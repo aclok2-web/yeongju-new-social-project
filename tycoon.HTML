@@ -235,7 +235,7 @@
     <canvas id="gameCanvas"></canvas>
     <div class="map-zoom-controls" aria-label="맵 크기 조절">
       <button id="mapZoomIn" type="button" aria-label="맵 확대">＋</button>
-      <output id="mapZoomLevel" aria-live="polite">100%</output>
+      <output id="mapZoomLevel" aria-live="polite">75%</output>
       <button id="mapZoomOut" type="button" aria-label="맵 축소">−</button>
     </div>
     <button id="plantActionBtn" type="button" onclick="plantNearbyField()" style="display:none;position:absolute;left:50%;bottom:110px;transform:translateX(-50%);z-index:30;padding:16px 28px;border:3px solid #24452d;border-radius:16px;background:#3fa35f;color:white;font-size:20px;font-weight:900;box-shadow:0 6px 0 #24452d;cursor:pointer">파종</button>
@@ -299,8 +299,8 @@
     const canvas = document.getElementById("gameCanvas");
     const ctx = canvas.getContext("2d");
     const DPR = Math.max(1, Math.min(2, window.devicePixelRatio || 1));
-    let mapZoom = 1;
-    const MIN_MAP_ZOOM = .75;
+    let mapZoom = .75;
+    const MIN_MAP_ZOOM = .5;
     const MAX_MAP_ZOOM = 1.5;
     function changeMapZoom(amount){
       mapZoom = Math.max(MIN_MAP_ZOOM, Math.min(MAX_MAP_ZOOM, Math.round((mapZoom + amount) * 100) / 100));
@@ -1246,8 +1246,8 @@
     document.getElementById("riceBtn").addEventListener("click", () => selectCrop("rice"));
     document.getElementById("ginsengBtn").addEventListener("click", () => selectCrop("ginseng"));
     document.getElementById("garlicBtn").addEventListener("click", () => selectCrop("garlic"));
-    document.getElementById("mapZoomIn").addEventListener("click", () => changeMapZoom(.1));
-    document.getElementById("mapZoomOut").addEventListener("click", () => changeMapZoom(-.1));
+    document.getElementById("mapZoomIn").addEventListener("click", () => changeMapZoom(.25));
+    document.getElementById("mapZoomOut").addEventListener("click", () => changeMapZoom(-.25));
     document.getElementById("panelToggle").addEventListener("click", () => {
       const panel = document.getElementById("upgradePanel");
       const toggle = document.getElementById("panelToggle");
