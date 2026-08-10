@@ -1,0 +1,1275 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>영주 하베스트 타이쿤</title>
+  <style>
+    :root{
+      --ink:#253127;
+      --soft:#fff8e6;
+      --line:#ead7ad;
+      --green:#2f8f51;
+      --gold:#e5a72f;
+      --blue:#3d76ad;
+      --red:#c94f3f;
+      --shadow:0 18px 42px rgba(42,36,22,.22);
+    }
+    *{box-sizing:border-box}
+    html,body{margin:0;height:100%;overflow:hidden;font-family:"Pretendard","Noto Sans KR",system-ui,sans-serif;color:var(--ink);background:#dcefc4}
+    button{font:inherit;border:0}
+    .game{
+      position:relative;
+      width:100vw;
+      height:100vh;
+      background:linear-gradient(180deg,#bfe8fb,#dcefc4 42%,#a8d273);
+    }
+    canvas{
+      display:block;
+      width:100%;
+      height:100%;
+      image-rendering:auto;
+    }
+    .hud{
+      position:absolute;
+      left:16px;
+      right:16px;
+      top:14px;
+      display:grid;
+      grid-template-columns:1fr auto;
+      gap:12px;
+      align-items:start;
+      pointer-events:none;
+    }
+    .title-card,.wallet,.panel,.toast,.help{
+      background:rgba(255,248,230,.94);
+      border:2px solid rgba(104,76,36,.14);
+      box-shadow:var(--shadow);
+      backdrop-filter:blur(8px);
+    }
+    .title-card{
+      max-width:610px;
+      padding:12px 14px;
+      border-radius:16px;
+    }
+    h1{margin:0;font-size:clamp(24px,3.4vw,42px);line-height:1.05;letter-spacing:0}
+    .title-card p{margin:6px 0 0;font-weight:700;color:#61705e;font-size:14px}
+    .wallet{
+      min-width:260px;
+      padding:12px 14px;
+      border-radius:16px;
+      text-align:right;
+    }
+    .money{font-size:30px;font-weight:950;color:#236f3f}
+    .wallet small{display:block;margin-top:3px;color:#667163;font-weight:700}
+    .bars{
+      display:grid;
+      gap:7px;
+      margin-top:9px;
+    }
+    .bar-row{display:grid;grid-template-columns:78px 1fr minmax(64px,auto);gap:8px;align-items:center;font-size:12px;font-weight:900;color:#536052}
+    .bar{height:10px;border-radius:999px;background:#e2d6b7;overflow:hidden}
+    .bar span{display:block;height:100%;width:0;border-radius:999px;background:linear-gradient(90deg,#61c66d,#e8c547)}
+    .panel{
+      position:absolute;
+      right:16px;
+      bottom:16px;
+      width:420px;
+      max-width:calc(100vw - 32px);
+      max-height:calc(100vh - 32px);
+      overflow:auto;
+      padding:12px;
+      border-radius:16px;
+      transition:max-height .22s ease, width .22s ease, padding .22s ease;
+    }
+    .panel-header{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:10px;
+      margin-bottom:10px;
+    }
+    .panel h2{margin:0;font-size:18px}
+    .panel-title{
+      display:flex;
+      align-items:center;
+      gap:8px;
+    }
+    .panel-toggle{
+      width:38px;
+      height:34px;
+      border-radius:10px;
+      color:white;
+      background:linear-gradient(180deg,#3d76ad,#2f5f8f);
+      box-shadow:inset 0 -3px 0 rgba(0,0,0,.13);
+      font-size:18px;
+      font-weight:950;
+      cursor:pointer;
+      line-height:1;
+    }
+    .panel-body{display:block}
+    .panel.collapsed{
+      width:260px;
+      max-height:62px;
+      overflow:hidden;
+    }
+    .panel.collapsed .panel-header{margin-bottom:0}
+    .panel.collapsed .panel-body{display:none}
+    .upgrades,.contracts{display:grid;gap:8px}
+    .upgrade{
+      display:grid;
+      grid-template-columns:42px 1fr auto;
+      gap:9px;
+      align-items:center;
+      padding:9px;
+      border:1px solid var(--line);
+      border-radius:12px;
+      background:#fffdf5;
+    }
+    .upgrade .ico{font-size:28px;text-align:center}
+    .upgrade b{display:block;font-size:14px}
+    .upgrade span{display:block;margin-top:2px;font-size:11px;color:#687368;line-height:1.3}
+    .buy{
+      min-width:78px;
+      padding:9px 10px;
+      border-radius:10px;
+      color:white;
+      background:linear-gradient(180deg,#3fa35f,#2f8f51);
+      box-shadow:inset 0 -3px 0 rgba(0,0,0,.13);
+      font-weight:950;
+      cursor:pointer;
+    }
+    .buy:disabled{background:#b5b8ad;cursor:not-allowed;box-shadow:none}
+    .cost{display:block;font-size:11px;opacity:.88;margin-top:1px}
+    .contract{
+      display:grid;
+      grid-template-columns:1fr auto;
+      gap:9px;
+      align-items:center;
+      padding:10px;
+      border:1px solid var(--line);
+      border-radius:12px;
+      background:#fffdf5;
+    }
+    .contract b{display:block;font-size:14px}
+    .contract span{display:block;margin-top:3px;font-size:11px;color:#687368;line-height:1.35}
+    .contract.locked{
+      color:#777;
+      background:rgba(255,255,255,.62);
+    }
+    .help{
+      position:absolute;
+      left:16px;
+      bottom:16px;
+      max-width:420px;
+      padding:11px 13px;
+      border-radius:16px;
+      line-height:1.45;
+      font-size:13px;
+      font-weight:750;
+    }
+    .toast{
+      position:absolute;
+      left:50%;
+      bottom:24px;
+      transform:translateX(-50%) translateY(28px);
+      opacity:0;
+      max-width:min(620px,calc(100vw - 32px));
+      padding:12px 18px;
+      border-radius:999px;
+      color:white;
+      background:#27382d;
+      border:0;
+      transition:.22s;
+      text-align:center;
+      font-weight:850;
+      pointer-events:none;
+    }
+    .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+    .map-zoom-controls{
+      position:fixed;left:16px;top:50%;transform:translateY(-50%);z-index:40;
+      display:flex;flex-direction:column;align-items:center;gap:6px;
+      padding:8px;background:rgba(255,250,235,.94);border:2px solid #496b42;
+      border-radius:16px;box-shadow:0 8px 24px rgba(30,55,28,.28)
+    }
+    .map-zoom-controls button{
+      width:44px;height:44px;border:0;border-radius:11px;background:#3f8d66;color:#fff;
+      font-size:27px;font-weight:900;line-height:1;cursor:pointer;box-shadow:0 3px 0 #24452d
+    }
+    .map-zoom-controls button:active{transform:translateY(2px);box-shadow:0 1px 0 #24452d}
+    .map-zoom-controls output{min-width:48px;text-align:center;font-size:12px;font-weight:900;color:#24452d}
+    .mobile-pad{
+      display:none;
+      position:absolute;
+      left:18px;
+      bottom:104px;
+      grid-template-columns:54px 54px 54px;
+      grid-template-rows:54px 54px 54px;
+      gap:6px;
+    }
+    .mobile-pad button{
+      border-radius:14px;
+      background:rgba(255,248,230,.92);
+      border:2px solid rgba(104,76,36,.18);
+      box-shadow:0 8px 18px rgba(42,36,22,.16);
+      font-size:24px;
+      font-weight:950;
+    }
+    .mobile-pad .up{grid-column:2}.mobile-pad .left{grid-column:1;grid-row:2}.mobile-pad .right{grid-column:3;grid-row:2}.mobile-pad .down{grid-column:2;grid-row:3}
+    @media(max-width:900px){
+      .hud{grid-template-columns:1fr}.wallet{text-align:left;min-width:0;width:max-content;max-width:100%}
+      .panel{width:calc(100vw - 32px);right:16px;bottom:16px}
+      .panel.collapsed{width:260px;max-width:calc(100vw - 32px)}
+      .help{display:none}
+      .mobile-pad{display:grid}
+    }
+    @media(max-width:560px){
+      .title-card p{display:none}.wallet{font-size:12px}.money{font-size:24px}.panel{max-height:42vh;overflow:auto}
+      .upgrade{grid-template-columns:34px 1fr auto}.upgrade .ico{font-size:23px}.buy{min-width:70px}
+    }
+  #upgradePanel{display:none!important}
+</style>
+</head>
+<body>
+  <div class="game">
+    <canvas id="gameCanvas"></canvas>
+    <div class="map-zoom-controls" aria-label="맵 크기 조절">
+      <button id="mapZoomIn" type="button" aria-label="맵 확대">＋</button>
+      <output id="mapZoomLevel" aria-live="polite">100%</output>
+      <button id="mapZoomOut" type="button" aria-label="맵 축소">−</button>
+    </div>
+    <button id="plantActionBtn" type="button" onclick="plantNearbyField()" style="display:none;position:absolute;left:50%;bottom:110px;transform:translateX(-50%);z-index:30;padding:16px 28px;border:3px solid #24452d;border-radius:16px;background:#3fa35f;color:white;font-size:20px;font-weight:900;box-shadow:0 6px 0 #24452d;cursor:pointer">파종</button>
+    <div id="storageActions" style="display:none;position:absolute;left:50%;bottom:110px;transform:translateX(-50%);z-index:31;gap:12px;align-items:center;justify-content:center">
+      <button id="storageSaveBtn" type="button" onclick="saveAtStorage()" style="padding:16px 26px;border:3px solid #5b3b1f;border-radius:16px;background:#d69345;color:white;font-size:19px;font-weight:900;box-shadow:0 6px 0 #5b3b1f;cursor:pointer">저장</button>
+      <button type="button" onclick="goToDeliveryApp()" style="padding:16px 26px;border:3px solid #24452d;border-radius:16px;background:#3f8d66;color:white;font-size:19px;font-weight:900;box-shadow:0 6px 0 #24452d;cursor:pointer">배달앱으로 가기</button>
+    </div>
+
+    <div class="hud">
+      <div class="title-card">
+        <h1>영주 하베스트 타이쿤</h1>
+      <p>쌀·풍기인삼·마늘을 골라 심고 수확해 배달앱 공동 저장고에 쌓으세요.</p>
+        <div class="bars">
+          <div class="bar-row"><span>연료</span><div class="bar"><span id="fuelBar"></span></div><span id="fuelText">100%</span></div>
+          <div class="bar-row"><span>적재함</span><div class="bar"><span id="loadBar"></span></div><span id="loadText">0/20</span></div>
+        </div>
+      </div>
+      <div class="wallet">
+        <div class="money" id="money">₩0</div>
+        <small id="statText">레벨 1 · 사회가치 0 · 평판 0</small>
+      </div>
+    </div>
+
+    <div class="help">
+      조작: W/A/S/D 또는 방향키로 이동합니다. 밭 가까이에서 파종 버튼을 누르고, 작물이 다 자라면 수확 버튼을 눌러 공동 저장고에 보관할 수 있습니다. 작물은 한 번 심을 때 1개씩 수확됩니다.
+    </div>
+
+    <div class="panel" id="upgradePanel">
+      <div class="panel-header">
+        <div class="panel-title">
+          <h2>장비 업그레이드</h2>
+        </div>
+        <button class="panel-toggle" id="panelToggle" type="button" aria-label="장비 업그레이드 접기" aria-expanded="true">▼</button>
+      </div>
+      <div class="panel-body">
+        <div class="upgrades">
+          <div class="upgrade"><div class="ico">⚡</div><div><b>엔진 강화</b><span>이동 속도가 빨라집니다.</span></div><button class="buy" id="speedBtn">구매<span class="cost" id="speedCost"></span></button></div>
+          <div class="upgrade"><div class="ico">📦</div><div><b>적재함 확장</b><span>한 번에 더 많이 싣습니다.</span></div><button class="buy" id="capacityBtn">구매<span class="cost" id="capacityCost"></span></button></div>
+          <div class="upgrade"><div class="ico">🌾</div><div><b>수확날 확장</b><span>더 넓은 범위를 수확합니다.</span></div><button class="buy" id="bladeBtn">구매<span class="cost" id="bladeCost"></span></button></div>
+          <div class="upgrade"><div class="ico">🗺️</div><div><b>밭 구역 해금</b><span>새 작물 구역이 열립니다.</span></div><button class="buy" id="fieldBtn">구매<span class="cost" id="fieldCost"></span></button></div>
+          <div class="upgrade"><div class="ico">🌾</div><div><b>쌀 심기</b><span>빈 밭에 심을 작물 선택 · 1칸 12원</span></div><button class="buy" id="riceBtn">선택</button></div>
+          <div class="upgrade"><div class="ico">🌿</div><div><b>풍기인삼 심기</b><span>빈 밭에 심을 작물 선택 · 1칸 30원</span></div><button class="buy" id="ginsengBtn">선택</button></div>
+          <div class="upgrade"><div class="ico">🧄</div><div><b>마늘 심기</b><span>빈 밭에 심을 작물 선택 · 1칸 18원</span></div><button class="buy" id="garlicBtn">선택</button></div>
+        </div>
+        <h2 style="margin-top:14px;margin-bottom:10px">선택 작물 · <span id="selectedCropText">쌀</span></h2>
+        <div class="contract"><div><b>배달앱 공동 저장고</b><span id="sharedStockText">쌀 0 · 인삼 0 · 마늘 0</span></div></div>
+      </div>
+    </div>
+
+    <div class="mobile-pad">
+      <button class="up" data-key="ArrowUp">▲</button>
+      <button class="left" data-key="ArrowLeft">◀</button>
+      <button class="right" data-key="ArrowRight">▶</button>
+      <button class="down" data-key="ArrowDown">▼</button>
+    </div>
+
+    <div class="toast" id="toast"></div>
+  </div>
+
+  <script>
+    const canvas = document.getElementById("gameCanvas");
+    const ctx = canvas.getContext("2d");
+    const DPR = Math.max(1, Math.min(2, window.devicePixelRatio || 1));
+    let mapZoom = 1;
+    const MIN_MAP_ZOOM = .75;
+    const MAX_MAP_ZOOM = 1.5;
+    function changeMapZoom(amount){
+      mapZoom = Math.max(MIN_MAP_ZOOM, Math.min(MAX_MAP_ZOOM, Math.round((mapZoom + amount) * 100) / 100));
+      document.getElementById("mapZoomLevel").textContent = Math.round(mapZoom * 100) + "%";
+    }
+    const worldBackground = new Image();
+    worldBackground.src = 'yeongju_tycoon_background_empty.png';
+    const grownBackground = new Image();
+    grownBackground.src = 'yeongju_tycoon_background_grown.png';
+    const tractorSpriteCanvas = new Image();
+    let tractorSpriteReady = false;
+    tractorSpriteCanvas.onload = () => { tractorSpriteReady = true; };
+    tractorSpriteCanvas.src = 'tractor_sprite_transparent.png';
+
+    const defaultState = {
+      money: 0,
+      totalEarned: 0,
+      social: 0,
+      reputation: 0,
+      speedLevel: 1,
+      capacityLevel: 1,
+      bladeLevel: 1,
+      fieldLevel: 1,
+      coopLevel: 0,
+      fuel: 100,
+      load: 0,
+      loadItems: { rice:0, ginseng:0, garlic:0 },
+      loadValue: 0,
+      loadProcessed: false,
+      storage: 0,
+      selectedCrop: "rice",
+      storageValue: 0,
+      harvested: 0,
+      contracts: [],
+      contractsDone: 0,
+      lastSaved: Date.now()
+    };
+
+    let state = loadState();
+    let shared = loadShared();
+    state.money = shared.money;
+    state.loadItems = {rice:0,ginseng:0,garlic:0,...(state.loadItems||{})};
+    const keys = {};
+    const camera = { x: 0, y: 0 };
+    const world = { w: 3000, h: 2100 };
+    const tractor = { x: 2350, y: 700, a: 0, targetA: 0, vx: 0, vy: 0, bob: 0 };
+    const floaters = [];
+    let nearbyPlantField = null;
+    const fields = [];
+    const fieldZones = [];
+    const pads = [
+      { id: "storage", x: 2020, y: 120, w: 500, h: 300, color: "rgba(180,122,60,.78)", label: "배달앱 공동 저장고", icon: "📦" },
+      { id: "fuel", x: 1460, y: 1660, w: 500, h: 300, color: "rgba(61,118,173,.78)", label: "주유소", icon: "⛽" }
+    ];
+
+    const CONTRACT_TYPES = [
+      { name: "학교 급식 납품", need: 28, money: 820, social: 8, rep: 3 },
+      { name: "복지 장터 꾸러미", need: 22, money: 620, social: 14, rep: 2 },
+      { name: "지역 축제 마켓", need: 36, money: 1180, social: 12, rep: 5 },
+      { name: "청년창업 매장 공급", need: 30, money: 950, social: 10, rep: 4 }
+    ];
+
+    function setupFields(){
+      fields.length = 0;
+      fieldZones.length = 0;
+      addFieldBlock(620, 500, 5, 5, "ginseng", "인삼밭");
+      addFieldBlock(1660, 750, 6, 4, "garlic", "마늘밭");
+      if(state.fieldLevel >= 2) addFieldBlock(540, 1160, 5, 4, "rice", "왼쪽 벼밭");
+      if(state.fieldLevel >= 3) addFieldBlock(1640, 1240, 6, 4, "rice", "오른쪽 벼밭");
+    }
+
+    function addFieldBlock(x, y, cols, rows, type, label){
+      const size = 78;
+      const gap = 16;
+      const padding = 26;
+      fieldZones.push({
+        x: x - padding,
+        y: y - padding - 34,
+        w: cols * size + (cols - 1) * gap + padding * 2,
+        h: rows * size + (rows - 1) * gap + padding * 2 + 34,
+        label,
+        type
+      });
+      for(let r = 0; r < rows; r++){
+        for(let c = 0; c < cols; c++){
+          fields.push({
+            x: x + c * (size + gap),
+            y: y + r * (size + gap),
+            w: size,
+            h: size,
+            crop: null,
+            allowedCrop: type,
+            zoneLabel: label,
+            planted: false,
+            grown: 0,
+            regrow: 0,
+            locked: false
+          });
+        }
+      }
+    }
+
+    function resize(){
+      canvas.width = Math.floor(innerWidth * DPR);
+      canvas.height = Math.floor(innerHeight * DPR);
+      ctx.setTransform(DPR,0,0,DPR,0,0);
+    }
+
+    function formatWon(n){
+      if(n >= 10000) return "₩" + (n / 10000).toFixed(1) + "만";
+      return "₩" + Math.floor(n).toLocaleString("ko-KR");
+    }
+
+    function capacity(){ return 20 + (state.capacityLevel - 1) * 14; }
+    function speed(){ return 2.65 + (state.speedLevel - 1) * 0.42; }
+    function bladeRadius(){ return 38 + (state.bladeLevel - 1) * 16; }
+    function inFieldActionRange(field){
+      const nearestX = Math.max(field.x, Math.min(tractor.x, field.x + field.w));
+      const nearestY = Math.max(field.y, Math.min(tractor.y, field.y + field.h));
+      return Math.hypot(tractor.x - nearestX, tractor.y - nearestY) < bladeRadius() + 70;
+    }
+    function cropValue(crop){ return crop === "ginseng" ? 38 : crop === "garlic" ? 26 : 20; }
+    function cropUnit(crop){ return 1; }
+    function seedCost(crop){ return crop === "ginseng" ? 30 : crop === "garlic" ? 18 : 12; }
+    function cropLabel(crop){ return crop === "ginseng" ? "풍기인삼" : crop === "garlic" ? "마늘" : "쌀"; }
+    function fieldLabel(crop){ return crop === "ginseng" ? "인삼밭" : crop === "garlic" ? "마늘밭" : "쌀밭"; }
+    function updateFarmMission(crop){
+      const base={stage:0,residents:0,farmLocal:{rice:0,ginseng:0,garlic:0},marketDelivered:{rice:0,ginseng:0,garlic:0},farmRestaurant:{rice:0,ginseng:0,garlic:0},restaurantDelivered:{rice:0,ginseng:0,garlic:0},mealsServed:0,completed:false};
+      shared.quest={...base,...(shared.quest||{})};
+      for(const key of ["farmLocal","marketDelivered","farmRestaurant","restaurantDelivered"]){
+        shared.quest[key]={rice:0,ginseng:0,garlic:0,...(shared.quest[key]||{})};
+      }
+      const q=shared.quest;
+      if(q.stage===0){
+        q.farmLocal[crop]=Math.min(5,q.farmLocal[crop]+1);
+        if(["rice","ginseng","garlic"].every(type=>q.farmLocal[type]>=5)){
+          q.stage=1;q.residents+=2;shared.residentsGained=q.residents;
+          shared.regionalStats={safety:40,welfare:40,education:40,economy:40,...(shared.regionalStats||{})};
+          shared.regionalStats.economy=Math.min(100,shared.regionalStats.economy+8);
+          shared.regionalStats.welfare=Math.min(100,shared.regionalStats.welfare+4);
+          shared.regionalStats.happiness=Math.round((shared.regionalStats.safety+shared.regionalStats.welfare+shared.regionalStats.education+shared.regionalStats.economy)/4);
+          toast("지방 특산물 생산 목표 달성! 주민이 2명 늘었습니다.");
+        }
+      }else if(q.stage===2){
+        q.farmRestaurant[crop]=Math.min(5,q.farmRestaurant[crop]+1);
+        if(["rice","ginseng","garlic"].every(type=>q.farmRestaurant[type]>=5)){
+          toast("작물 재생산 완료! 삼계탕 맛집에 종류별 5개를 납품하세요.");
+        }
+      }
+      saveShared();
+    }
+
+    function upgradeCost(type){
+      const map = {
+        speed: Math.floor(220 * Math.pow(1.7, state.speedLevel - 1)),
+        capacity: Math.floor(260 * Math.pow(1.68, state.capacityLevel - 1)),
+        blade: Math.floor(310 * Math.pow(1.72, state.bladeLevel - 1)),
+        field: state.fieldLevel >= 4 ? Infinity : Math.floor(650 * Math.pow(1.95, state.fieldLevel - 1))
+      };
+      return map[type];
+    }
+
+    function buy(type){
+      const cost = upgradeCost(type);
+      if(!Number.isFinite(cost)) return toast("모든 밭 구역을 해금했습니다.");
+      if(state.money < cost) return toast("자금이 부족합니다.");
+      state.money -= cost;
+      if(type === "speed"){ state.speedLevel++; toast("엔진이 강화되었습니다."); }
+      if(type === "capacity"){ state.capacityLevel++; toast("적재함이 넓어졌습니다."); }
+      if(type === "blade"){ state.bladeLevel++; toast("수확 범위가 넓어졌습니다."); }
+      if(type === "field"){ state.fieldLevel++; setupFields(); toast("새 밭 구역을 열었습니다."); }
+      shared.money=state.money;saveShared();
+      saveState(true);
+      renderHud();
+    }
+
+    function ensureContracts(){
+      state.contracts = Array.isArray(state.contracts) ? state.contracts : [];
+      if(state.coopLevel < 2) return;
+      while(state.contracts.length < 3){
+        const base = CONTRACT_TYPES[(state.contractsDone + state.contracts.length + Math.floor(Math.random() * CONTRACT_TYPES.length)) % CONTRACT_TYPES.length];
+        const scale = 1 + state.coopLevel * 0.18 + state.contractsDone * 0.04;
+        state.contracts.push({
+          id: Date.now() + Math.random(),
+          name: base.name,
+          need: Math.floor(base.need * scale),
+          money: Math.floor(base.money * scale),
+          social: Math.floor(base.social * (1 + state.coopLevel * 0.12)),
+          rep: base.rep + Math.floor(state.coopLevel / 2)
+        });
+      }
+    }
+
+    function completeContract(id){
+      const contract = state.contracts.find(c => c.id === id);
+      if(!contract) return;
+      if(state.storage < contract.need) return toast("저장고 물량이 부족합니다.");
+      const ratio = contract.need / state.storage;
+      state.storage -= contract.need;
+      state.storageValue = Math.max(0, Math.floor(state.storageValue * (1 - ratio)));
+      state.money += contract.money;
+      state.totalEarned += contract.money;
+      state.social += contract.social;
+      state.reputation += contract.rep;
+      state.contractsDone++;
+      state.contracts = state.contracts.filter(c => c.id !== id);
+      ensureContracts();
+      pop("계약 완료", tractor.x, tractor.y - 72, "#315f8a");
+      toast(contract.name + " 완료! 사회가치 +" + contract.social);
+      saveState(true);
+      renderHud();
+    }
+
+    function update(){
+      if(state.fuel <= 0){
+        handleFuelEmpty();
+      }
+
+      const up = keys.ArrowUp || keys.KeyW;
+      const down = keys.ArrowDown || keys.KeyS;
+      const left = keys.ArrowLeft || keys.KeyA;
+      const right = keys.ArrowRight || keys.KeyD;
+      let ix = (right ? 1 : 0) - (left ? 1 : 0);
+      let iy = (down ? 1 : 0) - (up ? 1 : 0);
+      const moving = ix !== 0 || iy !== 0;
+
+      if(moving && state.fuel > 0){
+        const len = Math.hypot(ix, iy) || 1;
+        ix /= len;
+        iy /= len;
+        tractor.targetA = Math.atan2(iy, ix);
+        const turn = Math.atan2(Math.sin(tractor.targetA - tractor.a), Math.cos(tractor.targetA - tractor.a));
+        tractor.a += turn * 0.28;
+        const targetSpeed = speed() * 2.05;
+        tractor.vx += (ix * targetSpeed - tractor.vx) * 0.16;
+        tractor.vy += (iy * targetSpeed - tractor.vy) * 0.16;
+        state.fuel = Math.max(0, state.fuel - 0.018);
+        if(state.fuel <= 0) handleFuelEmpty();
+      }else{
+        tractor.vx *= 0.84;
+        tractor.vy *= 0.84;
+      }
+
+      tractor.x = Math.max(60, Math.min(world.w - 60, tractor.x + tractor.vx));
+      tractor.y = Math.max(70, Math.min(world.h - 70, tractor.y + tractor.vy));
+      tractor.bob += Math.hypot(tractor.vx, tractor.vy) * 0.12;
+
+      nearbyPlantField = null;
+      let nearbyHarvestField = null;
+      fields.forEach(field => {
+        if(!field.planted){
+          if(inFieldActionRange(field) && !nearbyPlantField) nearbyPlantField = field;
+          return;
+        }
+        if(field.grown < 1){
+          field.regrow += 0.0024;
+          field.grown = Math.min(1, field.regrow);
+          return;
+        }
+        if(inFieldActionRange(field) && !nearbyHarvestField) nearbyHarvestField = field;
+      });
+
+      // 다 자란 작물이 있으면 파종을 막고 수확만 표시한다. 자라는 중에는 다른 빈 밭에 계속 파종할 수 있다.
+      if(nearbyHarvestField) nearbyPlantField = nearbyHarvestField;
+
+      updatePlantAction();
+
+      pads.forEach(pad => {
+        if(inPad(pad)){
+          if(pad.id === "fuel") chargeFuel();
+        }
+      });
+      updateStorageActions();
+
+      floaters.forEach(f => { f.y -= 0.8; f.life -= 1; });
+      for(let i = floaters.length - 1; i >= 0; i--) if(floaters[i].life <= 0) floaters.splice(i, 1);
+      renderHud();
+      saveTimer++;
+      if(saveTimer > 180){ saveTimer = 0; saveState(true); }
+    }
+
+    function inPad(pad){
+      const margin = pad.id === "fuel" ? 70 : 0;
+      return tractor.x > pad.x - margin && tractor.x < pad.x + pad.w + margin && tractor.y > pad.y - margin && tractor.y < pad.y + pad.h + margin;
+    }
+
+    function updateStorageActions(){
+      const actions = document.getElementById("storageActions");
+      const storagePad = pads.find(pad => pad.id === "storage");
+      const atStorage = storagePad && inPad(storagePad);
+      actions.style.display = atStorage ? "flex" : "none";
+      document.getElementById("storageSaveBtn").disabled = !atStorage;
+    }
+
+    function saveAtStorage(){
+      const storagePad = pads.find(pad => pad.id === "storage");
+      if(!storagePad || !inPad(storagePad)) return toast("저장고 입구로 이동하세요.");
+      if(state.load > 0){
+        storeLoad();
+        toast("수확물을 공동 저장고에 저장했습니다.");
+      }else{
+        saveState(true);
+        saveShared();
+        toast("현재 게임 상태를 저장했습니다.");
+      }
+    }
+
+    function goToDeliveryApp(){
+      const storagePad = pads.find(pad => pad.id === "storage");
+      if(!storagePad || !inPad(storagePad)) return toast("저장고 입구로 이동하세요.");
+      saveState(true);
+      saveShared();
+      location.href = "index.html?skipIntro=1";
+    }
+
+    function chargeFuel(){
+      const before = state.fuel;
+      state.fuel = Math.min(100, state.fuel + 1.8);
+      if(before < 100 && state.fuel >= 100) toast("연료가 가득 찼습니다.");
+      if(before < 25 && state.fuel >= 25) toast("충전소에서 연료를 채우는 중입니다.");
+    }
+
+    function handleFuelEmpty(){
+      state.fuel = 35;
+      state.money = Math.floor(state.money / 2);
+      state.load = Math.floor(state.load / 2);
+      state.loadValue = Math.floor(state.loadValue / 2);
+      state.storage = Math.floor(state.storage / 2);
+      state.storageValue = Math.floor(state.storageValue / 2);
+      tractor.vx = 0;
+      tractor.vy = 0;
+      pop("긴급 연료 지원", tractor.x, tractor.y - 76, "#315f8a");
+      toast("연료가 떨어져 긴급 지원을 받았습니다. 소지금, 적재함, 창고 물량이 절반으로 줄고 연료가 35% 회복됩니다.");
+      saveState(true);
+      renderHud();
+    }
+
+    function storeLoad(){
+      state.storage += state.load;
+      state.storageValue += state.loadValue;
+      for(const crop of ["rice","ginseng","garlic"])shared.inventory[crop]=(shared.inventory[crop]||0)+(state.loadItems[crop]||0);
+      shared.localValue=Math.min(100,(shared.localValue||0)+Math.max(1,Math.ceil(state.load/5)));
+      pop("보관 +" + state.load, tractor.x, tractor.y - 60, "#7a4d24");
+      state.load = 0;
+      state.loadItems={rice:0,ginseng:0,garlic:0};
+      state.loadValue = 0;
+      state.loadProcessed = false;
+      saveShared();
+      saveState(true);
+    }
+
+    function sellStorage(){
+      const earned = Math.floor(state.storageValue * sellBonus());
+      state.money += earned;
+      state.totalEarned += earned;
+      state.reputation += Math.max(1, Math.floor(state.storage / 20));
+      state.social += state.coopLevel;
+      pop("판매 " + formatWon(earned), tractor.x, tractor.y - 60, "#1f7a3d");
+      state.storage = 0;
+      state.storageValue = 0;
+      saveState(true);
+    }
+
+
+    function updatePlantAction(){
+      const button = document.getElementById("plantActionBtn");
+      if(!nearbyPlantField){button.style.display="none";return;}
+      const crop = nearbyPlantField.planted ? nearbyPlantField.crop : nearbyPlantField.allowedCrop;
+      button.textContent = nearbyPlantField.planted
+        ? cropLabel(crop) + " 수확 · 1개"
+        : cropLabel(crop) + " 파종 · " + formatWon(seedCost(crop));
+      button.style.display = "block";
+      button.disabled = nearbyPlantField.planted
+        ? state.load >= capacity()
+        : state.money < seedCost(crop);
+    }
+
+    function plantNearbyField(){
+      const field = nearbyPlantField;
+      if(!field) return;
+      if(field.planted){
+        if(field.grown < 1) return;
+        if(state.load >= capacity()) return toast("적재함이 가득 찼습니다.");
+        if(state.load === 0) state.loadProcessed = false;
+        const crop = field.crop;
+        const unit = cropUnit(crop);
+        state.load += unit;
+        state.loadItems[crop] = (state.loadItems[crop] || 0) + unit;
+        state.loadValue += cropValue(crop) * unit;
+        state.harvested += unit;
+        updateFarmMission(crop);
+        field.grown = 0;
+        field.planted = false;
+        field.crop = null;
+        field.regrow = 0;
+        pop(cropLabel(crop) + " 수확 +" + unit, field.x + field.w / 2, field.y + field.h / 2, "#315f37");
+        nearbyPlantField = null;
+        updatePlantAction();
+        saveState(true);
+        return;
+      }
+      const crop = field.allowedCrop;
+      const cost = seedCost(crop);
+      if(state.money < cost) return toast("파종 비용이 부족합니다.");
+      state.money -= cost;
+      shared.money = state.money;
+      field.crop = crop;
+      field.planted = true;
+      field.grown = .01;
+      field.regrow = .01;
+      saveShared();
+      pop(cropLabel(crop) + " 파종 -" + formatWon(cost),field.x+field.w/2,field.y+field.h/2,"#7a4d24");
+      nearbyPlantField = null;
+      updatePlantAction();
+    }
+    function pop(text,x,y,color){
+      floaters.push({ text, x, y, color, life: 70 });
+    }
+
+    function draw(){
+      ctx.clearRect(0,0,innerWidth,innerHeight);
+      const viewWidth = innerWidth / mapZoom;
+      const viewHeight = innerHeight / mapZoom;
+      camera.x += (tractor.x - viewWidth / 2 - camera.x) * 0.08;
+      camera.y += (tractor.y - viewHeight / 2 - camera.y) * 0.08;
+      camera.x = Math.max(0, Math.min(Math.max(0, world.w - viewWidth), camera.x));
+      camera.y = Math.max(0, Math.min(Math.max(0, world.h - viewHeight), camera.y));
+      ctx.save();
+      ctx.scale(mapZoom, mapZoom);
+      ctx.translate(-camera.x, -camera.y);
+      drawWorld();
+      pads.forEach(drawPad);
+      drawTractor();
+      drawFloaters();
+      ctx.restore();
+      requestAnimationFrame(loop);
+    }
+
+    function drawWorld(){
+      ctx.fillStyle = "#315b32";
+      ctx.fillRect(0,0,world.w,world.h);
+      if(worldBackground.complete && worldBackground.naturalWidth){
+        ctx.drawImage(worldBackground,0,0,world.w,world.h);
+      }
+      if(grownBackground.complete && grownBackground.naturalWidth){
+        const drawCropRegion = (crop,zoneLabel,x,y,w,h) => {
+          if(!fields.some(field => field.allowedCrop === crop && field.zoneLabel === zoneLabel && field.planted && field.grown >= 1)) return;
+          const sx = x / world.w * grownBackground.naturalWidth;
+          const sy = y / world.h * grownBackground.naturalHeight;
+          const sw = w / world.w * grownBackground.naturalWidth;
+          const sh = h / world.h * grownBackground.naturalHeight;
+          ctx.drawImage(grownBackground,sx,sy,sw,sh,x,y,w,h);
+        };
+        drawCropRegion("ginseng","인삼밭",500,440,880,610);
+        drawCropRegion("garlic","마늘밭",1510,710,1160,500);
+        drawCropRegion("rice","왼쪽 벼밭",450,1080,960,570);
+        drawCropRegion("rice","오른쪽 벼밭",1510,1180,1160,500);
+      }
+      fieldZones.forEach(drawFieldZone);
+    }
+
+    function drawTreeLine(){
+      for(let i=0;i<48;i++){
+        const x = 40 + i * 64;
+        const y = 30 + Math.sin(i) * 12;
+        ctx.fillStyle = "#5f9c55";
+        ctx.beginPath(); ctx.arc(x,y,24,0,Math.PI*2); ctx.fill();
+        ctx.fillStyle = "#79552f";
+        ctx.fillRect(x-4,y+18,8,20);
+      }
+    }
+
+    function drawBuilding(x,y,w,h,label,color,icon){
+      ctx.fillStyle = "rgba(72,55,30,.18)";
+      roundRect(x+12,y+16,w,h,16,true);
+      ctx.fillStyle = color;
+      roundRect(x,y,w,h,16,true);
+      ctx.fillStyle = "#fff0c7";
+      ctx.fillRect(x,y,w,36);
+      ctx.fillStyle = "#27382d";
+      ctx.font = "800 18px system-ui";
+      ctx.fillText(icon + " " + label, x + 18, y + 88);
+    }
+
+    function drawSign(x,y,text){
+      ctx.fillStyle = "rgba(72,55,30,.18)";
+      roundRect(x+8,y+10,530,72,14,true);
+      ctx.fillStyle = "#fff8e6";
+      roundRect(x,y,530,72,14,true);
+      ctx.fillStyle = "#6b4a25";
+      ctx.font = "900 17px system-ui";
+      ctx.fillText("TIP", x + 18, y + 29);
+      ctx.fillStyle = "#27382d";
+      ctx.font = "800 16px system-ui";
+      ctx.fillText(text, x + 18, y + 54);
+    }
+
+    function drawRoads(){
+      drawRoadPath([
+        [270,1740],[640,1510],[1040,1280],[1510,1120],[2160,1010],[2590,520]
+      ]);
+      drawRoadPath([
+        [540,1510],[500,960],[460,470],[980,420],[1430,440],[2110,500],[2600,520]
+      ]);
+      drawRoadPath([
+        [2160,1010],[2470,1320],[2470,1620]
+      ]);
+      drawRoadPath([
+        [1420,1125],[1330,1560],[1690,1740]
+      ]);
+    }
+
+    function drawRoadPath(points){
+      ctx.lineCap = "round";
+      ctx.lineJoin = "round";
+      ctx.strokeStyle = "#b9824d";
+      ctx.lineWidth = 72;
+      ctx.beginPath();
+      points.forEach((p,i) => i ? ctx.lineTo(p[0],p[1]) : ctx.moveTo(p[0],p[1]));
+      ctx.stroke();
+      ctx.strokeStyle = "#cf9d65";
+      ctx.lineWidth = 54;
+      ctx.beginPath();
+      points.forEach((p,i) => i ? ctx.lineTo(p[0],p[1]) : ctx.moveTo(p[0],p[1]));
+      ctx.stroke();
+      ctx.strokeStyle = "rgba(255,244,200,.88)";
+      ctx.lineWidth = 6;
+      ctx.setLineDash([28,26]);
+      ctx.beginPath();
+      points.forEach((p,i) => i ? ctx.lineTo(p[0],p[1]) : ctx.moveTo(p[0],p[1]));
+      ctx.stroke();
+      ctx.setLineDash([]);
+    }
+
+    function drawFieldZone(z){
+      ctx.save();
+      ctx.font = "950 30px system-ui";
+      ctx.textAlign = "center";
+      ctx.textBaseline = "middle";
+      ctx.lineWidth = 8;
+      ctx.strokeStyle = "rgba(35,25,15,.92)";
+      ctx.fillStyle = "#fff4c7";
+      const labelX = z.x + z.w / 2;
+      const labelY = z.y + z.h / 2;
+      ctx.strokeText(fieldLabel(z.type), labelX, labelY);
+      ctx.fillText(fieldLabel(z.type), labelX, labelY);
+      ctx.restore();
+    }
+
+    function drawField(f){
+      const grown = f.grown;
+      ctx.fillStyle = f.crop === "ginseng" ? "#6f4a2c" : "#7b4c2b";
+      roundRect(f.x,f.y,f.w,f.h,10,true);
+      ctx.fillStyle = f.crop === "ginseng" ? "rgba(235,210,162,.22)" : "rgba(255,255,255,.07)";
+      for(let i=12;i<f.w;i+=18) ctx.fillRect(f.x+i,f.y+8,5,f.h-16);
+      if(f.crop === "ginseng"){
+        ctx.strokeStyle = "rgba(47,36,25,.26)";
+        ctx.lineWidth = 2;
+        for(let y=f.y+15;y<f.y+f.h-4;y+=16){
+          ctx.beginPath();
+          ctx.moveTo(f.x+8,y);
+          ctx.lineTo(f.x+f.w-8,y+3);
+          ctx.stroke();
+        }
+      }
+      if(grown > 0.08){
+        const rows = 3;
+        const cols = 3;
+        for(let r=0;r<rows;r++){
+          for(let c=0;c<cols;c++){
+            const px = f.x + 17 + c * 22;
+            const py = f.y + 19 + r * 19;
+            ctx.globalAlpha = Math.max(.25,grown);
+            if(f.crop === "ginseng"){
+              drawGinsengPlant(px, py, grown);
+            }else{
+              drawCropPlant(px, py, grown, f.crop);
+            }
+            ctx.globalAlpha = 1;
+          }
+        }
+      }
+    }
+
+    function drawCropPlant(x,y,grown,crop){ctx.save();ctx.translate(x,y);const s=.65+grown*.45;ctx.scale(s,s);if(crop==="rice"){ctx.strokeStyle="#d6a629";ctx.lineWidth=2;for(let i=-6;i<=6;i+=6){ctx.beginPath();ctx.moveTo(i,12);ctx.lineTo(i-2,-15);ctx.stroke();ctx.fillStyle="#f2cf4f";ctx.beginPath();ctx.ellipse(i+2,-9,3,7,.5,0,Math.PI*2);ctx.fill()}}else{ctx.strokeStyle="#3f8b46";ctx.lineWidth=3;for(let i=-6;i<=6;i+=6){ctx.beginPath();ctx.moveTo(0,6);ctx.lineTo(i,-16);ctx.stroke()}ctx.fillStyle="#f4ead4";ctx.beginPath();ctx.ellipse(0,9,8,6,0,0,Math.PI*2);ctx.fill()}ctx.restore()}
+
+    function drawGinsengPlant(x, y, grown){
+      const scale = .72 + grown * .42;
+      ctx.save();
+      ctx.translate(x, y);
+      ctx.scale(scale, scale);
+
+      ctx.strokeStyle = "#2f7d4a";
+      ctx.lineWidth = 2.4;
+      ctx.lineCap = "round";
+      ctx.beginPath();
+      ctx.moveTo(0, 2);
+      ctx.lineTo(0, -13);
+      ctx.moveTo(0, -10);
+      ctx.lineTo(-10, -18);
+      ctx.moveTo(0, -12);
+      ctx.lineTo(10, -20);
+      ctx.stroke();
+
+      ctx.fillStyle = "#3f9a55";
+      [
+        [-13,-19,-.55],
+        [-5,-23,-.2],
+        [6,-23,.25],
+        [14,-18,.55]
+      ].forEach(leaf => {
+        ctx.beginPath();
+        ctx.ellipse(leaf[0], leaf[1], 4.6, 8, leaf[2], 0, Math.PI * 2);
+        ctx.fill();
+      });
+
+      ctx.fillStyle = "#f4dfb8";
+      ctx.strokeStyle = "#9f7446";
+      ctx.lineWidth = 1.6;
+      ctx.beginPath();
+      ctx.moveTo(0, -1);
+      ctx.quadraticCurveTo(9, 4, 6, 17);
+      ctx.quadraticCurveTo(3, 27, 0, 31);
+      ctx.quadraticCurveTo(-5, 25, -7, 16);
+      ctx.quadraticCurveTo(-10, 4, 0, -1);
+      ctx.fill();
+      ctx.stroke();
+
+      ctx.strokeStyle = "#d8bb87";
+      ctx.lineWidth = 1.8;
+      ctx.beginPath();
+      ctx.moveTo(-5, 11);
+      ctx.quadraticCurveTo(-15, 12, -17, 23);
+      ctx.moveTo(5, 10);
+      ctx.quadraticCurveTo(16, 12, 18, 22);
+      ctx.moveTo(-2, 22);
+      ctx.quadraticCurveTo(-7, 31, -12, 36);
+      ctx.moveTo(3, 21);
+      ctx.quadraticCurveTo(9, 30, 15, 35);
+      ctx.stroke();
+
+      ctx.restore();
+    }
+
+    function drawAppleTree(x, y, grown){
+      const scale = .68 + grown * .44;
+      ctx.save();
+      ctx.translate(x, y);
+      ctx.scale(scale, scale);
+
+      ctx.fillStyle = "#7a4d24";
+      roundRect(-3, -2, 6, 23, 3, true);
+
+      ctx.fillStyle = "#3f8f45";
+      ctx.beginPath();
+      ctx.arc(-9, -11, 12, 0, Math.PI * 2);
+      ctx.arc(8, -13, 13, 0, Math.PI * 2);
+      ctx.arc(0, -25, 12, 0, Math.PI * 2);
+      ctx.arc(0, -8, 13, 0, Math.PI * 2);
+      ctx.fill();
+
+      ctx.fillStyle = "#62a95b";
+      ctx.beginPath();
+      ctx.arc(6, -23, 6, 0, Math.PI * 2);
+      ctx.arc(-10, -17, 5, 0, Math.PI * 2);
+      ctx.fill();
+
+      if(grown > .58){
+        ctx.fillStyle = "#d94737";
+        [
+          [-8,-16],
+          [8,-20],
+          [2,-8],
+          [-1,-27]
+        ].forEach(([ax, ay]) => {
+          ctx.beginPath();
+          ctx.arc(ax, ay, 3.4, 0, Math.PI * 2);
+          ctx.fill();
+        });
+      }
+
+      ctx.restore();
+    }
+
+    function drawPad(p){
+      if(p.id === "storage"){
+        ctx.save();
+        ctx.textAlign = "center";
+        ctx.textBaseline = "middle";
+        ctx.font = "950 28px system-ui";
+        ctx.lineWidth = 7;
+        ctx.strokeStyle = "rgba(35,25,15,.92)";
+        ctx.fillStyle = "#fff4c7";
+        const labelX = p.x + p.w / 2;
+        const labelY = p.y + 58;
+        ctx.strokeText("저장고", labelX, labelY);
+        ctx.fillText("저장고", labelX, labelY);
+        ctx.restore();
+        return;
+      }
+      if(p.id === "fuel"){
+        ctx.save();
+        ctx.textAlign = "center";
+        ctx.textBaseline = "middle";
+        ctx.font = "950 25px system-ui";
+        ctx.lineWidth = 6;
+        ctx.strokeStyle = "rgba(35,25,15,.9)";
+        ctx.fillStyle = "#fff4c7";
+        const labelX = p.x + p.w / 2;
+        const labelY = p.y + 58;
+        ctx.strokeText("주유소 - 연료 회복", labelX, labelY);
+        ctx.fillText("주유소 - 연료 회복", labelX, labelY);
+        ctx.restore();
+        return;
+      }
+      ctx.fillStyle = "rgba(70,48,20,.18)";
+      roundRect(p.x+10,p.y+10,p.w,p.h,20,true);
+      ctx.fillStyle = p.color;
+      roundRect(p.x,p.y,p.w,p.h,20,true);
+      ctx.fillStyle = "rgba(255,255,255,.16)";
+      ctx.fillRect(p.x+12,p.y+12,p.w-24,42);
+      ctx.fillStyle = "#fff8e6";
+      ctx.font = "950 25px system-ui";
+      ctx.fillText(p.icon + " " + p.label, p.x + 24, p.y + 74);
+      ctx.font = "800 14px system-ui";
+      const sub = p.id === "storage"
+        ? "수확물을 보관"
+        : p.id === "market"
+          ? "저장고 물량 판매"
+        : p.id === "fuel"
+          ? "연료 자동 회복"
+          : p.id === "process"
+            ? "적재물 가치 22% 증가"
+            : "사회가치와 판매가치 소폭 증가";
+      ctx.fillText(sub, p.x + 26, p.y + 106);
+    }
+
+    function drawTractor(){
+      ctx.save();
+      ctx.translate(tractor.x, tractor.y + Math.sin(tractor.bob) * 1.5);
+      if(tractorSpriteReady){
+        ctx.fillStyle = "rgba(40,30,18,.24)";
+        ctx.beginPath();
+        ctx.ellipse(0, 44, 116, 58, 0, 0, Math.PI * 2);
+        ctx.fill();
+
+        const cos = Math.cos(tractor.a), sin = Math.sin(tractor.a);
+        let sprite;
+        if(Math.abs(cos) >= Math.abs(sin)){
+          sprite = cos >= 0
+            ? {sx:790, sy:585, sw:590, sh:450, dw:284, dh:216}
+            : {sx:80, sy:585, sw:590, sh:450, dw:284, dh:216};
+        }else{
+          sprite = sin >= 0
+            ? {sx:130, sy:20, sw:480, sh:520, dw:196, dh:236}
+            : {sx:890, sy:20, sw:430, sh:520, dw:196, dh:236};
+        }
+        ctx.imageSmoothingEnabled = true;
+        ctx.drawImage(
+          tractorSpriteCanvas,
+          sprite.sx, sprite.sy, sprite.sw, sprite.sh,
+          -sprite.dw / 2, -sprite.dh / 2, sprite.dw, sprite.dh
+        );
+        ctx.restore();
+        return;
+      }
+      ctx.rotate(tractor.a);
+      ctx.fillStyle = "rgba(40,30,18,.22)";
+      ctx.beginPath(); ctx.ellipse(4,10,55,34,0,0,Math.PI*2); ctx.fill();
+
+      ctx.fillStyle = "#263024";
+      roundRect(-36,-30,74,18,9,true);
+      roundRect(-36,13,74,18,9,true);
+      ctx.fillStyle = "#475347";
+      roundRect(-31,-26,64,10,6,true);
+      roundRect(-31,17,64,10,6,true);
+
+      ctx.fillStyle = "#f05a45";
+      roundRect(-35,-23,70,46,15,true);
+      ctx.fillStyle = "#ffcf49";
+      roundRect(0,-20,36,40,13,true);
+      ctx.fillStyle = "#fff4c7";
+      roundRect(-29,-15,22,30,10,true);
+
+      ctx.fillStyle = "#d86d2f";
+      ctx.beginPath();
+      ctx.moveTo(-30,-15);
+      ctx.lineTo(-24,-32);
+      ctx.lineTo(-15,-18);
+      ctx.lineTo(-5,-32);
+      ctx.lineTo(-1,-15);
+      ctx.closePath();
+      ctx.fill();
+      ctx.fillStyle = "#ffefe0";
+      ctx.beginPath();
+      ctx.moveTo(-25,-23);
+      ctx.lineTo(-23,-29);
+      ctx.lineTo(-19,-21);
+      ctx.closePath();
+      ctx.moveTo(-10,-21);
+      ctx.lineTo(-6,-29);
+      ctx.lineTo(-6,-22);
+      ctx.closePath();
+      ctx.fill();
+      ctx.fillStyle = "#e87937";
+      ctx.beginPath(); ctx.arc(-16, -7, 15, 0, Math.PI * 2); ctx.fill();
+      ctx.fillStyle = "#fff2df";
+      ctx.beginPath(); ctx.ellipse(-16, 0, 10, 8, 0, 0, Math.PI * 2); ctx.fill();
+      ctx.fillStyle = "#2c241f";
+      ctx.beginPath(); ctx.arc(-22, -8, 1.8, 0, Math.PI * 2); ctx.arc(-10, -8, 1.8, 0, Math.PI * 2); ctx.fill();
+      ctx.beginPath(); ctx.arc(-16, -2, 2.2, 0, Math.PI * 2); ctx.fill();
+      ctx.strokeStyle = "#8d3d2e";
+      ctx.lineWidth = 1.8;
+      ctx.beginPath(); ctx.arc(-16, 1, 4.6, 0.12, Math.PI - 0.12); ctx.stroke();
+      ctx.fillStyle = "#e87937";
+      ctx.beginPath();
+      ctx.ellipse(-35, 2, 8, 18, -0.65, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.fillStyle = "#fff2df";
+      ctx.beginPath();
+      ctx.ellipse(-39, 8, 4, 9, -0.65, 0, Math.PI * 2);
+      ctx.fill();
+
+      ctx.fillStyle = "#fff0c5";
+      roundRect(-56,-bladeRadius()/2,17,bladeRadius(),8,true);
+      ctx.fillStyle = "rgba(255,255,255,.55)";
+      roundRect(-53,-bladeRadius()/2+6,5,bladeRadius()-12,4,true);
+      ctx.fillStyle = "#fff5cf";
+      ctx.font = "900 12px system-ui";
+      ctx.fillText("YJ", 7, 5);
+      ctx.restore();
+    }
+
+    function drawFloaters(){
+      floaters.forEach(f => {
+        ctx.globalAlpha = Math.max(0, f.life / 70);
+        ctx.fillStyle = f.color;
+        ctx.font = "950 20px system-ui";
+        ctx.strokeStyle = "white";
+        ctx.lineWidth = 4;
+        ctx.strokeText(f.text, f.x - 24, f.y);
+        ctx.fillText(f.text, f.x - 24, f.y);
+        ctx.globalAlpha = 1;
+      });
+    }
+
+    function roundRect(x,y,w,h,r,fill){
+      ctx.beginPath();
+      ctx.moveTo(x+r,y);
+      ctx.arcTo(x+w,y,x+w,y+h,r);
+      ctx.arcTo(x+w,y+h,x,y+h,r);
+      ctx.arcTo(x,y+h,x,y,r);
+      ctx.arcTo(x,y,x+w,y,r);
+      if(fill) ctx.fill();
+      else ctx.stroke();
+    }
+
+    function renderHud(){
+      document.getElementById("money").textContent = formatWon(state.money);
+      document.getElementById("statText").textContent = "공동 저장고 · 쌀 " + shared.inventory.rice + " · 인삼 " + shared.inventory.ginseng + " · 마늘 " + shared.inventory.garlic;
+      document.getElementById("fuelBar").style.width = state.fuel + "%";
+      document.getElementById("fuelText").textContent = Math.floor(state.fuel) + "%";
+      document.getElementById("loadBar").style.width = Math.min(100, state.load / capacity() * 100) + "%";
+      document.getElementById("loadText").textContent = state.load + "/" + capacity() + " · 창고 " + state.storage;
+      setCost("speed", state.speedLevel, "speedCost", "speedBtn");
+      setCost("capacity", state.capacityLevel, "capacityCost", "capacityBtn");
+      setCost("blade", state.bladeLevel, "bladeCost", "bladeBtn");
+      setCost("field", state.fieldLevel, "fieldCost", "fieldBtn");
+      document.getElementById("selectedCropText").textContent=cropLabel(state.selectedCrop);
+      document.getElementById("sharedStockText").textContent=`쌀 ${shared.inventory.rice} · 인삼 ${shared.inventory.ginseng} · 마늘 ${shared.inventory.garlic}`;
+    }
+
+    function setCost(type, level, costId, btnId){
+      const cost = upgradeCost(type);
+      const costEl = document.getElementById(costId);
+      const btn = document.getElementById(btnId);
+      costEl.textContent = Number.isFinite(cost) ? formatWon(cost) : "완료";
+      btn.disabled = !Number.isFinite(cost) || state.money < cost;
+    }
+
+    function renderContracts(){
+      const box = document.getElementById("contracts");
+      if(!box) return;
+      if(state.coopLevel < 2){
+        box.innerHTML = '<div class="contract locked"><div><b>협동조합 Lv.2 필요</b><span>협동조합을 키우면 학교급식, 복지장터, 축제마켓 계약이 열립니다.</span></div></div>';
+        return;
+      }
+      box.innerHTML = state.contracts.map(contract => {
+        const ready = state.storage >= contract.need;
+        return `<div class="contract">
+          <div><b>${contract.name}</b><span>저장고 ${contract.need}개 납품 · 보상 ${formatWon(contract.money)} · 사회가치 +${contract.social} · 평판 +${contract.rep}</span></div>
+          <button class="buy" data-contract="${contract.id}" ${ready ? "" : "disabled"}>납품</button>
+        </div>`;
+      }).join("");
+      box.querySelectorAll("[data-contract]").forEach(btn => {
+        btn.addEventListener("click", () => completeContract(Number(btn.dataset.contract)));
+      });
+    }
+
+    function toast(msg){
+      const el = document.getElementById("toast");
+      el.textContent = msg;
+      el.classList.add("show");
+      clearTimeout(window.toastTimer);
+      window.toastTimer = setTimeout(() => el.classList.remove("show"), 1800);
+    }
+
+    function saveState(silent=false){
+      state.lastSaved = Date.now();
+      shared.money=state.money;saveShared();
+      localStorage.setItem("yeongjuHarvestTycoon", JSON.stringify(state));
+      if(!silent) toast("저장했습니다.");
+    }
+
+    function loadShared(){
+      try{const raw=localStorage.getItem("yeongjuDeliveryWarehouse");const data=raw?JSON.parse(raw):{};return {...data,money:Number.isFinite(data.money)?data.money:1000,inventory:{rice:0,ginseng:0,garlic:0,...(data.inventory||{})},restaurant:{rice:0,ginseng:0,garlic:0,...(data.restaurant||{})}}}catch(e){return {money:1000,inventory:{rice:0,ginseng:0,garlic:0},restaurant:{rice:0,ginseng:0,garlic:0}}}
+    }
+    function saveShared(){localStorage.setItem("yeongjuDeliveryWarehouse",JSON.stringify(shared));}
+    function selectCrop(crop){state.selectedCrop=crop;toast(cropLabel(crop)+" 파종을 선택했습니다.");saveState(true);renderHud();}
+
+    function loadState(){
+      try{
+        const raw = localStorage.getItem("yeongjuHarvestTycoon");
+        return raw ? { ...structuredClone(defaultState), ...JSON.parse(raw) } : structuredClone(defaultState);
+      }catch(e){
+        return structuredClone(defaultState);
+      }
+    }
+
+    let saveTimer = 0;
+    function loop(){
+      update();
+      draw();
+    }
+
+    addEventListener("resize", resize);
+    addEventListener("keydown", e => { keys[e.code] = true; if(["ArrowUp","ArrowDown","ArrowLeft","ArrowRight","Space"].includes(e.code)) e.preventDefault(); });
+    addEventListener("keyup", e => { keys[e.code] = false; });
+    document.getElementById("speedBtn").addEventListener("click", () => buy("speed"));
+    document.getElementById("capacityBtn").addEventListener("click", () => buy("capacity"));
+    document.getElementById("bladeBtn").addEventListener("click", () => buy("blade"));
+    document.getElementById("fieldBtn").addEventListener("click", () => buy("field"));
+    document.getElementById("riceBtn").addEventListener("click", () => selectCrop("rice"));
+    document.getElementById("ginsengBtn").addEventListener("click", () => selectCrop("ginseng"));
+    document.getElementById("garlicBtn").addEventListener("click", () => selectCrop("garlic"));
+    document.getElementById("mapZoomIn").addEventListener("click", () => changeMapZoom(.1));
+    document.getElementById("mapZoomOut").addEventListener("click", () => changeMapZoom(-.1));
+    document.getElementById("panelToggle").addEventListener("click", () => {
+      const panel = document.getElementById("upgradePanel");
+      const toggle = document.getElementById("panelToggle");
+      const collapsed = panel.classList.toggle("collapsed");
+      toggle.textContent = collapsed ? "▲" : "▼";
+      toggle.setAttribute("aria-expanded", String(!collapsed));
+      toggle.setAttribute("aria-label", collapsed ? "장비 업그레이드 펼치기" : "장비 업그레이드 접기");
+    });
+    document.querySelectorAll(".mobile-pad button").forEach(btn => {
+      const code = btn.dataset.key;
+      btn.addEventListener("pointerdown", e => { e.preventDefault(); keys[code] = true; });
+      btn.addEventListener("pointerup", () => keys[code] = false);
+      btn.addEventListener("pointerleave", () => keys[code] = false);
+    });
+    addEventListener("beforeunload", () => saveState(true));
+    addEventListener("storage",e=>{if(e.key==="yeongjuDeliveryWarehouse"){shared=loadShared();state.money=shared.money;renderHud();}});
+
+    resize();
+    setupFields();
+    renderHud();
+    toast("트랙터를 몰아 익은 밭을 지나가 보세요.");
+    requestAnimationFrame(loop);
+  </script>
+</body>
+</html>

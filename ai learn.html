@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>AI 직무교육 · 일자리 창출 게임</title>
+  <style>
+    *{box-sizing:border-box} body{margin:0;font-family:Pretendard,"Noto Sans KR",Arial,sans-serif;background:#111827;color:#f9fafb;min-height:100vh;display:flex;align-items:center;justify-content:center;padding:20px}
+    .app{width:min(920px,100%);background:#1f2937;border:1px solid #374151;border-radius:22px;overflow:hidden;box-shadow:0 24px 80px rgba(0,0,0,.35)}
+    header{padding:22px 26px;background:#0f172a;border-bottom:1px solid #334155;display:flex;justify-content:space-between;gap:16px;align-items:center;flex-wrap:wrap}
+    h1{font-size:24px;margin:0}.sub{color:#94a3b8;font-size:14px;margin-top:5px}.content{padding:26px}
+    .steps{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:22px}.step{padding:12px;border-radius:12px;text-align:center;background:#374151;color:#9ca3af;font-weight:700}.step.active{background:#2563eb;color:white}.step.done{background:#166534;color:white}
+    .story{background:#111827;border:1px solid #374151;border-radius:16px;padding:18px;margin-bottom:18px;line-height:1.7;color:#d1d5db}.story strong{color:#fbbf24}
+    .mission{background:#f8fafc;color:#111827;border-radius:16px;padding:22px}.mission h2{margin:0 0 8px;font-size:22px}.guide{font-size:14px;color:#475569;margin-bottom:14px}.example{background:#e2e8f0;border-left:5px solid #2563eb;border-radius:10px;padding:16px;line-height:1.65;font-weight:700;white-space:pre-wrap;user-select:none}
+    textarea{width:100%;min-height:130px;margin-top:14px;border:2px solid #cbd5e1;border-radius:12px;padding:15px;font:inherit;resize:vertical;outline:none}.textarea-ok{border-color:#16a34a}.textarea-bad{border-color:#dc2626}
+    .status{min-height:26px;margin:10px 0;font-weight:700}.ok{color:#16a34a}.bad{color:#dc2626}.info{color:#2563eb}
+    .stats{display:flex;gap:14px;flex-wrap:wrap;font-size:14px;color:#475569;margin-bottom:14px}.stats span{background:#e2e8f0;padding:8px 10px;border-radius:9px}
+    .buttons{display:flex;gap:10px;flex-wrap:wrap}button{border:0;border-radius:10px;padding:12px 18px;font-weight:800;cursor:pointer;font-size:15px}.primary{background:#2563eb;color:#fff}.secondary{background:#cbd5e1;color:#1e293b}.primary:disabled{opacity:.45;cursor:not-allowed}
+    .result{display:none;margin-top:18px;background:#ecfdf5;border:2px solid #86efac;color:#14532d;border-radius:15px;padding:18px}.result.show{display:block}.result h3{margin-top:0}.preview{background:white;border:1px solid #bbf7d0;border-radius:12px;padding:18px;color:#111827;margin-top:12px}.generated-image{display:block;width:100%;height:auto;border-radius:12px;border:1px solid #bbf7d0}.game-frame{display:block;width:100%;height:620px;border:2px solid #2563eb;border-radius:12px;background:#0f172a}.codebox{background:#0f172a;color:#a7f3d0;border-radius:10px;padding:15px;font-family:Consolas,monospace;white-space:pre-wrap;text-align:left}.end{text-align:center;padding:20px}.end .big{font-size:64px}.hidden{display:none}
+    .intro-video{position:fixed;inset:0;z-index:1000;background:#020617;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:20px}.intro-video.hidden{display:none}.intro-video video{width:min(1100px,100%);max-height:78vh;object-fit:contain;border:3px solid #334155;border-radius:18px;background:#000;box-shadow:0 24px 80px rgba(0,0,0,.6)}.intro-actions{display:flex;gap:12px;margin-top:18px}.intro-actions button{padding:14px 24px;font-size:17px}.intro-start{background:#2563eb;color:white}.intro-skip{background:#475569;color:white}
+    @media(max-width:650px){.steps{grid-template-columns:1fr}.content{padding:16px}header{padding:18px}.mission{padding:17px}}
+  </style>
+</head>
+<body>
+<div class="intro-video" id="introVideo">
+  <video id="introPlayer" autoplay muted playsinline controls preload="auto">
+    <source src="ai learn11.mp4" type="video/mp4">
+  </video>
+  <div class="intro-actions">
+    <button class="intro-start hidden" id="introStartBtn" type="button" onclick="closeIntroVideo()">AI 직무교육 시작하기</button>
+    <button class="intro-skip" type="button" onclick="closeIntroVideo()">인트로 건너뛰기</button>
+  </div>
+</div>
+<div class="app">
+  <header>
+    <div><h1>⌨️ AI 직무교육 · 일자리 창출</h1><div class="sub">AI 실무 역량을 배우고 지역의 새로운 일자리를 만들어 보세요.</div></div>
+  </header>
+  <div class="content">
+    <div class="steps">
+      <div class="step active" id="step0">1. 디지털 기초</div>
+      <div class="step" id="step1">2. AI 콘텐츠 직무</div>
+      <div class="step" id="step2">3. AI 개발 직무</div>
+    </div>
+    <div class="story" id="story"></div>
+    <section class="mission" id="game">
+      <h2 id="title"></h2>
+      <div class="guide" id="guide"></div>
+      <div class="example" id="example"></div>
+      <textarea id="input" placeholder="위 문장을 똑같이 입력하세요." spellcheck="false"></textarea>
+      <div class="status info" id="status">입력을 시작하면 정확도와 진행률이 표시됩니다.</div>
+      <div class="stats"><span>진행률 <b id="progress">0%</b></span><span>정확도 <b id="accuracy">100%</b></span><span>타수 <b id="chars">0</b></span></div>
+      <div class="buttons"><button class="secondary" id="resetBtn">다시 입력</button><button class="primary" id="submitBtn" disabled>결과 생성</button><button class="primary hidden" id="nextBtn">다음 단계</button></div>
+      <div class="result" id="result"></div>
+    </section>
+    <section class="end hidden" id="ending"><div class="big">🏆</div><h2>AI 역량으로 새로운 일자리를 만들었습니다!</h2><p>디지털 기초, AI 콘텐츠 제작, 웹게임 개발 직무교육을 모두 완료했습니다.</p><p><strong>지역 주민이 AI 기술을 활용해 콘텐츠 제작자와 개발자로 일할 수 있게 되었습니다.</strong></p><button class="primary" onclick="location.href='index.html?skipIntro=1'">배달앱으로 돌아가기</button></section>
+  </div>
+</div>
+<script>
+const introPlayer=document.getElementById('introPlayer'),introStartBtn=document.getElementById('introStartBtn');
+function closeIntroVideo(){introPlayer.pause();document.getElementById('introVideo').classList.add('hidden');setTimeout(()=>document.getElementById('input').focus(),50)}
+introPlayer.addEventListener('ended',()=>{introStartBtn.classList.remove('hidden');document.querySelector('.intro-skip').classList.add('hidden')});
+function completeCultureMission(){
+  try{
+    const key='yeongjuDeliveryWarehouse',shared=JSON.parse(localStorage.getItem(key)||'{}');
+    if(shared.quest&&shared.quest.stage===4){
+      shared.quest.stage=5;
+      shared.quest.residents=Math.max(0,(shared.quest.residents||0)+2);
+      shared.residentsGained=shared.quest.residents;
+      shared.regionalStats={safety:40,welfare:40,education:40,economy:40,...(shared.regionalStats||{})};
+      shared.regionalStats.education=Math.min(100,shared.regionalStats.education+22);
+      shared.regionalStats.welfare=Math.min(100,shared.regionalStats.welfare+8);
+      shared.regionalStats.economy=Math.min(100,shared.regionalStats.economy+4);
+      const s=shared.regionalStats;
+      s.happiness=Math.round((s.safety+s.welfare+s.education+s.economy)/4);
+      localStorage.setItem(key,JSON.stringify(shared));
+    }
+  }catch(e){}
+}
+const stages=[
+ {title:'1단계 · 디지털 기초 직무교육',guide:'AI 관련 업무에 필요한 정확한 문서 입력 능력을 익혀 보세요.',text:'안녕하세요. 저는 AI 직무교육을 받고 새로운 일자리에 도전합니다.',story:'지역의 새로운 일자리에 도전하려면 먼저 <strong>디지털 기초 역량</strong>이 필요합니다. 정확한 타자로 업무의 기본을 익혀 보세요.',result:`<h3>✅ 디지털 기초 직무교육 완료!</h3><p>AI 업무에 필요한 정확한 문서 입력 능력을 익혔습니다.</p><div class="preview"><b>취업 역량</b><br>⌨️ 정확한 문서 작성<br>📘 디지털 업무 기초<br>🤝 협업을 위한 의사소통</div>`},
+ {title:'2단계 · AI 콘텐츠 제작 직무',guide:'고객의 요구를 구체적인 프롬프트로 작성해 AI 콘텐츠를 제작하세요.',text:'사회적경제의 핵심 가치인 협력, 연대, 성장을 담은 친근한 지원센터 마스코트를 그려줘',story:'지역 홍보 콘텐츠 제작 의뢰가 들어왔습니다. 고객이 원하는 결과를 만들려면 <strong>프롬프트 작성 역량</strong>이 필요합니다.',result:`<h3>🎨 AI 콘텐츠 제작 업무 완료!</h3><div class="preview"><img class="generated-image" src="social_economy_mascot.png" alt="사회적경제 마스코트 상상이 캐릭터 소개 이미지"></div><p>사회적경제 마스코트 이미지를 완성해 AI 콘텐츠 제작자로 활동할 수 있게 되었습니다.</p>`},
+ {title:'3단계 · AI 웹개발 직무',guide:'개발 요구사항을 정확히 작성하고 실제 사회적 가치 모으기 게임을 완성하세요.',text:'협력, 상생, 연대 등 사회적 가치 아이템이 랜덤으로 등장하고, 캐릭터가 아이템을 먹으면 점수를 얻는 게임을 만들어줘.\n60초 동안 최대한 많은 사회적 가치를 모으는 방식으로 구성하고, 획득할 때 해당 가치의 이름과 간단한 의미가 화면에 표시되도록 해줘.',story:'이번에는 지역 교육용 게임 제작 의뢰입니다. AI에게 개발 요구사항을 전달해 <strong>웹게임 개발 일자리</strong>를 만들어 보세요.',result:`<h3>🕹️ AI 웹게임 개발 업무 완료!</h3><div class="preview"><iframe class="game-frame" src="star.html" title="사회적 가치 모으기 게임"></iframe></div><p>실제 작동하는 사회적 가치 모으기 게임을 완성해 AI 웹개발 직무를 만들었습니다.</p>`}
+];
+let current=0;
+const $=id=>document.getElementById(id); const input=$('input'),submit=$('submitBtn'),next=$('nextBtn'),result=$('result');
+function normalize(s){return s.replace(/\r\n/g,'\n').trim()}
+function loadStage(){const s=stages[current];$('title').textContent=s.title;$('guide').textContent=s.guide;$('example').textContent=s.text;$('story').innerHTML=s.story;input.value='';input.disabled=false;result.className='result';result.innerHTML='';submit.disabled=true;submit.classList.remove('hidden');next.classList.add('hidden');$('status').className='status info';$('status').textContent='입력을 시작하면 정확도와 진행률이 표시됩니다.';$('progress').textContent='0%';$('accuracy').textContent='100%';$('chars').textContent='0';input.className='';[0,1,2].forEach(i=>{$('step'+i).className='step'+(i<current?' done':i===current?' active':'')});input.focus()}
+function check(){const target=stages[current].text,typed=input.value;let correct=0;for(let i=0;i<typed.length;i++)if(typed[i]===target[i])correct++;const progress=Math.min(100,Math.round(typed.length/target.length*100));const accuracy=typed.length?Math.round(correct/typed.length*100):100;$('progress').textContent=progress+'%';$('accuracy').textContent=accuracy+'%';$('chars').textContent=typed.length;const exact=normalize(typed)===normalize(target);submit.disabled=!exact;if(exact){$('status').className='status ok';$('status').textContent='정확하게 입력했습니다! 결과를 생성하세요.';input.className='textarea-ok'}else if(typed.length>0&&target.slice(0,typed.length)!==typed){$('status').className='status bad';$('status').textContent='예시와 다른 글자가 있습니다. 오타를 확인하세요.';input.className='textarea-bad'}else{$('status').className='status info';$('status').textContent='좋습니다. 계속 입력하세요.';input.className=''}}
+input.addEventListener('input',check);$('resetBtn').onclick=()=>{input.value='';check();input.focus()};submit.onclick=()=>{const s=stages[current];result.innerHTML=s.result+`<p><b>이 단계의 직무 역량을 습득했습니다!</b></p>`;result.className='result show';input.disabled=true;submit.classList.add('hidden');next.classList.remove('hidden');next.textContent=current===stages.length-1?'직무교육 수료하기':'다음 직무교육'};next.onclick=()=>{if(current<stages.length-1){current++;loadStage()}else{completeCultureMission();$('game').classList.add('hidden');$('story').classList.add('hidden');document.querySelector('.steps').classList.add('hidden');$('ending').classList.remove('hidden')}};loadStage();
+</script>
+</body>
+</html>

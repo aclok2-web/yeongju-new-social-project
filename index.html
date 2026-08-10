@@ -1,0 +1,1716 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+<meta http-equiv="Pragma" content="no-cache">
+<meta http-equiv="Expires" content="0">
+<title>사회적경제로 행복한 도시 영주 만들기</title>
+<style>
+:root{
+  --ink:#203428;
+  --panel:#fff8dc;
+  --line:#1b1b1b;
+  --green:#2f7d4a;
+  --gold:#e8ae32;
+  --red:#c85b4d;
+  --blue:#4679a8;
+  --shadow:5px 5px 0 rgba(0,0,0,.32);
+}
+*{box-sizing:border-box}
+html,body{height:100%;overflow:hidden}
+body{
+  margin:0;
+  font-family:"Malgun Gothic","Noto Sans KR",system-ui,sans-serif;
+  color:var(--ink);
+  background:#1f2b23;
+}
+button{font:inherit;cursor:pointer}
+.wrap{
+  width:min(1280px,100vw);
+  height:100vh;
+  margin:auto;
+  padding:8px;
+  display:flex;
+  flex-direction:column;
+  gap:8px;
+}
+header{
+  flex:0 0 auto;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:10px;
+  padding:9px 13px;
+  border:4px solid var(--line);
+  background:#2f6040;
+  color:#fff;
+  box-shadow:var(--shadow);
+}
+h1{margin:0;font-size:24px;line-height:1.05}
+header p{margin:4px 0 0;font-size:12px;opacity:.9}
+.cash-badge{
+  min-width:170px;
+  padding:7px 11px;
+  border:3px solid var(--line);
+  background:#f7f0d4;
+  color:#203428;
+  font-weight:900;
+}
+.cash-badge span{display:block;font-size:12px}
+.cash-badge strong{font-size:24px}
+.layout{
+  flex:1 1 auto;
+  min-height:0;
+  display:grid;
+  grid-template-columns:minmax(0,1fr) 326px;
+  gap:8px;
+}
+.game-wrap,.side{
+  min-height:0;
+  border:4px solid var(--line);
+  background:#f7f0d4;
+  box-shadow:var(--shadow);
+}
+.game-wrap{position:relative;background:#151f19}
+canvas{display:block;width:100%;height:100%;image-rendering:pixelated;background:#7fb56c;touch-action:none}
+.hud{
+  position:absolute;
+  top:12px;
+  left:12px;
+  right:12px;
+  display:flex;
+  flex-wrap:wrap;
+  gap:8px;
+  justify-content:space-between;
+  pointer-events:none;
+}
+.hudbox{
+  padding:7px 10px;
+  border:3px solid var(--line);
+  background:#fff8dc;
+  box-shadow:3px 3px 0 rgba(0,0,0,.28);
+  font-size:13px;
+  font-weight:900;
+}
+.action-row{
+  position:absolute;
+  left:50%;
+  bottom:94px;
+  transform:translateX(-50%);
+  display:flex;
+  gap:7px;
+  flex-wrap:wrap;
+  justify-content:center;
+}
+.action-row button,.auto-toggle{
+  display:none;
+  padding:10px 14px;
+  border:3px solid var(--line);
+  background:#fff8dc;
+  color:#203428;
+  font-weight:900;
+  box-shadow:3px 3px 0 rgba(0,0,0,.3);
+}
+.auto-toggle{
+  display:block;
+  position:absolute;
+  right:14px;
+  top:54px;
+  z-index:3;
+  color:var(--green);
+}
+.auto-toggle.on{background:var(--green);color:#fff}
+.rpg-dialog{
+  position:absolute;
+  left:14px;
+  right:14px;
+  bottom:14px;
+  min-height:70px;
+  padding:10px 14px;
+  border:4px solid var(--line);
+  background:#fff8dc;
+  box-shadow:5px 5px 0 rgba(0,0,0,.34);
+}
+.rpg-dialog b{display:block;margin-bottom:5px;color:#1f5b36;font-size:13px}
+.rpg-dialog p{margin:0;font-size:13px;font-weight:900;line-height:1.35}
+.side{
+  height:100%;
+  padding:8px;
+  display:grid;
+  grid-template-rows:auto auto auto auto auto auto 1fr auto;
+  gap:7px;
+  overflow:hidden;
+}
+.fold-section{border:3px solid var(--line);background:#fff8dc;min-height:0}
+.section-toggle{
+  width:100%;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  padding:6px 8px;
+  border:0;
+  border-bottom:3px solid var(--line);
+  background:#ead89b;
+  color:#203428;
+  font-size:12px;
+  font-weight:900;
+}
+.section-toggle::after{content:"접기";font-size:10px}
+.fold-section.collapsed .section-toggle{border-bottom:0}
+.fold-section.collapsed .section-toggle::after{content:"펼치기"}
+.fold-content{padding:7px}
+.fold-section.collapsed .fold-content{display:none}
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:5px}
+.stat{
+  padding:7px 4px;
+  border:3px solid var(--line);
+  background:#fffdf0;
+  text-align:center;
+  font-size:10px;
+}
+.stat strong{display:block;color:var(--green);font-size:17px}
+.inventory{display:grid;grid-template-columns:repeat(3,1fr);gap:5px}
+.inv{
+  padding:6px 4px;
+  border:3px solid var(--line);
+  background:#fffdf0;
+  text-align:center;
+  font-size:11px;
+  font-weight:900;
+}
+.inv b{display:block;font-size:18px;color:#8a5b12}
+.meter-track{height:15px;margin-top:5px;border:3px solid var(--line);background:#edf3ea;overflow:hidden}
+.meter-fill{height:100%;width:0%;background:var(--green);transition:width .3s ease}
+.task-card,.log{
+  padding:8px;
+  border:3px solid var(--line);
+  background:#fffdf0;
+  font-size:12px;
+  font-weight:900;
+  line-height:1.35;
+}
+.case-notebook{display:grid;grid-template-columns:1fr;gap:5px}
+.case-notebook div{padding:6px 8px;border:2px solid #8a6a3b;background:#fffdf0;font-size:12px;font-weight:900}
+.case-notebook b{color:#245b3d}
+.log{height:74px;overflow:hidden;color:#405144}
+#miniMap{width:100%;height:90px;border:3px solid var(--line);background:#8fbd78;image-rendering:pixelated}
+.start,.small-btn{
+  width:100%;
+  padding:9px;
+  border:3px solid var(--line);
+  background:var(--green);
+  color:#fff;
+  font-weight:900;
+  box-shadow:3px 3px 0 rgba(0,0,0,.26);
+}
+.small-btn{background:#fff8dc;color:var(--green)}
+.modal{
+  position:fixed;
+  inset:0;
+  z-index:50;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  padding:18px;
+  background:rgba(26,42,30,.88);
+}
+.modal-content{
+  width:min(560px,100%);
+  padding:24px;
+  border:4px solid var(--line);
+  background:#fff8dc;
+  text-align:center;
+  box-shadow:var(--shadow);
+}
+.ending-content{width:min(980px,calc(100vw - 32px))}
+.modal-content h2{margin:0 0 10px;color:var(--green)}
+.modal-content p{line-height:1.55}
+.modal-content button{width:100%;padding:13px;border:3px solid var(--line);background:var(--green);color:#fff;font-weight:900}
+.project-credit{
+  margin:10px 0 14px;
+  font-size:13px;
+  font-weight:900;
+  color:#5b4a2f;
+  opacity:.88;
+}
+.ending-image{
+  display:none;
+  width:100%;
+  max-height:56vh;
+  object-fit:contain;
+  margin:14px 0 18px;
+  border:4px solid var(--line);
+  background:#111;
+  box-shadow:0 10px 24px rgba(0,0,0,.26);
+}
+.intro-content{width:min(960px,calc(100vw - 32px));max-width:960px}
+.intro-video{display:block;width:100%;aspect-ratio:16/9;margin:12px 0;border:3px solid var(--line);background:#071a16;object-fit:contain}
+.intro-hint{margin:8px 0 12px!important;text-align:center;color:#53645d;font-size:14px}
+.pause-actions{display:grid;gap:10px;margin-top:18px}
+.pause-actions button:last-child{background:#fff;color:var(--line)}
+.festival-video-modal{position:fixed;inset:0;z-index:90;display:flex;align-items:center;justify-content:center;background:#020806;padding:18px}
+.festival-video-modal video{display:block;width:min(1280px,100%);max-height:calc(100vh - 36px);background:#000;box-shadow:0 0 50px #000}
+#finalFeedback{white-space:pre-line;text-align:center;font-size:17px;line-height:1.8}
+.toast{
+  position:fixed;
+  left:50%;
+  bottom:20px;
+  z-index:60;
+  display:none;
+  transform:translateX(-50%);
+  max-width:min(640px,calc(100vw - 30px));
+  padding:12px 22px;
+  border-radius:0;
+  border:3px solid var(--line);
+  background:rgba(0,0,0,.84);
+  color:#fff;
+  font-weight:900;
+  text-align:center;
+}
+@media(max-width:940px){
+  .wrap{padding:6px}
+  .layout{grid-template-columns:minmax(0,1fr) 292px;gap:6px}
+  header p{display:none}
+  h1{font-size:20px}
+  .cash-badge{min-width:132px}
+}
+</style>
+</head>
+<body>
+<div class="toast" id="toast"></div>
+
+<div class="modal" id="introModal">
+  <div class="modal-content intro-content">
+    <h2>사회적경제로 행복한 도시 영주 만들기</h2>
+    <video id="introVideo" class="intro-video" autoplay muted playsinline controls preload="auto" onended="enableIntroStart()">
+      <source src="김세은_배달앱_인트로.mp4" type="video/mp4">
+      브라우저가 인트로 영상을 지원하지 않습니다.
+    </video>
+    <p class="intro-hint">소리를 들으려면 영상의 음소거 버튼을 눌러 주세요.</p>
+    <p class="project-credit">Original Project © 2026 영주한국효문화진흥원</p>
+    <button id="introStartBtn" onclick="closeIntro()" disabled>영상 재생 후 시작하기</button>
+  </div>
+</div>
+
+<div class="modal" id="endingModal" style="display:none">
+  <div class="modal-content ending-content">
+    <h2 id="endingTitle">영업 종료</h2>
+    <img id="endingFestivalImage" class="ending-image" src="yeongju_festival_final.png" alt="영주 축제 엔딩 이미지">
+    <p id="finalFeedback"></p>
+    <p class="project-credit">Original Project © 2026 영주한국효문화진흥원</p>
+    <button onclick="restartGame()">다시 경영하기</button>
+  </div>
+</div>
+
+<div class="modal" id="pauseModal" style="display:none">
+  <div class="modal-content">
+    <h2>게임을 잠시 멈췄어요</h2>
+    <p>계속 진행하거나 게임을 처음부터 다시 시작할 수 있습니다.</p>
+    <div class="pause-actions">
+      <button onclick="resumeGame()">계속 진행</button>
+      <button onclick="restartGame()">처음부터 시작</button>
+    </div>
+  </div>
+</div>
+
+<div class="festival-video-modal" id="festivalVideoModal" style="display:none">
+  <video id="festivalVideo" playsinline controls preload="auto" onended="finishFestivalVideo()" onerror="finishFestivalVideo()">
+    <source src="0806.mp4" type="video/mp4">
+  </video>
+</div>
+
+<div class="wrap">
+  <header>
+    <div>
+      <h1>사회적경제로 행복한 도시 영주 만들기</h1>
+      <p>생산·배달·장사·세금 납부를 통해 주민이 돌아오는 영주의 경제 순환을 만드는 게임입니다.</p>
+    </div>
+    <div class="cash-badge">
+      <span>공동 보유금</span>
+      <strong id="topCash">80원</strong>
+    </div>
+  </header>
+
+  <main class="layout">
+    <section class="game-wrap">
+      <canvas id="game" width="1536" height="1024" tabindex="0" aria-label="영주 배달 지도"></canvas>
+      <div class="hud">
+        <div class="hudbox" id="nearHud">공동 저장고 앞에서 시작하세요</div>
+        <div class="hudbox" id="timerHud">영업시간 3:00</div>
+        <div class="hudbox" id="truckHud">트럭 적재: 없음</div>
+        <div class="hudbox" id="stageHud">영주 농산물 물류</div>
+      </div>
+      <div class="action-row">
+        <button id="farmGameBtn" onclick="openFarmGame()">농사하기</button>
+        <button id="farmLoadBtn" onclick="showFarmLoadChoices()">물건 싣기</button>
+        <button id="loadRiceBtn" onclick="loadFarmStock('rice')">쌀 5개 싣기</button>
+        <button id="loadGinsengBtn" onclick="loadFarmStock('ginseng')">인삼 5개 싣기</button>
+        <button id="loadGarlicBtn" onclick="loadFarmStock('garlic')">마늘 5개 싣기</button>
+        <button id="marketSellBtn" onclick="sellFarmStock('traditionalMarket')">영주 전통시장에 판매</button>
+        <button id="restaurantGameBtn" onclick="openRestaurantGame()">장사하기</button>
+        <button id="restaurantDeliverBtn" onclick="sellFarmStock('samgyetang')">납품하기</button>
+        <button id="cultureMissionBtn" onclick="openEducationGame()">AI 직무교육 시작</button>
+        <button id="policeMissionBtn" onclick="advanceBeefTheftMission()">수사하기</button>
+        <button id="policeChaseBtn" onclick="chaseCulpritToHyoCenter()">효문화진흥원으로 추적하기</button>
+        <button id="socialMissionBtn" onclick="openSocialConsultingGame()">컨설팅 받기</button>
+      </div>
+      <div class="rpg-dialog">
+        <b id="rpgSpeaker">배달 안내</b>
+        <p id="rpgLine">공동 저장고에서 농산물을 싣고 판매장이나 식당에 공급하세요.</p>
+      </div>
+    </section>
+
+    <aside class="side">
+      <div class="fold-section">
+        <button class="section-toggle" onclick="toggleSection(this)">오늘의 목표</button>
+        <div class="fold-content">
+          <div class="task-card" id="taskText">공동 저장고에서 판매할 농산물을 실으세요.</div>
+        </div>
+      </div>
+
+      <div class="fold-section">
+        <button class="section-toggle" onclick="toggleSection(this)">지역행복도</button>
+        <div class="fold-content">
+          <div class="stats">
+            <div class="stat"><strong id="happinessText">40</strong><span>지역행복도</span></div>
+            <div class="stat"><strong id="safetyText">40</strong><span>치안</span></div>
+            <div class="stat"><strong id="welfareText">40</strong><span>복지</span></div>
+            <div class="stat"><strong id="educationText">40</strong><span>교육</span></div>
+            <div class="stat"><strong id="economyText">40</strong><span>경제</span></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="fold-section" id="policeNotebook" style="display:none">
+        <button class="section-toggle" onclick="toggleSection(this)">🔎 수사수첩 · 사라진 영주한우</button>
+        <div class="fold-content case-notebook">
+          <div>가방: <b id="clueBag">?</b></div>
+          <div>옷: <b id="clueClothes">?</b></div>
+          <div>신발: <b id="clueShoes">?</b></div>
+        </div>
+      </div>
+
+      <div class="fold-section" style="display:none">
+        <button class="section-toggle" onclick="toggleSection(this)">재고</button>
+        <div class="fold-content">
+          <div class="inventory">
+            <div class="inv">밀가루<b id="flourText">0</b></div>
+            <div class="inv">우유<b id="milkText">0</b></div>
+            <div class="inv">계란<b id="eggText">0</b></div>
+            <div class="inv">반죽<b id="doughText">0</b></div>
+            <div class="inv">빵<b id="breadText">0</b></div>
+            <div class="inv">손님<b id="customerText">0</b></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="fold-section">
+        <button class="section-toggle" onclick="toggleSection(this)">농장 연동 공동 저장고</button>
+        <div class="fold-content">
+          <div class="inventory">
+            <div class="inv">쌀<b id="sharedRiceText">0</b></div>
+            <div class="inv">풍기인삼<b id="sharedGinsengText">0</b></div>
+            <div class="inv">마늘<b id="sharedGarlicText">0</b></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="fold-section">
+        <button class="section-toggle" onclick="toggleSection(this)">식당 재고 · 품목별 최대 20</button>
+        <div class="fold-content"><div class="inventory">
+          <div class="inv">쌀<b id="restaurantRiceText">0/20</b></div>
+          <div class="inv">풍기인삼<b id="restaurantGinsengText">0/20</b></div>
+          <div class="inv">마늘<b id="restaurantGarlicText">0/20</b></div>
+        </div></div>
+      </div>
+
+      <div class="fold-section" style="display:none">
+        <button class="section-toggle" onclick="toggleSection(this)">생산 진행</button>
+        <div class="fold-content">
+          <div>반죽</div>
+          <div class="meter-track"><div class="meter-fill" id="mixFill"></div></div>
+          <div style="margin-top:6px">오븐</div>
+          <div class="meter-track"><div class="meter-fill" id="bakeFill"></div></div>
+        </div>
+      </div>
+
+      <div class="fold-section collapsed" style="display:none">
+        <button class="section-toggle" onclick="toggleSection(this)">배달 주문</button>
+        <div class="fold-content">
+          <div class="task-card" id="orderText">아직 배달 주문이 없습니다. 빵을 구우면 주문이 들어옵니다.</div>
+        </div>
+      </div>
+
+      <div class="fold-section collapsed">
+        <button class="section-toggle" onclick="toggleSection(this)">미니맵</button>
+        <div class="fold-content"><canvas id="miniMap" width="290" height="180"></canvas></div>
+      </div>
+
+      <div class="fold-section">
+        <button class="section-toggle" onclick="toggleSection(this)">영업 기록</button>
+        <div class="fold-content"><div class="log" id="logText">영업을 시작해 보세요.</div></div>
+      </div>
+
+      <button class="start" id="startBtn" onclick="startGame()">처음부터 시작</button>
+      <button class="small-btn" onclick="resetTruck()">공동 저장고로 돌아가기</button>
+    </aside>
+  </main>
+</div>
+
+<script>
+const canvas = document.getElementById("game");
+const ctx = canvas.getContext("2d");
+const miniMap = document.getElementById("miniMap");
+const mctx = miniMap.getContext("2d");
+const W = canvas.width;
+const H = canvas.height;
+const WORLD_W = 1536;
+const WORLD_H = 1024;
+const mapImage = new Image();
+mapImage.src = "yeongju_delivery_map_empty.png";
+const houseLayerImage = new Image();
+houseLayerImage.src = "yeongju_delivery_map.png";
+const festivalMapImage = new Image();
+festivalMapImage.src = "yeongju_festival_final.png";
+const truckImage = new Image();
+truckImage.src = "delivery_truck.png";
+const residentImage = new Image();
+residentImage.src = "resident_sprites.png";
+const thiefSpriteImage = new Image();
+thiefSpriteImage.src = "도둑캐릭터.png";
+const THIEF_PROFILES=[
+  {name:"카키색 후드 청년",bag:"가방 없음",clothes:"카키색 후드와 파란 바지",shoes:"갈색 신발",crop:[105,62,121,222]},
+  {name:"자주색 원피스 여성",bag:"가방 없음",clothes:"자주색 원피스와 베이지색 앞치마",shoes:"갈색 신발",crop:[108,307,116,213]},
+  {name:"회색 모자 노인",bag:"가방 없음",clothes:"베이지색 셔츠와 검은 조끼",shoes:"검은 신발",crop:[100,548,123,208]},
+  {name:"장바구니를 든 상인",bag:"베이지색 장바구니",clothes:"겨자색 소매와 검은 앞치마",shoes:"갈색 신발",crop:[100,778,143,217]},
+  {name:"남색 모자 학생",bag:"남색 배낭",clothes:"흰색 반소매 상의와 파란 반바지",shoes:"검은색과 흰색 운동화",crop:[101,1017,142,190]},
+  {name:"검은 정장 회사원",bag:"검은 서류가방",clothes:"검은 정장과 빨간 넥타이",shoes:"검은 신발",crop:[110,1224,122,201]}
+];
+
+// 건물 상호작용 지점은 다음 설정에서 새 지도에 맞춰 등록합니다.
+const places = [];
+const placeById = id => places.find(p => p.id === id);
+
+const truck = {
+  x:1115, y:525, angle:0, speed:0, maxSpeed:280,
+  target:null, route:[], auto:false, cargo:null
+};
+
+const keys = new Set();
+const bubbles = [];
+const customers = [];
+// 배경 이미지에서 실제 도로의 중심선을 따라 만든 주행 네트워크입니다.
+const roadPaths = [
+  [[75,525],[280,525],[500,525],[720,525],[900,525],[1115,525],[1350,525],[1510,525]],
+  [[690,300],[860,300],[1045,300],[1115,350],[1320,380],[1510,380]],
+  [[1050,55],[1050,180],[1050,300],[1115,350],[1115,525],[1115,705],[1115,900]],
+  [[500,525],[500,700],[650,850],[900,850],[1115,850],[1350,850],[1480,900]],
+  [[730,525],[730,700],[730,850]],
+  [[1435,380],[1435,525],[1435,700],[1480,900]],
+  [[1115,705],[1270,705],[1435,705]],
+  [[75,525],[35,650],[70,790],[200,850],[500,850]],
+  [[280,525],[210,445],[300,385],[470,350],[570,305],[690,300]],
+  [[860,300],[860,210],[800,170],[760,120],[820,70],[980,55],[1050,55]],
+  [[1115,350],[1180,300],[1300,300],[1435,300],[1435,380]]
+];
+const ROAD_HALF_WIDTH = 52;
+function pointSegmentDistance(px,py,ax,ay,bx,by){const dx=bx-ax,dy=by-ay,l=dx*dx+dy*dy;if(!l)return dist(px,py,ax,ay);const t=clamp(((px-ax)*dx+(py-ay)*dy)/l,0,1);return dist(px,py,ax+t*dx,ay+t*dy)}
+function isOnRoad(px,py){return roadPaths.some(path=>path.some((p,i)=>i&&pointSegmentDistance(px,py,path[i-1][0],path[i-1][1],p[0],p[1])<=ROAD_HALF_WIDTH));}
+function nudgeTruck(dx,dy){const nx=truck.x+dx,ny=truck.y+dy;if(isOnRoad(nx,ny)){truck.x=nx;truck.y=ny;truck.angle=Math.atan2(dy,dx)}}
+const mapDestinations=[
+  {id:"park",name:"소백산 국립공원",x:430,y:45,w:190,h:125,access:[690,300]},
+  {id:"temple",name:"부석사",x:760,y:25,w:250,h:245,access:[860,300]},
+  {id:"ginsengVillage",name:"풍기 인삼 마을",x:1090,y:95,w:220,h:230,access:[1180,300]},
+  {id:"appleCenter",name:"영주 사과 직판장",x:1325,y:190,w:205,h:180,access:[1435,300]},
+  {id:"sosu",name:"소수서원",x:175,y:215,w:350,h:170,access:[470,350]},
+  {id:"hyoCenter",name:"영주한국효문화진흥원",x:75,y:335,w:440,h:190,access:[280,525]},
+  {id:"traditionalMarket",name:"영주 전통시장",x:545,y:335,w:285,h:185,access:[730,525]},
+  {id:"cityHall",name:"영주시청",x:865,y:335,w:260,h:190,access:[900,525]},
+  {id:"station",name:"영주역",x:1160,y:335,w:245,h:190,access:[1115,525]},
+  {id:"samgyetang",name:"삼계탕 맛집",x:75,y:525,w:210,h:180,access:[280,525]},
+  {id:"socialCenter",name:"영주시사회적경제지원센터",x:300,y:525,w:230,h:190,access:[500,525]},
+  {id:"cultureCenter",name:"영주시문화센터",x:545,y:525,w:200,h:235,access:[730,525]},
+  {id:"homes",name:"주택가",x:760,y:525,w:350,h:330,access:[900,525]},
+  {id:"beefRestaurant",name:"영주 한우 식당",x:1160,y:525,w:245,h:190,access:[1115,525]},
+  {id:"police",name:"영주경찰서",x:1140,y:700,w:285,h:210,access:[1115,850]}
+];
+let currentDestinationId=null;
+let farmLoadMenuOpen=false;
+const roadNodeKey=p=>p[0]+","+p[1];
+const roadGraph=new Map();
+function linkRoadNodes(a,b){const ak=roadNodeKey(a),bk=roadNodeKey(b),cost=dist(a[0],a[1],b[0],b[1]);if(!roadGraph.has(ak))roadGraph.set(ak,[]);if(!roadGraph.has(bk))roadGraph.set(bk,[]);roadGraph.get(ak).push({key:bk,cost});roadGraph.get(bk).push({key:ak,cost})}
+roadPaths.forEach(path=>path.forEach((p,i)=>{if(!roadGraph.has(roadNodeKey(p)))roadGraph.set(roadNodeKey(p),[]);if(i)linkRoadNodes(path[i-1],p)}));
+const roadNodes=[...roadGraph.keys()].map(k=>{const [x,y]=k.split(",").map(Number);return {key:k,x,y}});
+function nearestRoadNode(x,y){return roadNodes.reduce((best,n)=>!best||dist(x,y,n.x,n.y)<best.d?{...n,d:dist(x,y,n.x,n.y)}:best,null)}
+function findRoadRoute(sx,sy,tx,ty){const start=nearestRoadNode(sx,sy),end=nearestRoadNode(tx,ty),cost=new Map([[start.key,0]]),prev=new Map(),open=new Set([start.key]);while(open.size){let cur=[...open].reduce((a,b)=>(cost.get(a)??Infinity)<=(cost.get(b)??Infinity)?a:b);open.delete(cur);if(cur===end.key)break;for(const edge of roadGraph.get(cur)||[]){const next=(cost.get(cur)||0)+edge.cost;if(next<(cost.get(edge.key)??Infinity)){cost.set(edge.key,next);prev.set(edge.key,cur);open.add(edge.key)}}}const keys=[];let cur=end.key;while(cur){keys.unshift(cur);if(cur===start.key)break;cur=prev.get(cur)}return keys.map(k=>{const [x,y]=k.split(",").map(Number);return {x,y}})}
+function driveToDestination(place){
+  moveTruckToDestination(place);
+  showToast(place.name+"에 도착했습니다.");
+  updateActionButtons();updateUI();draw();
+}
+
+const ingredientInfo = {
+  flour:{label:"밀가루", unit:"포대", cost:10, supplier:"farm"},
+  milk:{label:"우유", unit:"병", cost:8, supplier:"dairy"},
+  egg:{label:"계란", unit:"판", cost:6, supplier:"coop"}
+};
+
+function loadDeliveryWarehouse(){try{const raw=localStorage.getItem("yeongjuDeliveryWarehouse");const d=raw?JSON.parse(raw):{},mealCirculation=Number.isFinite(d.mealCirculation)?d.mealCirculation:0;return {...d,money:Number.isFinite(d.money)?d.money:1000,taxPaid:Number.isFinite(d.taxPaid)?d.taxPaid:0,localValue:Number.isFinite(d.localValue)?d.localValue:0,mealCirculation,circulation:mealCirculation,residentsGained:Math.min(10,Math.floor(mealCirculation/2)),inventory:{rice:0,ginseng:0,garlic:0,...(d.inventory||{})},farm:{rice:20,ginseng:20,garlic:20,...(d.farm||{})},restaurant:{rice:0,ginseng:0,garlic:0,...(d.restaurant||{})}}}catch(e){return {money:1000,taxPaid:0,localValue:0,mealCirculation:0,circulation:0,residentsGained:0,inventory:{rice:0,ginseng:0,garlic:0},farm:{rice:20,ginseng:20,garlic:20},restaurant:{rice:0,ginseng:0,garlic:0}}}}
+function saveDeliveryWarehouse(){localStorage.setItem("yeongjuDeliveryWarehouse",JSON.stringify(deliveryWarehouse));}
+const deliveryWarehouse=loadDeliveryWarehouse();
+delete deliveryWarehouse.restaurantMoney;
+function ensureMissionQuest(){
+  const base={stage:0,residents:0,farmLocal:{rice:0,ginseng:0,garlic:0},marketDelivered:{rice:0,ginseng:0,garlic:0},farmRestaurant:{rice:0,ginseng:0,garlic:0},restaurantDelivered:{rice:0,ginseng:0,garlic:0},mealsServed:0,completed:false};
+  deliveryWarehouse.quest={...base,...(deliveryWarehouse.quest||{})};
+  for(const key of ["farmLocal","marketDelivered","farmRestaurant","restaurantDelivered"]){
+    deliveryWarehouse.quest[key]={rice:0,ginseng:0,garlic:0,...(deliveryWarehouse.quest[key]||{})};
+  }
+  const oldCase=deliveryWarehouse.quest.beefTheft||{};
+  const policeCase={step:0,bag:"?",clothes:"?",shoes:"?",culpritIdentified:false,completed:false,...oldCase};
+  if(policeCase.step>=5)policeCase.culpritIdentified=true;
+  if(!Number.isInteger(policeCase.culpritProfile)||policeCase.culpritProfile<0||policeCase.culpritProfile>=THIEF_PROFILES.length)policeCase.culpritProfile=Math.floor(Math.random()*THIEF_PROFILES.length);
+  if(!Number.isInteger(policeCase.culpritSlot)||policeCase.culpritSlot<0||policeCase.culpritSlot>2)policeCase.culpritSlot=Math.floor(Math.random()*3);
+  if(!Array.isArray(policeCase.suspectProfiles)||policeCase.suspectProfiles.length!==3){
+    const others=THIEF_PROFILES.map((_,i)=>i).filter(i=>i!==policeCase.culpritProfile).sort(()=>Math.random()-.5).slice(0,2);
+    policeCase.suspectProfiles=others;policeCase.suspectProfiles.splice(policeCase.culpritSlot,0,policeCase.culpritProfile);
+  }
+  const selectedProfile=THIEF_PROFILES[policeCase.culpritProfile];
+  policeCase.bag=policeCase.step>=2?selectedProfile.bag:"?";
+  policeCase.clothes=policeCase.step>=3?selectedProfile.clothes:"?";
+  policeCase.shoes=policeCase.step>=4?selectedProfile.shoes:"?";
+  deliveryWarehouse.quest.beefTheft=policeCase;
+  return deliveryWarehouse.quest;
+}
+ensureMissionQuest();
+
+const BEEF_THEFT_HYO_GOAL="「사라진 영주한우를 찾아라!」 효문화진흥원에서 범인과 대화해 자백을 받으세요.";
+function hyoCenterDestination(){return mapDestinations.find(place=>place.id==="hyoCenter");}
+function moveTruckToDestination(place){
+  if(!place)return;
+  truck.auto=false;truck.route=[];truck.target=null;truck.speed=0;
+  truck.x=place.access[0];truck.y=place.access[1];currentDestinationId=place.id;farmLoadMenuOpen=false;
+}
+function markCulpritFound(){
+  const q=ensureMissionQuest(),c=q.beefTheft;
+  q.stage=5;
+  c.step=5;
+  c.culpritIdentified=true;
+  c.completed=false;
+  delete c.escapeFrom;delete c.escapeStartedAt;
+  if(typeof state!=="undefined")state.task=BEEF_THEFT_HYO_GOAL;
+  moveTruckToDestination(hyoCenterDestination());
+  saveDeliveryWarehouse();
+}
+function mergeWarehouseWithoutQuestDowngrade(fresh){
+  const currentCase=(deliveryWarehouse.quest&&deliveryWarehouse.quest.beefTheft)||{};
+  const freshCase=(fresh.quest&&fresh.quest.beefTheft)||{};
+  if((currentCase.culpritIdentified||currentCase.step>=5)&&(freshCase.step||0)<5){
+    fresh.quest={...(fresh.quest||{}),beefTheft:{...freshCase,...currentCase,step:5,culpritIdentified:true}};
+  }
+  Object.assign(deliveryWarehouse,fresh);
+}
+
+function ensureRegionalStats(){
+  deliveryWarehouse.regionalStats={safety:40,welfare:40,education:40,economy:40,...(deliveryWarehouse.regionalStats||{})};
+  const s=deliveryWarehouse.regionalStats;
+  for(const key of ["safety","welfare","education","economy"])s[key]=Math.max(0,Math.min(100,s[key]));
+  s.happiness=Math.round((s.safety+s.welfare+s.education+s.economy)/4);
+  return s;
+}
+function applyRegionalImpact(impact){
+  const s=ensureRegionalStats();
+  for(const [key,value] of Object.entries(impact))s[key]=Math.max(0,Math.min(100,s[key]+value));
+  s.happiness=Math.round((s.safety+s.welfare+s.education+s.economy)/4);
+}
+ensureRegionalStats();
+
+function missionGoalText(){
+  const q=ensureMissionQuest(),fmt=p=>`쌀 ${Math.min(5,p.rice)}/5 · 풍기인삼 ${Math.min(5,p.ginseng)}/5 · 마늘 ${Math.min(5,p.garlic)}/5`;
+  if(q.stage===0)return `인삼마을에서 풍기인삼·마늘·쌀을 5개씩 심고 수확해 지방 특산물을 만드세요. (${fmt(q.farmLocal)})`;
+  if(q.stage===1)return `풍기인삼·마늘·쌀을 전통시장에 5개씩 납품해 전통시장을 활성화하세요. (${fmt(q.marketDelivered)})`;
+  if(q.stage===2)return `인삼마을에서 작물을 다시 5개씩 심고 수확한 뒤 삼계탕 맛집에 납품하세요. (수확 ${fmt(q.farmRestaurant)} / 납품 ${fmt(q.restaurantDelivered)})`;
+  if(q.stage===3)return `삼계탕 5그릇을 팔아 영주의 맛집으로 소문나세요. (${Math.min(5,q.mealsServed)}/5)`;
+  if(q.stage===4)return "영주시문화센터에서 교육하여 일자리를 창출하세요.";
+  if(q.stage===5){
+    if(q.beefTheft.culpritIdentified||q.beefTheft.step>=5)return BEEF_THEFT_HYO_GOAL;
+    const goals=["영주 한우 식당에서 사라진 축제용 한우 사건을 확인하세요.","영주경찰서에서 CCTV 단서를 확인하세요.","영주역 목격자에게 두 번째 단서를 물어보세요.","부석사 NPC에게 세 번째 단서를 물어보세요.","소수서원에서 수사수첩과 일치하는 시민을 찾아 클릭하세요.","영주한국효문화진흥원으로 가서 범인에게 자백을 받으세요."];
+    return "「사라진 영주한우를 찾아라!」 "+(goals[q.beefTheft.step]||"사건을 해결했습니다.");
+  }
+  if(q.stage===6)return "영주시사회적경제지원센터에서 컨설팅을 받고 사회적기업을 만드세요.";
+  return "모든 목표를 달성했습니다. 엔딩 영상이 준비될 예정입니다.";
+}
+
+function missionComplete(nextStage,residentChange,message){
+  const q=ensureMissionQuest();
+  q.stage=nextStage;
+  q.residents=Math.max(0,q.residents+residentChange);
+  const impacts={2:{economy:12,welfare:4},3:{economy:10,welfare:6},5:{education:22,welfare:8,economy:4},6:{safety:22,welfare:-3}};
+  if(impacts[nextStage])applyRegionalImpact(impacts[nextStage]);
+  deliveryWarehouse.residentsGained=q.residents;
+  saveDeliveryWarehouse();
+  addLog(message+` · 주민 ${residentChange>=0?"+":""}${residentChange}명`);
+  showToast(message+` · 주민 ${residentChange>=0?"+":""}${residentChange}명`);
+}
+
+function completePlaceMission(type){
+  const q=ensureMissionQuest();
+  if(type==="culture"){
+    if(currentDestinationId!=="cultureCenter")return showToast("영주시문화센터에 도착해야 합니다.");
+    if(q.stage!==4)return showToast("현재 진행할 교육 미션이 없습니다.");
+    missionComplete(5,2,"문화센터 교육으로 일자리를 만들었습니다.");
+  }else if(type==="police"){
+    if(currentDestinationId!=="police")return showToast("영주경찰서에 도착해야 합니다.");
+    if(q.stage!==5)return showToast("현재 진행할 도둑잡기 미션이 없습니다.");
+    missionComplete(6,-1,"도둑을 잡아 치안을 회복했습니다.");
+  }else{
+    if(currentDestinationId!=="socialCenter")return showToast("영주시사회적경제지원센터에 도착해야 합니다.");
+    if(q.stage!==6)return showToast("현재 진행할 컨설팅 미션이 없습니다.");
+    completeSocialConsultingMission();
+  }
+  state.task=missionGoalText();updateActionButtons();updateUI();
+}
+
+function openSocialConsultingGame(){
+  const q=ensureMissionQuest();
+  if(currentDestinationId!=="socialCenter")return showToast("영주시사회적경제지원센터에 도착해야 합니다.");
+  if(q.stage!==6)return showToast("현재 진행할 컨설팅 미션이 없습니다.");
+  saveDeliveryWarehouse();
+  location.href="declare.html";
+}
+
+function completeSocialConsultingMission(){
+  const q=ensureMissionQuest();
+  q.stage=7;
+  q.residents=10;
+  q.completed=true;
+  deliveryWarehouse.residentsGained=10;
+  applyRegionalImpact({safety:5,welfare:12,education:8,economy:20});
+  saveDeliveryWarehouse();
+  state.residentsGained=10;
+  state.task=missionGoalText();
+  currentDestinationId="socialCenter";
+  const center=placeById("socialCenter");
+  if(center){
+    truck.x=center.access[0];
+    truck.y=center.access[1];
+    truck.target=null;
+    truck.route=[];
+    truck.auto=false;
+  }
+  addLog("사회적기업 컨설팅을 완료해 주민이 총 10명 늘었습니다.");
+  showToast("컨설팅 완료! 사회적기업 선언문을 완성했습니다.");
+  updateActionButtons();
+  updateUI();
+  draw();
+  endGame(true);
+}
+
+function handleConsultingReturn(){
+  const params=new URLSearchParams(location.search);
+  if(params.get("consultingComplete")!=="1")return false;
+  const q=ensureMissionQuest();
+  if(q.completed){
+    currentDestinationId="socialCenter";
+    startFestivalEnding();
+  }else{
+    completeSocialConsultingMission();
+  }
+  history.replaceState(null,"",location.pathname);
+  return true;
+}
+
+function advanceBeefTheftMission(){
+  const q=ensureMissionQuest(),c=q.beefTheft;
+  const profile=THIEF_PROFILES[c.culpritProfile];
+  let speaker="수사 안내",line="";
+  if(q.stage!==5)return showToast("현재 진행할 한우 절도 사건이 없습니다.");
+  const expected=["beefRestaurant","police","station","temple",null,"hyoCenter"][c.step];
+  if(expected&&currentDestinationId!==expected)return showToast((mapDestinations.find(p=>p.id===expected)||{}).name+"에 도착해야 합니다.");
+  if(c.step===0){c.step=1;speaker="한우식당 주인";line="축제용 영주한우가 사라졌어요! 영주경찰서에 신고해 주세요.";}
+  else if(c.step===1){c.step=2;c.bag=profile.bag;speaker="영주경찰서 경찰";line=`CCTV를 보니 ${profile.bag==="가방 없음"?"가방을 들고 있지 않은 사람":profile.bag+"을 든 사람"}이 영주역 방향으로 이동했습니다.`;}
+  else if(c.step===2){c.step=3;c.clothes=profile.clothes;speaker="영주역 목격자";line=`${profile.clothes} 차림의 사람이 부석사 방향으로 갔어요.`;}
+  else if(c.step===3){c.step=4;c.shoes=profile.shoes;speaker="부석사 NPC";line=`${profile.shoes}을 신은 사람이 급하게 소수서원 방향으로 이동했습니다.`;}
+  else if(c.step===5){
+    c.step=6;c.completed=true;
+    speaker="범인";line="제가 잘못했습니다. 물건을 돌려드리고 직접 사과하겠습니다.";
+    addLog("경찰이 도착해 한우를 식당으로 돌려보냈습니다. 사건 해결!");
+    missionComplete(6,-1,"경찰이 도착하고 한우가 식당으로 돌아가 사건이 해결됐습니다.");
+  }
+  state.task=missionGoalText();saveDeliveryWarehouse();updateActionButtons();updateUI();
+  if(line)showCaseDialogue(speaker,line);
+}
+
+function showCaseDialogue(speaker,line){
+  document.getElementById("rpgSpeaker").innerText=speaker;
+  document.getElementById("rpgLine").innerText=line;
+  showToast(line);
+}
+
+function chaseCulpritToHyoCenter(){
+  const q=ensureMissionQuest();
+  if(q.stage!==5||q.beefTheft.step!==5)return showToast("먼저 소수서원에서 단서와 일치하는 범인을 찾으세요.");
+  const destination=mapDestinations.find(place=>place.id==="hyoCenter");
+  if(!destination)return showToast("영주한국효문화진흥원 위치를 찾지 못했습니다.");
+  markCulpritFound();
+  updateActionButtons();updateUI();draw();
+  showCaseDialogue("수사 안내","영주한국효문화진흥원에 도착했습니다. 범인과 대화해 자백을 받으세요.");
+}
+
+const investigationCitizens=[
+  {id:"citizen1",label:"시민 1",baseX:385,baseY:302,phase:.2,slot:0},
+  {id:"citizen2",label:"시민 2",baseX:430,baseY:330,phase:2.1,slot:1},
+  {id:"citizen3",label:"시민 3",baseX:345,baseY:350,phase:4.3,slot:2}
+];
+function isCulpritCitizen(n){return n.slot===ensureMissionQuest().beefTheft.culpritSlot;}
+function citizenPosition(n,now=Date.now()){
+  const c=ensureMissionQuest().beefTheft;
+  if(isCulpritCitizen(n)&&c.culpritIdentified&&c.step===5){
+    return {x:260,y:430};
+  }
+  return {x:n.baseX+Math.sin(now/900+n.phase)*16,y:n.baseY+Math.cos(now/1100+n.phase)*10};
+}
+function selectInvestigationCitizen(citizen){
+  const q=ensureMissionQuest(),c=q.beefTheft;
+  if(q.stage!==5||c.step!==4||currentDestinationId!=="sosu")return;
+  const pos=citizenPosition(citizen);
+  if(dist(truck.x,truck.y,pos.x,pos.y)>175)return showToast("시민에게 조금 더 가까이 이동해 주세요.");
+  if(!isCulpritCitizen(citizen))return showCaseDialogue(citizen.label,"단서와 일치하지 않는 사람입니다.");
+  markCulpritFound();
+  addLog("소수서원 수사 완료 · 단서와 일치하는 범인을 찾았습니다.");
+  updateActionButtons();updateUI();
+  document.getElementById("taskText").innerText=BEEF_THEFT_HYO_GOAL;
+  showCaseDialogue("수사 완료","단서와 일치하는 시민을 찾았습니다! 범인을 따라 효문화진흥원에 도착했습니다. 범인과 대화해 자백을 받으세요.");
+  draw();
+}
+
+const state = {
+  running:false,
+  cash:deliveryWarehouse.money,
+  reputation:deliveryWarehouse.localValue,
+  localSpend:deliveryWarehouse.taxPaid,
+  localValue:deliveryWarehouse.localValue,
+  taxPaid:deliveryWarehouse.taxPaid,
+  circulation:deliveryWarehouse.mealCirculation,
+  residentsGained:deliveryWarehouse.quest.residents,
+  shopLevel:1,
+  timeLeft:180,
+  flour:0,
+  milk:0,
+  egg:0,
+  dough:0,
+  bread:0,
+  sold:0,
+  visitors:0,
+  deliveryDone:0,
+  mixJob:null,
+  bakeJob:null,
+  supplierStock:{flour:6,milk:6,egg:6},
+  supplierTimer:{flour:0,milk:0,egg:0},
+  deliveryOrder:null,
+  task:missionGoalText(),
+  log:["영업을 시작해 보세요."],
+  nearbyId:null,
+  completed:false
+};
+
+let lastTime = performance.now();
+let wasRunningBeforePause = false;
+let festivalMode = false;
+let festivalEndingStarted = false;
+
+function closeIntro(){
+  const video = document.getElementById("introVideo");
+  video.pause();
+  video.currentTime = 0;
+  document.getElementById("introModal").style.display = "none";
+  startGame();
+}
+
+function enableIntroStart(){
+  const button = document.getElementById("introStartBtn");
+  button.disabled = false;
+  button.textContent = "게임 시작하기";
+  button.focus();
+}
+
+function restartGame(){
+  localStorage.removeItem("yeongjuDeliveryWarehouse");
+  location.reload();
+}
+
+function openPauseMenu(){
+  if(document.getElementById("introModal").style.display !== "none" ||
+     document.getElementById("endingModal").style.display !== "none") return;
+  wasRunningBeforePause = state.running;
+  state.running = false;
+  keys.clear();
+  truck.speed = 0;
+  document.getElementById("pauseModal").style.display = "flex";
+}
+
+function resumeGame(){
+  document.getElementById("pauseModal").style.display = "none";
+  if(wasRunningBeforePause && !state.completed) state.running = true;
+  lastTime = performance.now();
+  canvas.focus();
+}
+
+function togglePauseMenu(){
+  const modal = document.getElementById("pauseModal");
+  if(modal.style.display === "flex") resumeGame();
+  else openPauseMenu();
+}
+
+function startGame(){
+  Object.assign(state, {
+    running:true,
+    cash:deliveryWarehouse.money,
+    reputation:deliveryWarehouse.localValue,
+    localSpend:deliveryWarehouse.taxPaid,
+    localValue:deliveryWarehouse.localValue,
+    taxPaid:deliveryWarehouse.taxPaid,
+    circulation:deliveryWarehouse.mealCirculation,
+    residentsGained:deliveryWarehouse.quest.residents,
+    shopLevel:1,
+    timeLeft:180,
+    flour:0,
+    milk:0,
+    egg:0,
+    dough:0,
+    bread:0,
+    sold:0,
+    visitors:0,
+    deliveryDone:0,
+    mixJob:null,
+    bakeJob:null,
+    supplierStock:{flour:6,milk:6,egg:6},
+    supplierTimer:{flour:0,milk:0,egg:0},
+    deliveryOrder:null,
+    task:missionGoalText(),
+    log:["생산·배달·장사·세금으로 영주의 경제 순환을 시작했습니다."],
+    completed:false
+  });
+  customers.length = 0;
+  bubbles.length = 0;
+  resetTruck();
+  spawnCustomer(true);
+  spawnCustomer(true);
+  showToast("공동 저장고에서 농산물을 싣고 판매장이나 식당으로 출발하세요.");
+  updateUI();
+}
+
+function resetTruck(){
+  if(truck.cargo&&truck.cargo.source==="warehouse"){deliveryWarehouse.inventory[truck.cargo.type]+=truck.cargo.qty;saveDeliveryWarehouse();}
+  if(truck.cargo&&truck.cargo.source==="farm"){deliveryWarehouse.farm[truck.cargo.type]+=truck.cargo.qty;saveDeliveryWarehouse();}
+  truck.x = 1115;
+  truck.y = 525;
+  truck.angle = 0;
+  truck.speed = 0;
+  truck.target = null;
+  truck.route = [];
+  truck.cargo = null;
+  currentDestinationId=null;
+  farmLoadMenuOpen=false;
+}
+
+const farmStockInfo={rice:{label:"쌀",price:25},ginseng:{label:"풍기인삼",price:70},garlic:{label:"마늘",price:40}};
+const RESTAURANT_LIMIT=20;
+function openFarmGame(){if(currentDestinationId!=="ginsengVillage")return showToast("풍기 인삼 마을에서 농사할 수 있습니다.");location.href="tycoon.HTML"}
+function openRestaurantGame(){if(currentDestinationId!=="samgyetang")return showToast("삼계탕 맛집에서 장사할 수 있습니다.");location.href="chickensoup.html"}
+function openEducationGame(){if(currentDestinationId!=="cultureCenter")return showToast("영주시문화센터에 도착해야 합니다.");if(ensureMissionQuest().stage!==4)return showToast("현재 진행할 교육 미션이 없습니다.");saveDeliveryWarehouse();location.href="ai learn.html"}
+function showFarmLoadChoices(){if(currentDestinationId!=="ginsengVillage")return showToast("풍기 인삼 마을에서 물건을 실을 수 있습니다.");if(truck.cargo)return showToast("트럭에 이미 화물이 있습니다.");farmLoadMenuOpen=true;showToast("실을 농산물을 선택하세요.");updateActionButtons()}
+function loadFarmStock(type){const info=farmStockInfo[type];if(currentDestinationId!=="ginsengVillage")return showToast("풍기 인삼 마을에서 농산물을 실을 수 있습니다.");if(truck.cargo)return showToast("트럭에 이미 화물이 있습니다.");const qty=Math.min(5,deliveryWarehouse.inventory[type]||0);if(qty<1)return showToast(info.label+" 재고가 없습니다. 농사하기에서 먼저 생산하세요.");deliveryWarehouse.inventory[type]-=qty;truck.cargo={type,qty,label:info.label,source:"warehouse"};farmLoadMenuOpen=false;state.task=info.label+"을 영주 전통시장이나 삼계탕 맛집에 배달하세요.";saveDeliveryWarehouse();updateActionButtons();updateUI();}
+function loadFromFarm(type){const place=currentPlace(),info=farmStockInfo[type];if(!place||place.id!=="cropFarm")return showToast("영주 상생농장에서 실을 수 있습니다.");if(truck.cargo)return showToast("트럭에 이미 화물이 있습니다.");const qty=Math.min(5,deliveryWarehouse.farm[type]||0);if(qty<1)return showToast("농장 "+info.label+" 재고가 없습니다.");deliveryWarehouse.farm[type]-=qty;truck.cargo={type,qty,label:info.label,source:"farm"};saveDeliveryWarehouse();state.task="공동 저장고로 운송해 입고하세요.";updateUI();}
+function unloadAtWarehouse(){const place=currentPlace();if(!place||place.id!=="warehouse")return showToast("공동 저장고에 도착해야 입고할 수 있습니다.");if(!truck.cargo||truck.cargo.source!=="farm")return showToast("농장에서 농산물을 먼저 실으세요.");deliveryWarehouse.inventory[truck.cargo.type]+=truck.cargo.qty;showToast(`${truck.cargo.label} ${truck.cargo.qty}개 저장고 입고 완료`);truck.cargo=null;saveDeliveryWarehouse();updateUI();}
+function syncMissionDelivery(destination,type,qty){
+  const q=ensureMissionQuest(),allFive=p=>["rice","ginseng","garlic"].every(c=>(p[c]||0)>=5);
+  if(q.stage===1&&destination==="traditionalMarket"){
+    q.marketDelivered[type]=Math.min(5,(q.marketDelivered[type]||0)+qty);
+    if(allFive(q.marketDelivered))missionComplete(2,2,"전통시장 특산물 납품 목표를 달성했습니다.");
+  }else if(q.stage===2&&destination==="samgyetang"){
+    if(!allFive(q.farmRestaurant))return showToast("먼저 인삼마을에서 작물을 종류별로 5개씩 다시 수확하세요.");
+    q.restaurantDelivered[type]=Math.min(5,(q.restaurantDelivered[type]||0)+qty);
+    if(allFive(q.restaurantDelivered))missionComplete(3,2,"삼계탕 맛집 재료 납품 목표를 달성했습니다.");
+  }
+  saveDeliveryWarehouse();
+}
+function sellFarmStock(destination){if(currentDestinationId!==destination)return showToast(destination==="samgyetang"?"삼계탕 맛집에 도착해야 납품할 수 있습니다.":"영주 전통시장에 도착해야 판매할 수 있습니다.");if(!truck.cargo||truck.cargo.source!=="warehouse")return showToast("풍기 인삼 마을에서 농산물을 먼저 실으세요.");const place=mapDestinations.find(p=>p.id===destination),{type,qty,label}=truck.cargo,info=farmStockInfo[type],isRestaurant=destination==="samgyetang";if(isRestaurant&&deliveryWarehouse.restaurant[type]+qty>RESTAURANT_LIMIT)return showToast(`삼계탕 맛집 ${label} 재고는 ${RESTAURANT_LIMIT}개를 넘길 수 없습니다.`);const earned=Math.floor(info.price*qty*(isRestaurant?1.2:1));if(isRestaurant)deliveryWarehouse.restaurant[type]+=qty;const tax=Math.max(1,Math.floor(earned*.1)),net=earned-tax,valueGain=Math.max(2,Math.round(tax/3)+qty+(isRestaurant?2:0));state.cash+=net;state.taxPaid+=tax;state.localSpend=state.taxPaid;state.localValue=Math.min(100,state.localValue+valueGain);state.reputation=state.localValue;deliveryWarehouse.money=state.cash;deliveryWarehouse.taxPaid=state.taxPaid;deliveryWarehouse.localValue=state.localValue;truck.cargo=null;state.sold++;syncMissionDelivery(destination,type,qty);state.task=missionGoalText();saveDeliveryWarehouse();addLog(`${label} ${qty}개 지역 거래 · 매출 ${formatWon(earned)} · 세금 ${formatWon(tax)} · 지역가치 +${valueGain}`);showToast(isRestaurant?`${label} 납품 완료 · 삼계탕을 만들어 배식하세요.`:`세금 ${formatWon(tax)} 납부 · 지역가치 +${valueGain}`);updateActionButtons();updateUI();}
+
+function toggleSection(btn){
+  btn.closest(".fold-section").classList.toggle("collapsed");
+}
+
+function toggleAutoDrive(){
+  truck.auto = !truck.auto;
+  truck.target = null;
+  const btn = document.getElementById("autoBtn");
+  btn.classList.toggle("on", truck.auto);
+  btn.innerText = truck.auto ? "자율주행 켜짐" : "자율주행 꺼짐";
+  showToast(truck.auto ? "방문지를 누르면 트럭이 자동으로 이동합니다." : "직접 운전 모드입니다.");
+}
+
+function currentPlace(){
+  return places.find(p => dist(truck.x, truck.y, p.visit.x, p.visit.y) <= p.visit.r);
+}
+
+function setAutoTarget(placeId){
+  const place = placeById(placeId);
+  if (!place) return;
+  truck.target = {x:place.visit.x, y:place.visit.y, id:place.id};
+}
+function driveToPlace(placeId){const place=placeById(placeId);if(!place)return;truck.auto=true;setAutoTarget(placeId);truck.speed=0;const btn=document.getElementById("autoBtn");btn.classList.add("on");btn.innerText="자율주행 켜짐";showToast(place.name+"으로 출발합니다.");}
+
+function buyIngredient(type){
+  const info = ingredientInfo[type];
+  const place = currentPlace();
+  if (!place || place.id !== info.supplier) {
+    showToast(`${placeById(info.supplier).name}에 가야 ${info.label}을 살 수 있습니다.`);
+    return;
+  }
+  if (truck.cargo) {
+    showToast("트럭에 이미 짐이 있습니다. 먼저 빵집에 내리세요.");
+    return;
+  }
+  if (state.cash < info.cost) {
+    showToast("보유금이 부족합니다.");
+    return;
+  }
+  if (state.supplierStock[type] < 2) {
+    showToast(`${place.name}의 ${info.label} 재고가 다시 쌓이는 중입니다.`);
+    return;
+  }
+  state.cash -= info.cost;
+  state.localSpend += info.cost;
+  state.supplierStock[type] -= 2;
+  truck.cargo = {type, qty:2, label:info.label};
+  state.task = `${info.label}을 실었습니다. 빵집으로 돌아가 재료를 내리세요.`;
+  addBubble(place.x + place.w/2, place.y - 12, `${info.label}값 +${formatWon(info.cost)}`, "#2f7d4a");
+  addLog(`${place.name}에서 ${info.label} 2${info.unit}를 ${formatWon(info.cost)}에 구매했습니다.`);
+  setAutoTarget("bakery");
+  updateUI();
+}
+
+function unloadAtBakery(){
+  const place = currentPlace();
+  if (!place || place.id !== "bakery") {
+    showToast("빵집 앞에서 재료를 내릴 수 있습니다.");
+    return;
+  }
+  if (!truck.cargo) {
+    showToast("트럭에 실린 재료가 없습니다.");
+    return;
+  }
+  state[truck.cargo.type] += truck.cargo.qty;
+  addBubble(place.x + place.w/2, place.y - 12, `${truck.cargo.label} +${truck.cargo.qty}`, "#8a5b12");
+  addLog(`빵집 창고에 ${truck.cargo.label} ${truck.cargo.qty}개를 넣었습니다.`);
+  truck.cargo = null;
+  updateTask();
+  updateUI();
+}
+
+function mixDough(){
+  const place = currentPlace();
+  if (!place || place.id !== "bakery") return showToast("빵집에서 반죽할 수 있습니다.");
+  if (state.mixJob) return showToast("이미 반죽 중입니다.");
+  if (state.flour < 1 || state.milk < 1 || state.egg < 1) {
+    return showToast("반죽에는 밀가루 1, 우유 1, 계란 1이 필요합니다.");
+  }
+  state.flour--;
+  state.milk--;
+  state.egg--;
+  state.mixJob = {t:0, need:5};
+  addLog("밀가루, 우유, 계란을 섞어 반죽을 시작했습니다.");
+  updateUI();
+}
+
+function bakeBread(){
+  const place = currentPlace();
+  if (!place || place.id !== "bakery") return showToast("빵집 오븐에서 구울 수 있습니다.");
+  if (state.bakeJob) return showToast("오븐이 이미 돌아가고 있습니다.");
+  if (state.dough < 1) return showToast("구울 반죽이 없습니다.");
+  state.dough--;
+  state.bakeJob = {t:0, need:6};
+  addLog("오븐에 반죽을 넣었습니다. 곧 빵 3개가 나옵니다.");
+  updateUI();
+}
+
+function loadBreadForDelivery(){
+  const place = currentPlace();
+  if (!place || place.id !== "bakery") return showToast("빵집에서 배달 빵을 실을 수 있습니다.");
+  if (!state.deliveryOrder) return showToast("아직 배달 주문이 없습니다.");
+  if (truck.cargo) return showToast("트럭이 비어 있어야 합니다.");
+  if (state.bread < state.deliveryOrder.qty) return showToast("배달할 빵 재고가 부족합니다.");
+  state.bread -= state.deliveryOrder.qty;
+  truck.cargo = {type:"bread", qty:state.deliveryOrder.qty, label:"빵"};
+  state.task = `${state.deliveryOrder.toName}으로 빵 ${state.deliveryOrder.qty}개를 배달하세요.`;
+  addLog(`배달 주문 빵 ${state.deliveryOrder.qty}개를 트럭에 실었습니다.`);
+  setAutoTarget(state.deliveryOrder.to);
+  updateUI();
+}
+
+function finishDelivery(){
+  const order = state.deliveryOrder;
+  if (!order) return showToast("진행 중인 배달 주문이 없습니다.");
+  const place = currentPlace();
+  if (!place || place.id !== order.to) return showToast(`${order.toName}에 도착해야 판매할 수 있습니다.`);
+  if (!truck.cargo || truck.cargo.type !== "bread") return showToast("배달할 빵을 싣고 와야 합니다.");
+  truck.cargo = null;
+  state.cash += order.pay;
+  state.reputation = Math.min(100, state.reputation + 14);
+  state.deliveryDone++;
+  addBubble(place.x + place.w/2, place.y - 12, `판매 +${formatWon(order.pay)}`, "#2f7d4a");
+  addLog(`${order.toName} 배달 완료. 빵값과 배달비로 ${formatWon(order.pay)}을 받았습니다.`);
+  state.deliveryOrder = null;
+  updateTask();
+  updateUI();
+}
+
+function updateTask(){
+  if (state.flour < 1) state.task = "청년농장에서 밀가루를 사 오세요.";
+  else if (state.milk < 1) state.task = "마을목장에서 우유를 사 오세요.";
+  else if (state.egg < 1) state.task = "양계장에서 계란을 사 오세요.";
+  else if (!state.mixJob && state.dough < 1) state.task = "빵집에서 반죽하기를 누르세요.";
+  else if (!state.bakeJob && state.dough > 0) state.task = "오븐에서 굽기를 시작하세요.";
+  else if (state.bread > 0) state.task = "손님에게 팔거나 배달 주문을 처리하세요.";
+}
+
+function maybeCreateDeliveryOrder(){
+  if (state.deliveryOrder || state.bread < 2) return;
+  if (Math.random() > 0.006 + state.reputation / 9000) return;
+  const target = Math.random() < .55 ? placeById("apartment") : placeById("office");
+  const qty = Math.min(state.bread, Math.random() < .7 ? 2 : 3);
+  state.deliveryOrder = {
+    to:target.id,
+    toName:target.name,
+    qty,
+    pay:qty * (target.id === "office" ? 34 : 30)
+  };
+  state.task = `${target.name}에서 빵 ${qty}개 주문! 빵집에서 싣고 배달하세요.`;
+  addLog(`${target.name} 배달 주문이 들어왔습니다.`);
+  showToast("새 배달 주문이 들어왔습니다.");
+}
+
+function spawnCustomer(force=false){
+  const target=2+state.residentsGained;
+  if(customers.length>=target||(!force&&Math.random()>.045))return;
+  const path=roadPaths[Math.floor(Math.random()*roadPaths.length)],i=Math.floor(Math.random()*(path.length-1)),a=path[i],b=path[i+1],progress=Math.random();
+  customers.push({x:a[0]+(b[0]-a[0])*progress,y:a[1]+(b[1]-a[1])*progress,a,b,progress,dir:Math.random()<.5?-1:1,speed:24+Math.random()*26,bob:Math.random()*10,variant:Math.floor(Math.random()*6),facing:0});
+}
+
+function updateCustomers(dt){
+  customers.forEach(c=>{const length=Math.max(1,dist(c.a[0],c.a[1],c.b[0],c.b[1]));c.progress+=c.dir*c.speed*dt/length;if(c.progress>=1){c.progress=1;c.dir=-1}else if(c.progress<=0){c.progress=0;c.dir=1}const dx=(c.b[0]-c.a[0])*c.dir,dy=(c.b[1]-c.a[1])*c.dir;c.facing=Math.abs(dx)>Math.abs(dy)?(dx<0?2:3):(dy<0?1:0);c.x=c.a[0]+(c.b[0]-c.a[0])*c.progress;c.y=c.a[1]+(c.b[1]-c.a[1])*c.progress});
+  const target=2+state.residentsGained;
+  while(customers.length>target)customers.pop();
+}
+
+function updateJobs(dt){
+  if (state.mixJob) {
+    state.mixJob.t += dt;
+    if (state.mixJob.t >= state.mixJob.need) {
+      state.mixJob = null;
+      state.dough += 2;
+      addBubble(1145, 730, "반죽 +2", "#8a5b12");
+      addLog("반죽 2개가 완성되었습니다.");
+      updateTask();
+    }
+  }
+  if (state.bakeJob) {
+    state.bakeJob.t += dt;
+    if (state.bakeJob.t >= state.bakeJob.need) {
+      state.bakeJob = null;
+      state.bread += 3 + Math.floor(state.shopLevel / 2);
+      addBubble(1210, 725, `빵 +${3 + Math.floor(state.shopLevel / 2)}`, "#8a5b12");
+      addLog("갓 구운 빵이 진열대에 올라왔습니다.");
+      updateTask();
+    }
+  }
+  ["flour","milk","egg"].forEach(type => {
+    if (state.supplierStock[type] < 6) {
+      state.supplierTimer[type] += dt;
+      if (state.supplierTimer[type] >= 12) {
+        state.supplierTimer[type] = 0;
+        state.supplierStock[type] = Math.min(6, state.supplierStock[type] + 2);
+      }
+    }
+  });
+}
+
+function updateTruck(dt){
+  const oldX=truck.x,oldY=truck.y;
+  let vx=0,vy=0;
+  if (truck.target) {
+    const dx=truck.target.x-truck.x,dy=truck.target.y-truck.y,d=Math.hypot(dx,dy);
+    if(d<12){truck.x=truck.target.x;truck.y=truck.target.y;truck.target=truck.route.shift()||null;truck.speed=0}else{vx=dx/d;vy=dy/d;truck.speed=truck.maxSpeed*.72}
+  } else {
+    if(keys.has("ArrowLeft")||keys.has("a")||keys.has("A")||keys.has("KeyA"))vx--;
+    if(keys.has("ArrowRight")||keys.has("d")||keys.has("D")||keys.has("KeyD"))vx++;
+    if(keys.has("ArrowUp")||keys.has("w")||keys.has("W")||keys.has("KeyW"))vy--;
+    if(keys.has("ArrowDown")||keys.has("s")||keys.has("S")||keys.has("KeyS"))vy++;
+    const n=Math.hypot(vx,vy);if(n){vx/=n;vy/=n;truck.speed=truck.maxSpeed*.72}else truck.speed=0;
+  }
+  if(vx||vy){truck.angle=Math.atan2(vy,vx);truck.x+=vx*truck.speed*dt;truck.y+=vy*truck.speed*dt;}
+  truck.x = clamp(truck.x, 45, WORLD_W - 45);
+  truck.y = clamp(truck.y, 45, WORLD_H - 45);
+  if(!isOnRoad(truck.x,truck.y)){
+    truck.x=oldX;truck.y=oldY;truck.speed=0;
+    if(truck.target&&!isOnRoad(truck.target.x,truck.target.y)){truck.target=null;truck.route=[];}
+  }
+}
+
+function update(dt){
+  if (state.running && !state.completed) {
+    state.circulation=deliveryWarehouse.mealCirculation||0;
+    state.residentsGained=ensureMissionQuest().residents;
+    state.task=missionGoalText();
+    if(ensureMissionQuest().completed)return endGame(true);
+    state.timeLeft = Math.max(0, state.timeLeft - dt);
+    updateJobs(dt);
+    spawnCustomer();
+    updateCustomers(dt);
+    maybeCreateDeliveryOrder();
+    state.shopLevel = 1 + Math.floor(state.localValue / 25);
+  }
+  updateTruck(dt);
+  bubbles.forEach(b => b.life -= dt);
+  for (let i=bubbles.length-1;i>=0;i--) if (bubbles[i].life <= 0) bubbles.splice(i,1);
+  const near = currentPlace();
+  state.nearbyId = near ? near.id : null;
+  updateActionButtons();
+  updateUI();
+}
+
+function endGame(forceSuccess=false){
+  state.completed = true;
+  state.running = false;
+  const success = forceSuccess || ensureMissionQuest().completed;
+  if(success){
+    startFestivalEnding();
+    return;
+  }
+  document.getElementById("endingTitle").innerText = success ? "게임 클리어! 영주 사회적경제 활성화" : "오늘의 미션 결과";
+  document.getElementById("finalFeedback").innerText =
+    `미션으로 늘어난 주민 ${state.residentsGained}/10명, 누적 세금 ${formatWon(state.taxPaid)}. ` +
+    (success ? "모든 지역 미션을 완수했습니다. 이곳에 추후 엔딩 영상이 재생됩니다." : "현재 목표를 이어서 달성해 주세요.");
+  document.getElementById("endingFestivalImage").style.display="none";
+  document.getElementById("endingModal").style.display = "flex";
+}
+
+function startFestivalEnding(){
+  if(festivalEndingStarted)return;
+  festivalEndingStarted = true;
+  festivalMode = false;
+  keys.clear();
+  truck.speed = 0;
+  document.getElementById("endingModal").style.display="none";
+  document.getElementById("endingFestivalImage").style.display="none";
+  showToast("모든 미션 완료! 엔딩 영상이 시작됩니다.");
+  playFestivalVideo();
+}
+
+function playFestivalVideo(){
+  const modal=document.getElementById("festivalVideoModal");
+  const video=document.getElementById("festivalVideo");
+  modal.style.display="flex";
+  video.currentTime=0;
+  video.play().catch(()=>{
+    video.muted=true;
+    video.play().catch(()=>{});
+  });
+}
+
+function finishFestivalVideo(){
+  const modal=document.getElementById("festivalVideoModal");
+  const video=document.getElementById("festivalVideo");
+  if(modal.style.display==="none")return;
+  video.pause();
+  modal.style.display="none";
+  festivalMode = true;
+  draw();
+  document.getElementById("endingTitle").innerText="「함께 만든 축제」";
+  document.getElementById("endingFestivalImage").style.display="block";
+  document.getElementById("finalFeedback").innerText=`모두의 협력이 만든 기적.
+
+작은 가게 하나의 성공이
+또 다른 가게를 살리고,
+그 변화는 도시 전체로 퍼져 나갔습니다.
+
+이제 이곳은
+사람이 모이고, 웃음이 피어나는 도시가 되었습니다.`;
+  document.getElementById("endingModal").style.display="flex";
+}
+
+function updateActionButtons(){
+  const ids = ["farmGameBtn","farmLoadBtn","loadRiceBtn","loadGinsengBtn","loadGarlicBtn","marketSellBtn","restaurantGameBtn","restaurantDeliverBtn","cultureMissionBtn","policeMissionBtn","policeChaseBtn","socialMissionBtn"];
+  ids.forEach(id => document.getElementById(id).style.display = "none");
+  if(currentDestinationId==="ginsengVillage"&&!truck.cargo){if(farmLoadMenuOpen){document.getElementById("loadRiceBtn").style.display="block";document.getElementById("loadGinsengBtn").style.display="block";document.getElementById("loadGarlicBtn").style.display="block";}else{document.getElementById("farmGameBtn").style.display="block";document.getElementById("farmLoadBtn").style.display="block";}}
+  if(currentDestinationId==="traditionalMarket"&&truck.cargo)document.getElementById("marketSellBtn").style.display="block";
+  if(currentDestinationId==="samgyetang"){document.getElementById("restaurantGameBtn").style.display="block";document.getElementById("restaurantDeliverBtn").style.display="block";}
+  const q=ensureMissionQuest();
+  if(currentDestinationId==="cultureCenter"&&q.stage===4)document.getElementById("cultureMissionBtn").style.display="block";
+  if(q.stage===5){
+    const c=q.beefTheft,expected=["beefRestaurant","police","station","temple",null,"hyoCenter"][c.step];
+    if(c.step===5&&currentDestinationId!=="hyoCenter")document.getElementById("policeChaseBtn").style.display="block";
+    if(expected&&currentDestinationId===expected){
+      const labels=["사건 확인하기","CCTV 확인하기","목격자와 대화","NPC와 대화","범인 확인","범인과 대화"];
+      document.getElementById("policeMissionBtn").innerText=labels[c.step]||"수사하기";
+      document.getElementById("policeMissionBtn").style.display="block";
+    }
+  }
+  if(currentDestinationId==="socialCenter"&&q.stage===6)document.getElementById("socialMissionBtn").style.display="block";
+}
+
+function updateUI(){
+  const time = Math.max(0, Math.ceil(state.timeLeft));
+  const min = Math.floor(time / 60);
+  const sec = String(time % 60).padStart(2,"0");
+  const near = mapDestinations.find(p=>p.id===currentDestinationId)||null;
+  if(deliveryWarehouse.money!==state.cash){deliveryWarehouse.money=state.cash;saveDeliveryWarehouse();}
+  document.getElementById("topCash").innerText = formatWon(state.cash);
+  const regional=ensureRegionalStats();
+  document.getElementById("happinessText").innerText = `${regional.happiness}/100`;
+  document.getElementById("safetyText").innerText = regional.safety;
+  document.getElementById("welfareText").innerText = regional.welfare;
+  document.getElementById("educationText").innerText = regional.education;
+  document.getElementById("economyText").innerText = regional.economy;
+  document.getElementById("flourText").innerText = state.flour;
+  document.getElementById("milkText").innerText = state.milk;
+  document.getElementById("eggText").innerText = state.egg;
+  document.getElementById("doughText").innerText = state.dough;
+  document.getElementById("breadText").innerText = state.bread;
+  document.getElementById("customerText").innerText = customers.length;
+  document.getElementById("sharedRiceText").innerText=deliveryWarehouse.inventory.rice;
+  document.getElementById("sharedGinsengText").innerText=deliveryWarehouse.inventory.ginseng;
+  document.getElementById("sharedGarlicText").innerText=deliveryWarehouse.inventory.garlic;
+  document.getElementById("restaurantRiceText").innerText=`${deliveryWarehouse.restaurant.rice}/${RESTAURANT_LIMIT}`;
+  document.getElementById("restaurantGinsengText").innerText=`${deliveryWarehouse.restaurant.ginseng}/${RESTAURANT_LIMIT}`;
+  document.getElementById("restaurantGarlicText").innerText=`${deliveryWarehouse.restaurant.garlic}/${RESTAURANT_LIMIT}`;
+  document.getElementById("mixFill").style.width = `${state.mixJob ? state.mixJob.t / state.mixJob.need * 100 : 0}%`;
+  document.getElementById("bakeFill").style.width = `${state.bakeJob ? state.bakeJob.t / state.bakeJob.need * 100 : 0}%`;
+  const activeQuest=ensureMissionQuest(),activeCase=activeQuest.beefTheft;
+  const culpritFound=activeQuest.stage===5&&(activeCase.culpritIdentified||activeCase.step>=5);
+  document.getElementById("taskText").innerText = culpritFound
+    ? BEEF_THEFT_HYO_GOAL
+    : state.task;
+  document.getElementById("logText").innerText = state.log.slice(-3).join("  /  ");
+  document.getElementById("timerHud").innerText = `영업시간 ${min}:${sec}`;
+  document.getElementById("nearHud").innerText = near ? `${near.name} 도착` : "방문지를 클릭하거나 운전하세요";
+  document.getElementById("truckHud").innerText = `트럭 적재: ${truck.cargo ? `${truck.cargo.label} ${truck.cargo.qty}` : "없음"}`;
+  document.getElementById("stageHud").innerText = `미션 ${Math.min(7,ensureMissionQuest().stage+1)}/7 · 주민 증가 ${state.residentsGained}/10명`;
+  document.getElementById("rpgSpeaker").innerText = near ? near.name : "배달 안내";
+  document.getElementById("rpgLine").innerText = dialogueFor(near);
+  const policeCase=ensureMissionQuest().beefTheft,notebook=document.getElementById("policeNotebook");
+  notebook.style.display=(ensureMissionQuest().stage===5||policeCase.completed)?"block":"none";
+  document.getElementById("clueBag").innerText=policeCase.bag;
+  document.getElementById("clueClothes").innerText=policeCase.clothes;
+  document.getElementById("clueShoes").innerText=policeCase.shoes;
+  document.getElementById("orderText").innerText = state.deliveryOrder ?
+    `${state.deliveryOrder.toName}: 빵 ${state.deliveryOrder.qty}개 배달 주문 · 받을 돈 ${formatWon(state.deliveryOrder.pay)}` :
+    "아직 배달 주문이 없습니다. 빵을 구우면 주문이 들어옵니다.";
+}
+
+addEventListener("storage",e=>{if(e.key==="yeongjuDeliveryWarehouse"){const fresh=loadDeliveryWarehouse();mergeWarehouseWithoutQuestDowngrade(fresh);ensureMissionQuest();state.cash=deliveryWarehouse.money;state.taxPaid=deliveryWarehouse.taxPaid;state.localSpend=deliveryWarehouse.taxPaid;state.localValue=deliveryWarehouse.localValue;state.reputation=deliveryWarehouse.localValue;state.circulation=deliveryWarehouse.mealCirculation;state.residentsGained=deliveryWarehouse.quest.residents;state.task=missionGoalText();updateUI();}});
+
+function dialogueFor(place){
+  if (!place) return "풍기 인삼 마을을 클릭해 농사하거나 농산물을 실으세요.";
+  if(place.id==="ginsengVillage")return "농사하기는 임정민 타이쿤으로 연결되고, 물건 싣기는 연동 재고를 트럭에 싣습니다.";
+  if(place.id==="traditionalMarket")return truck.cargo?"싣고 온 농산물을 기본 가격으로 판매할 수 있습니다.":"풍기 인삼 마을에서 농산물을 먼저 실으세요.";
+  if(place.id==="samgyetang")return truck.cargo?"농산물을 1.2배 가격으로 납품하고 식당 재고에 추가합니다.":"풍기 인삼 마을에서 농산물을 먼저 실으세요.";
+  if(place.id==="cultureCenter")return ensureMissionQuest().stage===4?"교육 미션을 완료해 일자리를 만드세요. 추후 타자게임이 연결됩니다.":"현재 목표를 먼저 완료하면 문화센터 교육 미션이 열립니다.";
+  if(ensureMissionQuest().stage===5){
+    const c=ensureMissionQuest().beefTheft;
+    if(place.id==="beefRestaurant")return c.step===0?"식당 주인이 사라진 축제용 한우 사건을 알려주려 합니다.":"경찰에 신고한 뒤 범인을 추적하고 있습니다.";
+    if(place.id==="police")return c.step===1?"경찰과 함께 CCTV를 확인하세요.":"수사수첩의 다음 목적지를 확인하세요.";
+    if(place.id==="station")return c.step===2?"역 앞 목격자에게 수상한 사람을 보았는지 물어보세요.":"목격자가 부석사 방향을 가리킵니다.";
+    if(place.id==="temple")return c.step===3?"부석사 NPC에게 도망간 사람의 특징을 물어보세요.":"NPC가 소수서원 방향을 가리킵니다.";
+    if(place.id==="sosu")return c.step===4?"돌아다니는 시민을 클릭해 수사수첩의 세 단서와 비교하세요.":"범인이 효문화진흥원 방향으로 달아났습니다.";
+    if(place.id==="hyoCenter")return c.step===5?"더 이상 도망가지 못한 범인과 대화하세요.":"영주한국효문화진흥원에 도착했습니다.";
+  }
+  if(place.id==="police")return "문화센터 교육 목표를 먼저 완료하세요.";
+  if(place.id==="socialCenter")return ensureMissionQuest().stage===6?"사회적경제 컨설팅을 받아 사회적기업을 만들고 마지막 목표를 완료하세요.":"앞선 지역 미션을 먼저 완료하세요.";
+  return place.name+"에 도착했습니다. 상호작용은 추후 설정됩니다.";
+}
+
+function addLog(text){
+  state.log.push(text);
+  if (state.log.length > 8) state.log.shift();
+}
+
+function addBubble(x,y,text,color){
+  bubbles.push({x,y,text,color,life:1.8});
+}
+
+function showToast(text){
+  const toast = document.getElementById("toast");
+  toast.innerText = text;
+  toast.style.display = "block";
+  clearTimeout(showToast.timer);
+  showToast.timer = setTimeout(() => toast.style.display = "none", 1800);
+}
+
+function draw(){
+  const cam = camera();
+  ctx.clearRect(0,0,W,H);
+  ctx.save();
+  ctx.translate(-cam.x,-cam.y);
+  drawWorld();
+  if(!festivalMode){
+    drawPlaces();
+    drawCustomers();
+    drawInvestigationCitizens();
+    drawTruck();
+    drawTarget();
+    drawBubbles();
+  }
+  ctx.restore();
+  drawMiniMap();
+}
+
+function drawInvestigationCitizens(){
+  const q=ensureMissionQuest(),c=q.beefTheft;
+  if(q.stage!==5||c.step<4||c.step>5)return;
+  for(const npc of investigationCitizens){
+    const p=citizenPosition(npc);
+    const profileIndex=c.suspectProfiles[npc.slot],profile=THIEF_PROFILES[profileIndex];
+    ctx.save();ctx.translate(p.x,p.y);
+    if(c.culpritIdentified&&c.step===5&&isCulpritCitizen(npc)){
+      ctx.strokeStyle="#ffcc33";ctx.lineWidth=4;ctx.beginPath();ctx.arc(0,-12,34,0,Math.PI*2);ctx.stroke();
+      ctx.fillStyle="#fff8dc";ctx.strokeStyle="#173d27";ctx.lineWidth=2;ctx.fillRect(-49,-76,98,20);ctx.strokeRect(-49,-76,98,20);
+      ctx.fillStyle="#b3261e";ctx.font="900 12px sans-serif";ctx.textAlign="center";ctx.fillText("붙잡힌 범인",0,-62);
+    }
+    ctx.fillStyle="rgba(0,0,0,.22)";ctx.beginPath();ctx.ellipse(0,22,17,6,0,0,Math.PI*2);ctx.fill();
+    if(thiefSpriteImage.complete&&thiefSpriteImage.naturalWidth){
+      const [sx,sy,sw,sh]=profile.crop;
+      ctx.drawImage(thiefSpriteImage,sx,sy,sw,sh,-23,-48,46,70);
+    }else{
+      ctx.fillStyle="#315a83";ctx.fillRect(-13,-12,26,30);ctx.fillStyle="#f2c49f";ctx.beginPath();ctx.arc(0,-20,10,0,Math.PI*2);ctx.fill();
+    }
+    if(!c.culpritIdentified||!isCulpritCitizen(npc)){ctx.fillStyle="#173d27";ctx.font="900 11px sans-serif";ctx.textAlign="center";ctx.fillText(npc.label,0,-54);}
+    ctx.restore();
+  }
+}
+
+function camera(){
+  return {x:0,y:0};
+}
+
+function drawWorld(){
+  ctx.fillStyle="#173d27";ctx.fillRect(0,0,WORLD_W,WORLD_H);
+  if(festivalMode&&festivalMapImage.complete&&festivalMapImage.naturalWidth){
+    ctx.drawImage(festivalMapImage,0,0,WORLD_W,WORLD_H);
+    return;
+  }
+  if(mapImage.complete&&mapImage.naturalWidth)ctx.drawImage(mapImage,0,0,WORLD_W,WORLD_H);
+  drawMissionHouses(ctx);
+}
+
+const missionHousePatches = [
+  {x:790,y:580,w:78,h:90},
+  {x:870,y:580,w:80,h:90},
+  {x:950,y:580,w:80,h:90},
+  {x:1028,y:580,w:78,h:90},
+  {x:790,y:662,w:78,h:90},
+  {x:870,y:662,w:80,h:90},
+  {x:950,y:662,w:80,h:90}
+];
+
+function drawMissionHouses(targetCtx,scaleX=1,scaleY=1){
+  if(!houseLayerImage.complete||!houseLayerImage.naturalWidth)return;
+  const completedMissions=Math.max(0,Math.min(missionHousePatches.length,ensureMissionQuest().stage));
+  for(let i=0;i<completedMissions;i++){
+    const h=missionHousePatches[i];
+    targetCtx.drawImage(houseLayerImage,h.x,h.y,h.w,h.h,h.x*scaleX,h.y*scaleY,h.w*scaleX,h.h*scaleY);
+  }
+}
+
+function drawFieldPatch(x,y,w,h,label){
+  ctx.fillStyle = "#6fae5f";
+  ctx.fillRect(x,y,w,h);
+  ctx.strokeStyle = "#315d35";
+  ctx.lineWidth = 5;
+  ctx.strokeRect(x,y,w,h);
+  ctx.fillStyle = "rgba(255,248,180,.6)";
+  for(let i=0;i<16;i++) ctx.fillRect(x+18+i*22,y+22+(i%3)*24,10,38);
+  ctx.fillStyle = "#203428";
+  ctx.font = "900 16px 'Malgun Gothic', sans-serif";
+  ctx.fillText(label,x+16,y+24);
+}
+
+function drawPlaces(){
+  // 새 상호작용 지점은 사용자가 지정한 뒤 표시합니다.
+}
+
+function drawVisitZone(place){
+  const active = state.nearbyId === place.id;
+  ctx.save();
+  ctx.beginPath();
+  ctx.arc(place.visit.x, place.visit.y, place.visit.r, 0, Math.PI*2);
+  ctx.fillStyle = active ? "rgba(91,190,96,.3)" : "rgba(255,255,255,.26)";
+  ctx.strokeStyle = active ? "#58a86d" : "rgba(40,50,35,.35)";
+  ctx.lineWidth = active ? 7 : 3;
+  ctx.fill();
+  ctx.stroke();
+  ctx.restore();
+}
+
+function drawBuilding(place){
+  const {x,y,w,h,color,icon,name} = place;
+  ctx.save();
+  ctx.fillStyle = "rgba(55,45,32,.18)";
+  ctx.fillRect(x+10,y+h-2,w,16);
+  ctx.fillStyle = "#5a392d";
+  ctx.fillRect(x-10,y+18,w+20,34);
+  ctx.fillStyle = color;
+  ctx.fillRect(x,y+45,w,h-45);
+  ctx.strokeStyle = "#1b1b1b";
+  ctx.lineWidth = 5;
+  ctx.strokeRect(x,y+45,w,h-45);
+  ctx.fillStyle = "#fff3d7";
+  ctx.fillRect(x+w/2-24,y+h-50,48,50);
+  ctx.strokeRect(x+w/2-24,y+h-50,48,50);
+  ctx.fillStyle = "#f8fbef";
+  ctx.fillRect(x+18,y+65,42,30);
+  ctx.fillRect(x+w-60,y+65,42,30);
+  ctx.strokeRect(x+18,y+65,42,30);
+  ctx.strokeRect(x+w-60,y+65,42,30);
+  ctx.font = "900 30px 'Malgun Gothic', sans-serif";
+  ctx.textAlign = "center";
+  ctx.fillText(icon,x+w/2,y+70);
+  ctx.fillStyle = "rgba(255,248,223,.96)";
+  ctx.fillRect(x+14,y+h-80,w-28,28);
+  ctx.strokeRect(x+14,y+h-80,w-28,28);
+  ctx.fillStyle = "#263326";
+  ctx.font = "900 14px 'Malgun Gothic', sans-serif";
+  ctx.fillText(name,x+w/2,y+h-61);
+  if (place.id === "bakery") drawBakeryInterior(place);
+  ctx.restore();
+}
+
+function drawBakeryInterior(place){
+  const shelfX = place.x + 24;
+  const shelfY = place.y + place.h - 116;
+  ctx.fillStyle = "#8a5b34";
+  ctx.fillRect(shelfX,shelfY,92,12);
+  ctx.fillRect(shelfX,shelfY+34,92,12);
+  for(let i=0;i<state.bread;i++){
+    drawBread(shelfX+14+(i%4)*20,shelfY-4+Math.floor(i/4)*34);
+  }
+  ctx.fillStyle = "#333";
+  ctx.fillRect(place.x+place.w-82,place.y+place.h-116,52,36);
+  ctx.fillStyle = state.bakeJob ? "#f39b35" : "#6c6c6c";
+  ctx.fillRect(place.x+place.w-74,place.y+place.h-108,36,20);
+}
+
+function drawPlaceStock(place){
+  if (place.ingredient === "flour") {
+    for(let i=0;i<state.supplierStock.flour;i++) drawSack(place.x+32+(i%3)*36,place.y+place.h+32+Math.floor(i/3)*30,"밀");
+  }
+  if (place.ingredient === "milk") {
+    for(let i=0;i<state.supplierStock.milk;i++) drawMilk(place.x+34+(i%3)*34,place.y+place.h+28+Math.floor(i/3)*30);
+  }
+  if (place.ingredient === "egg") {
+    for(let i=0;i<state.supplierStock.egg;i++) drawEggCrate(place.x+32+(i%3)*42,place.y+place.h+26+Math.floor(i/3)*28);
+  }
+}
+
+function drawSack(x,y,label){
+  ctx.fillStyle = "#f4ead6";
+  ctx.fillRect(x-12,y-21,24,32);
+  ctx.fillStyle = "#d9c59f";
+  ctx.fillRect(x-9,y-25,18,7);
+  ctx.strokeStyle = "#2a241d";
+  ctx.lineWidth = 2;
+  ctx.strokeRect(x-12,y-21,24,32);
+  ctx.fillStyle = "#7d6039";
+  ctx.font = "900 10px 'Malgun Gothic', sans-serif";
+  ctx.textAlign = "center";
+  ctx.fillText(label,x,y-1);
+}
+
+function drawMilk(x,y){
+  ctx.fillStyle = "#f7fbff";
+  ctx.fillRect(x-9,y-24,18,34);
+  ctx.fillStyle = "#7aa9c7";
+  ctx.fillRect(x-7,y-8,14,8);
+  ctx.strokeStyle = "#2a241d";
+  ctx.lineWidth = 2;
+  ctx.strokeRect(x-9,y-24,18,34);
+}
+
+function drawEggCrate(x,y){
+  ctx.fillStyle = "#c18b4d";
+  ctx.fillRect(x-17,y-12,34,18);
+  ctx.strokeStyle = "#2a241d";
+  ctx.lineWidth = 2;
+  ctx.strokeRect(x-17,y-12,34,18);
+  ctx.fillStyle = "#fff0d2";
+  for(let i=0;i<3;i++) ctx.fillRect(x-12+i*10,y-8,6,8);
+}
+
+function drawBread(x,y){
+  ctx.fillStyle = "#c9853d";
+  roundedRect(x-10,y-7,20,14,7,true,false);
+  ctx.fillStyle = "#f0bd68";
+  roundedRect(x-7,y-6,14,4,3,true,false);
+  ctx.strokeStyle = "#2a241d";
+  ctx.lineWidth = 2;
+  roundedRect(x-10,y-7,20,14,7,false,true);
+}
+
+function drawCustomers(){
+  customers.forEach((c,i) => drawResident(c,i));
+}
+
+function drawResident(c,i){
+  if(!residentImage.complete||!residentImage.naturalWidth){drawPixelPerson(c.x,c.y,i);return}
+  const colX=[135,385,635,885],rowY=[0,205,410,605,800,985],sx=colX[c.facing||0],sy=rowY[c.variant||0],sw=205,sh=Math.min(205,residentImage.naturalHeight-sy);
+  const bob=Math.sin(Date.now()/180+c.bob)*1.5;
+  ctx.save();ctx.translate(c.x,c.y+bob);ctx.fillStyle="rgba(0,0,0,.18)";ctx.beginPath();ctx.ellipse(0,17,13,5,0,0,Math.PI*2);ctx.fill();ctx.drawImage(residentImage,sx,sy,sw,sh,-27,-43,54,62);ctx.restore();
+}
+
+function drawPixelPerson(x,y,seed){
+  const colors = ["#e88f4d","#4f8ac9","#6aa85d","#c06b8d","#8b6cc5"];
+  ctx.save();
+  ctx.translate(x,y + Math.sin(Date.now()/170 + seed)*3);
+  ctx.fillStyle = "#f2c18f";
+  ctx.fillRect(-9,-28,18,18);
+  ctx.fillStyle = "#3a2a24";
+  ctx.fillRect(-11,-32,22,8);
+  ctx.fillStyle = colors[seed%colors.length];
+  ctx.fillRect(-12,-10,24,24);
+  ctx.fillStyle = "#263326";
+  ctx.fillRect(-10,14,8,14);
+  ctx.fillRect(2,14,8,14);
+  ctx.restore();
+}
+
+function drawTruck(){
+  ctx.save();
+  ctx.translate(truck.x,truck.y);
+  ctx.rotate(truck.angle);
+  if(truckImage.complete&&truckImage.naturalWidth)ctx.drawImage(truckImage,-58,-39,116,78);
+  else{ctx.fillStyle="#f6f0df";ctx.fillRect(-42,-24,84,48)}
+  ctx.restore();
+}
+
+function drawTarget(){
+  if (!truck.target) return;
+  ctx.save();
+  ctx.strokeStyle = "rgba(255,248,223,.95)";
+  ctx.lineWidth = 4;
+  ctx.beginPath();
+  ctx.arc(truck.target.x, truck.target.y, 28 + Math.sin(Date.now()/150)*5, 0, Math.PI*2);
+  ctx.stroke();
+  ctx.restore();
+}
+
+function drawBubbles(){
+  bubbles.forEach(b => {
+    ctx.save();
+    ctx.globalAlpha = Math.min(1,b.life);
+    ctx.font = "900 13px 'Malgun Gothic', sans-serif";
+    const width = Math.max(92, ctx.measureText(b.text).width + 26);
+    const rise = (1.8 - b.life) * 26;
+    ctx.fillStyle = "rgba(255,255,255,.95)";
+    roundedRect(b.x-width/2,b.y-34-rise,width,28,12,true,false);
+    ctx.fillStyle = b.color || "#2f7d4a";
+    ctx.textAlign = "center";
+    ctx.fillText(b.text,b.x,b.y-16-rise);
+    ctx.restore();
+  });
+}
+
+function drawMiniMap(){
+  const sx = miniMap.width / WORLD_W;
+  const sy = miniMap.height / WORLD_H;
+  mctx.clearRect(0,0,miniMap.width,miniMap.height);
+  if(festivalMode&&festivalMapImage.complete&&festivalMapImage.naturalWidth){
+    mctx.drawImage(festivalMapImage,0,0,miniMap.width,miniMap.height);
+    return;
+  }
+  if(mapImage.complete&&mapImage.naturalWidth)mctx.drawImage(mapImage,0,0,miniMap.width,miniMap.height);else{mctx.fillStyle="#274f32";mctx.fillRect(0,0,miniMap.width,miniMap.height)}
+  drawMissionHouses(mctx,sx,sy);
+  mctx.fillStyle = "#e84b3c";
+  mctx.fillRect(truck.x*sx-3, truck.y*sy-3, 6, 6);
+}
+
+function gameLoop(now){
+  const current=performance.now();
+  const dt = Math.min(.05, (current - lastTime) / 1000);
+  lastTime = current;
+  update(dt);
+  draw();
+}
+
+canvas.addEventListener("click", e => {
+  canvas.focus();
+  const rect = canvas.getBoundingClientRect();
+  const cam = camera();
+  const x = (e.clientX - rect.left) / rect.width * W + cam.x;
+  const y = (e.clientY - rect.top) / rect.height * H + cam.y;
+  const policeCase=ensureMissionQuest().beefTheft;
+  if(ensureMissionQuest().stage===5&&policeCase.step===4&&currentDestinationId==="sosu"){
+    const clicked=investigationCitizens.find(n=>{const p=citizenPosition(n);return dist(x,y,p.x,p.y)<25;});
+    if(clicked){selectInvestigationCitizen(clicked);return;}
+  }
+  const hyoDestination=place=>place&&x>=place.x&&x<=place.x+place.w&&y>=place.y&&y<=place.y+place.h;
+  const priorityHyo=ensureMissionQuest().stage===5&&policeCase.step===5?mapDestinations.find(p=>p.id==="hyoCenter"):null;
+  const destination=hyoDestination(priorityHyo)?priorityHyo:mapDestinations.find(p=>x>=p.x&&x<=p.x+p.w&&y>=p.y&&y<=p.y+p.h);
+  if(destination)driveToDestination(destination);
+  else showToast("지도에 표시된 장소를 클릭해 주세요.");
+});
+canvas.addEventListener("pointerdown",()=>canvas.focus());
+canvas.addEventListener("mousemove",e=>{const rect=canvas.getBoundingClientRect(),x=(e.clientX-rect.left)/rect.width*W,y=(e.clientY-rect.top)/rect.height*H;canvas.style.cursor=mapDestinations.some(p=>x>=p.x&&x<=p.x+p.w&&y>=p.y&&y<=p.y+p.h)?"pointer":"default"});
+window.addEventListener("keydown", e => {
+  if(e.key === "Escape"){
+    e.preventDefault();
+    if(!e.repeat) togglePauseMenu();
+    return;
+  }
+  keys.add(e.key);keys.add(e.code);
+  const k=e.code||e.key,raw=(e.key||"").toLowerCase();
+  if(["ArrowUp","ArrowDown","ArrowLeft","ArrowRight","Up","Down","Left","Right","Space"].includes(k))e.preventDefault();
+  const left=k==="ArrowLeft"||k==="Left"||k==="KeyA"||raw==="a",right=k==="ArrowRight"||k==="Right"||k==="KeyD"||raw==="d",up=k==="ArrowUp"||k==="Up"||k==="KeyW"||raw==="w",down=k==="ArrowDown"||k==="Down"||k==="KeyS"||raw==="s";
+  if(left||right||up||down){truck.target=null;truck.route=[];currentDestinationId=null;}
+  if(!e.repeat){if(left)nudgeTruck(-8,0);if(right)nudgeTruck(8,0);if(up)nudgeTruck(0,-8);if(down)nudgeTruck(0,8)}
+});
+window.addEventListener("keyup", e => {keys.delete(e.key);keys.delete(e.code);});
+
+function formatWon(n){ return `${Math.round(n)}원`; }
+function dist(x1,y1,x2,y2){ return Math.hypot(x2-x1,y2-y1); }
+function clamp(v,min,max){ return Math.max(min, Math.min(max, v)); }
+function rotateTowards(current,target,maxDelta){
+  let diff = Math.atan2(Math.sin(target-current), Math.cos(target-current));
+  diff = clamp(diff, -maxDelta, maxDelta);
+  return current + diff;
+}
+function roundedRect(x,y,w,h,r,fill,stroke){
+  ctx.beginPath();
+  ctx.moveTo(x+r,y);
+  ctx.lineTo(x+w-r,y);
+  ctx.quadraticCurveTo(x+w,y,x+w,y+r);
+  ctx.lineTo(x+w,y+h-r);
+  ctx.quadraticCurveTo(x+w,y+h,x+w-r,y+h);
+  ctx.lineTo(x+r,y+h);
+  ctx.quadraticCurveTo(x,y+h,x,y+h-r);
+  ctx.lineTo(x,y+r);
+  ctx.quadraticCurveTo(x,y,x+r,y);
+  if (fill) ctx.fill();
+  if (stroke) ctx.stroke();
+}
+
+if(new URLSearchParams(location.search).get("consultingComplete") === "1"){
+  document.getElementById("introModal").style.display = "none";
+  startGame();
+  handleConsultingReturn();
+}else if(new URLSearchParams(location.search).get("skipIntro") === "1"){
+  document.getElementById("introModal").style.display = "none";
+  startGame();
+}else{
+  updateUI();
+}
+requestAnimationFrame(function smoothLoop(now){gameLoop(now);requestAnimationFrame(smoothLoop)});
+</script>
+</body>
+</html>

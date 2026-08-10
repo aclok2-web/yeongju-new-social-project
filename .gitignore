@@ -1,0 +1,4 @@
+.video_tools/
+*.tmp
+*.bak
+*.encoding-broken-backup
