@@ -1402,6 +1402,7 @@ function drawWorld(){
     return;
   }
   if(mapImage.complete&&mapImage.naturalWidth)ctx.drawImage(mapImage,0,0,WORLD_W,WORLD_H);
+  drawFarmFields();
   drawMissionHouses(ctx);
 }
 
@@ -1435,6 +1436,12 @@ function drawFieldPatch(x,y,w,h,label){
   ctx.fillStyle = "#203428";
   ctx.font = "900 16px 'Malgun Gothic', sans-serif";
   ctx.fillText(label,x+16,y+24);
+}
+
+function drawFarmFields(){
+  drawFieldPatch(1165,112,118,76,"쌀밭");
+  drawFieldPatch(1298,112,118,76,"인삼밭");
+  drawFieldPatch(1165,208,118,76,"마늘밭");
 }
 
 function drawPlaces(){
