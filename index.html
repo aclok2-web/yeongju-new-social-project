@@ -1402,7 +1402,6 @@ function drawWorld(){
     return;
   }
   if(mapImage.complete&&mapImage.naturalWidth)ctx.drawImage(mapImage,0,0,WORLD_W,WORLD_H);
-  drawFarmFields();
   drawMissionHouses(ctx);
 }
 
@@ -1423,25 +1422,6 @@ function drawMissionHouses(targetCtx,scaleX=1,scaleY=1){
     const h=missionHousePatches[i];
     targetCtx.drawImage(houseLayerImage,h.x,h.y,h.w,h.h,h.x*scaleX,h.y*scaleY,h.w*scaleX,h.h*scaleY);
   }
-}
-
-function drawFieldPatch(x,y,w,h,label){
-  ctx.fillStyle = "#6fae5f";
-  ctx.fillRect(x,y,w,h);
-  ctx.strokeStyle = "#315d35";
-  ctx.lineWidth = 5;
-  ctx.strokeRect(x,y,w,h);
-  ctx.fillStyle = "rgba(255,248,180,.6)";
-  for(let i=0;i<16;i++) ctx.fillRect(x+18+i*22,y+22+(i%3)*24,10,38);
-  ctx.fillStyle = "#203428";
-  ctx.font = "900 16px 'Malgun Gothic', sans-serif";
-  ctx.fillText(label,x+16,y+24);
-}
-
-function drawFarmFields(){
-  drawFieldPatch(1165,112,118,76,"쌀밭");
-  drawFieldPatch(1298,112,118,76,"인삼밭");
-  drawFieldPatch(1165,208,118,76,"마늘밭");
 }
 
 function drawPlaces(){

@@ -368,8 +368,8 @@
       fieldZones.length = 0;
       addFieldBlock(620, 500, 5, 5, "ginseng", "인삼밭");
       addFieldBlock(1660, 750, 6, 4, "garlic", "마늘밭");
-      if(state.fieldLevel >= 2) addFieldBlock(540, 1160, 5, 4, "rice", "왼쪽 벼밭");
-      if(state.fieldLevel >= 3) addFieldBlock(1640, 1240, 6, 4, "rice", "오른쪽 벼밭");
+      addFieldBlock(540, 1160, 5, 4, "rice", "쌀밭");
+      if(state.fieldLevel >= 2) addFieldBlock(1640, 1240, 6, 4, "rice", "추가 쌀밭");
     }
 
     function addFieldBlock(x, y, cols, rows, type, label){
@@ -756,8 +756,8 @@
         };
         drawCropRegion("ginseng","인삼밭",500,440,880,610);
         drawCropRegion("garlic","마늘밭",1510,710,1160,500);
-        drawCropRegion("rice","왼쪽 벼밭",450,1080,960,570);
-        drawCropRegion("rice","오른쪽 벼밭",1510,1180,1160,500);
+        drawCropRegion("rice","쌀밭",450,1080,960,570);
+        drawCropRegion("rice","추가 쌀밭",1510,1180,1160,500);
       }
       fieldZones.forEach(drawFieldZone);
     }
