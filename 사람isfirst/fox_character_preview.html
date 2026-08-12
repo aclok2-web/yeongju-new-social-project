@@ -1,0 +1,46 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>BS05 Fox Character Model Preview</title>
+  <style>
+    body{margin:0;background:#f6f7f8;font-family:"Malgun Gothic",system-ui,sans-serif;color:#222}
+    main{min-height:100vh;display:grid;place-items:center;padding:28px}
+    .wrap{width:min(980px,100%);background:white;border:1px solid #e5e7eb;border-radius:14px;padding:22px;box-shadow:0 18px 45px rgba(15,23,42,.1)}
+    h1{font-size:24px;margin:0 0 4px}
+    p{margin:0 0 16px;color:#64748b}
+    canvas{width:100%;height:auto;border-radius:10px;background:linear-gradient(#fff,#f8fafc);border:1px solid #e5e7eb}
+  </style>
+</head>
+<body>
+<main>
+  <section class="wrap">
+    <h1>BS05 여우 캐릭터 모델</h1>
+    <p>색상규정의 orange/red/black/white를 유지한 게임용 캔버스 모델입니다.</p>
+    <canvas id="preview" width="960" height="520"></canvas>
+  </section>
+</main>
+<script src="fox_character_model.js"></script>
+<script>
+const canvas=document.getElementById('preview');
+const ctx=canvas.getContext('2d');
+function frame(){
+  ctx.clearRect(0,0,canvas.width,canvas.height);
+  ctx.fillStyle='#e5e7eb';
+  ctx.fillRect(0,420,960,2);
+  FoxMascot.draw(ctx,255,380,1.35,{pose:'idle'});
+  FoxMascot.draw(ctx,520,380,1.28,{pose:'idle',tool:'bubble',aimAngle:-.4});
+  FoxMascot.draw(ctx,765,382,1.24,{pose:'run',tool:'tetris'});
+  ctx.fillStyle='#111827';
+  ctx.font='bold 18px Malgun Gothic';
+  ctx.textAlign='center';
+  ctx.fillText('기본',230,470);
+  ctx.fillText('상생버블 슈팅',500,470);
+  ctx.fillText('테트리스 제작',745,470);
+  requestAnimationFrame(frame);
+}
+frame();
+</script>
+</body>
+</html>

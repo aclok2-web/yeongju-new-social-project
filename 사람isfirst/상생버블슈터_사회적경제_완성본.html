@@ -1,0 +1,1273 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <title>🤝 영주 상생 버블 슈터</title>
+  <style>
+    * { box-sizing: border-box; user-select: none; }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      background: linear-gradient(135deg, #f2fbf6 0%, #d8efe3 100%);
+      font-family: "Malgun Gothic", "Apple SD Gothic Neo", Arial, sans-serif;
+      color: #20312a;
+      overflow: hidden;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+    .game-shell {
+      width: min(1000px, calc(100vw - 14px));
+      height: min(720px, calc(100vh - 14px));
+      background: #fff;
+      border: 4px solid #3f9b59;
+      border-radius: 16px;
+      box-shadow: 0 18px 42px rgba(24, 67, 43, 0.22);
+      overflow: hidden;
+      display: grid;
+      grid-template-rows: auto 1fr;
+      position: relative;
+    }
+    .topbar {
+      background: #3f9b59;
+      color: #fff;
+      padding: 10px 12px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+    .title-block strong { display: block; font-size: clamp(17px, 2.4vw, 22px); }
+    .title-block span { font-size: 12px; opacity: 0.92; }
+    .metric {
+      background: rgba(0,0,0,0.18);
+      padding: 6px 10px;
+      border-radius: 8px;
+      font-weight: 800;
+      white-space: nowrap;
+      font-size: clamp(12px, 1.8vw, 15px);
+    }
+    .top-actions { display: flex; gap: 6px; }
+    button {
+      border: 0;
+      border-radius: 8px;
+      padding: 8px 11px;
+      font-weight: 800;
+      cursor: pointer;
+      color: #20312a;
+      background: #ffd95b;
+    }
+    button.secondary { background: #e7f5ec; }
+    button.danger { background: #ff7675; color: #fff; }
+    button:active { transform: translateY(1px); }
+    .play-area {
+      display: grid;
+      grid-template-columns: 1fr 250px;
+      min-height: 0;
+      background: #f6fbf8;
+    }
+    .canvas-wrap {
+      position: relative;
+      min-width: 0;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      padding: 8px;
+    }
+    canvas {
+      width: min(720px, 100%);
+      height: auto;
+      aspect-ratio: 720 / 560;
+      background: #fbfefc;
+      border: 2px solid #d7eadf;
+      border-radius: 10px;
+      touch-action: none;
+      cursor: crosshair;
+    }
+    .side-panel {
+      border-left: 2px solid #d7eadf;
+      background: #ffffff;
+      padding: 10px;
+      overflow: hidden;
+      display: grid;
+      grid-template-rows: auto auto auto 1fr;
+      gap: 8px;
+    }
+    .panel-card {
+      background: #f5fbf7;
+      border: 1px solid #d6eadf;
+      border-radius: 8px;
+      padding: 9px;
+    }
+    .panel-card h3 {
+      margin: 0 0 7px;
+      font-size: 14px;
+      color: #265f38;
+    }
+    .mission-title {
+      font-size: 13px;
+      font-weight: 900;
+      margin-bottom: 6px;
+      word-break: keep-all;
+    }
+    .need-row, .storage-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      font-size: 12px;
+      padding: 3px 0;
+    }
+    .need-row.done { color: #1e8e45; font-weight: 900; }
+    .storage-row.flash { animation: flash 0.45s ease; }
+    @keyframes flash {
+      0% { transform: scale(1); background: transparent; }
+      45% { transform: scale(1.04); background: #fff3b0; }
+      100% { transform: scale(1); background: transparent; }
+    }
+    .legend {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 4px;
+      font-size: 12px;
+    }
+    .legend span {
+      color: #fff;
+      border-radius: 7px;
+      padding: 4px 7px;
+      font-weight: 800;
+    }
+    .village-note {
+      font-size: 12px;
+      line-height: 1.45;
+      color: #455a4c;
+    }
+    .overlay {
+      position: absolute;
+      inset: 0;
+      z-index: 20;
+      background: rgba(12, 31, 22, 0.92);
+      color: #fff;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      text-align: center;
+      padding: 24px;
+    }
+    .overlay-card {
+      width: min(720px, 96%);
+      max-height: 96%;
+      overflow: auto;
+      background: #10291b;
+      border: 2px solid #ffd95b;
+      border-radius: 14px;
+      padding: 22px;
+      box-shadow: 0 12px 34px rgba(0,0,0,0.35);
+    }
+    .overlay h1, .overlay h2 { margin: 0 0 10px; color: #ffd95b; }
+    .overlay p { margin: 8px auto 14px; line-height: 1.65; max-width: 620px; word-break: keep-all; }
+    .howto {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 8px;
+      text-align: left;
+      margin: 16px 0;
+      font-size: 14px;
+    }
+    .howto div, .report-grid div {
+      background: rgba(255,255,255,0.08);
+      border: 1px solid rgba(255,255,255,0.16);
+      border-radius: 8px;
+      padding: 8px;
+    }
+    .message-card {
+      position: absolute;
+      top: 74px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: min(520px, 90%);
+      background: rgba(255, 255, 255, 0.96);
+      border: 2px solid #ffd95b;
+      color: #20312a;
+      border-radius: 10px;
+      padding: 12px;
+      z-index: 12;
+      box-shadow: 0 8px 20px rgba(0,0,0,0.18);
+      display: none;
+      text-align: center;
+      font-weight: 800;
+      word-break: keep-all;
+    }
+    .report-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 8px;
+      margin: 12px 0;
+      text-align: left;
+      font-size: 13px;
+    }
+    .bar-row { margin: 8px 0; text-align: left; font-size: 13px; }
+    .bar-bg { height: 12px; background: rgba(255,255,255,0.18); border-radius: 99px; overflow: hidden; margin-top: 3px; }
+    .bar-fill { height: 100%; border-radius: 99px; }
+    @media (max-width: 760px) {
+      body { align-items: stretch; }
+      .game-shell { width: 100vw; height: 100vh; border: 0; border-radius: 0; }
+      .play-area { grid-template-columns: 1fr; grid-template-rows: auto auto; overflow: hidden; }
+      .canvas-wrap { padding: 4px; }
+      .side-panel {
+        border-left: 0;
+        border-top: 2px solid #d7eadf;
+        grid-template-columns: 1fr 1fr;
+        grid-template-rows: auto auto;
+        max-height: 230px;
+        overflow: auto;
+      }
+      .panel-card { padding: 7px; }
+      .howto, .report-grid { grid-template-columns: 1fr; }
+      .title-block span { display: none; }
+    }
+  </style>
+</head>
+<body>
+  <div class="game-shell">
+    <div class="topbar">
+      <div class="title-block">
+        <strong>🤝 영주 상생 버블 슈터</strong>
+        <span>나눔·상생·협동으로 만드는 사회적경제 마을</span>
+      </div>
+      <div class="metric">사회적 가치 <span id="score">0</span></div>
+      <div class="metric">미션 <span id="mission-count">0</span>/5</div>
+      <div class="top-actions">
+        <button id="learn-btn" class="secondary">가치 알아보기</button>
+        <button id="bgm-btn">🎵 상생 음악 ON</button>
+        <button class="danger" id="reset-btn">리셋</button>
+      </div>
+    </div>
+
+    <div class="play-area">
+      <div class="canvas-wrap">
+        <canvas id="game-canvas" width="720" height="560"></canvas>
+        <div id="message-card" class="message-card"></div>
+      </div>
+      <aside class="side-panel">
+        <div class="panel-card" id="mission-panel">
+          <h3>현재 지역 미션</h3>
+          <div class="mission-title" id="mission-title"></div>
+          <div id="mission-needs"></div>
+          <div class="village-note" id="mission-result"></div>
+        </div>
+        <div class="panel-card">
+          <h3>가치 보관함</h3>
+          <div id="storage-list"></div>
+        </div>
+        <div class="panel-card">
+          <h3>가치 버블</h3>
+          <div class="legend" id="legend"></div>
+        </div>
+        <div class="panel-card">
+          <h3>상생마을 성장</h3>
+          <div class="village-note" id="village-note">비어 있는 마을에서 시작합니다. 미션을 해결할수록 마을이 살아납니다.</div>
+        </div>
+      </aside>
+    </div>
+
+    <div id="start-screen" class="overlay">
+      <div class="overlay-card">
+        <h1>🤝 영주 상생 버블 슈터</h1>
+        <p><strong>나눔·상생·협동으로 만드는 사회적경제 마을</strong></p>
+        <div class="howto">
+          <div>같은 사회적 가치 버블을 3개 이상 연결하세요.</div>
+          <div>버블을 연결하면 해당 가치카드를 얻습니다.</div>
+          <div>서로 다른 가치카드를 조합하면 지역 문제를 해결할 수 있습니다.</div>
+          <div>문제를 해결할수록 마을이 성장하고 주민이 행복해집니다.</div>
+          <div>모든 가치를 연결해 상생마을을 완성하세요.</div>
+          <div>PC는 마우스, 모바일은 터치로 조준하고 떼면 발사합니다.</div>
+        </div>
+        <button id="start-btn">상생마을 만들기 시작</button>
+      </div>
+    </div>
+
+    <div id="learn-screen" class="overlay" style="display:none;">
+      <div class="overlay-card">
+        <h2>가치 알아보기</h2>
+        <p>사회적경제는 사람과 공동체의 가치를 중요하게 생각하며, 협력과 연대를 통해 지역 문제를 해결하고 함께 성장하는 경제 활동입니다.</p>
+        <div id="learn-list" class="howto"></div>
+        <button id="continue-btn">게임 계속하기</button>
+      </div>
+    </div>
+
+    <div id="end-screen" class="overlay" style="display:none;">
+      <div class="overlay-card">
+        <h2 id="end-title">사회적 가치 리포트</h2>
+        <p id="end-quote"></p>
+        <h2 id="final-score">0점</h2>
+        <div id="report-body"></div>
+        <button id="restart-btn">다시 상생마을 만들기</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const canvas = document.getElementById("game-canvas");
+    const ctx = canvas.getContext("2d");
+    const scoreEl = document.getElementById("score");
+    const missionCountEl = document.getElementById("mission-count");
+    const missionTitleEl = document.getElementById("mission-title");
+    const missionNeedsEl = document.getElementById("mission-needs");
+    const missionResultEl = document.getElementById("mission-result");
+    const storageListEl = document.getElementById("storage-list");
+    const legendEl = document.getElementById("legend");
+    const villageNoteEl = document.getElementById("village-note");
+    const startScreen = document.getElementById("start-screen");
+    const learnScreen = document.getElementById("learn-screen");
+    const endScreen = document.getElementById("end-screen");
+    const messageCard = document.getElementById("message-card");
+
+    const ROWS = 9;
+    const COLS = 10;
+    const R = 22;
+    const TOP = 62;
+    const LEFT = 58;
+    const ROW_GAP = R * 1.72;
+    const SHOOTER_X = canvas.width / 2;
+    const SHOOTER_Y = canvas.height - 56;
+    const FAIL_Y = canvas.height - 122;
+    const NUM_VALUES = 5;
+
+    const VALUE_TYPES = {
+      1: { name: "협동", shortText: "협동", icon: "🤝", color: "#e74c3c", description: "주민의 힘과 자원을 모아 함께 문제를 해결합니다." },
+      2: { name: "나눔", shortText: "나눔", icon: "🎁", color: "#f1c40f", description: "필요한 이웃에게 자원과 마음을 나눕니다." },
+      3: { name: "상생", shortText: "상생", icon: "🌱", color: "#9b59b6", description: "기업과 주민이 서로를 도우며 함께 성장합니다." },
+      4: { name: "일자리 창출", shortText: "일자리", icon: "💼", color: "#ff7675", description: "지역 주민에게 안정적인 일할 기회를 만듭니다." },
+      5: { name: "지역사회 발전", shortText: "지역", icon: "🏘️", color: "#d5a973", description: "지역의 문제를 주민과 기업이 함께 해결합니다." }
+    };
+
+    const VALUE_MESSAGES = {
+      1: ["🤝 협동 성공! 혼자 어려운 일도 함께하면 해결할 수 있습니다.", "🤝 서로의 힘을 모으면 큰 변화를 만들 수 있습니다.", "🤝 협동은 사회적 가치를 현실로 만드는 힘입니다."],
+      2: ["🎁 나눔 실천! 가진 것을 나누면 모두의 삶이 따뜻해집니다.", "🎁 작은 나눔이 지역사회의 큰 힘이 됩니다.", "🎁 필요한 이웃에게 자원과 마음을 나누었습니다."],
+      3: ["🌱 상생 실현! 기업과 주민이 함께 성장합니다.", "🌱 한쪽의 이익이 아니라 모두의 성장을 만듭니다.", "🌱 서로 돕는 관계가 지속 가능한 지역을 만듭니다."],
+      4: ["💼 새로운 일자리! 지역 주민에게 일할 기회가 생겼습니다.", "💼 사회적기업이 지역의 안정적인 일자리를 만듭니다.", "💼 지역에서 일하고 생활할 수 있는 기반이 생겼습니다."],
+      5: ["🏘️ 우리 마을이 성장합니다!", "🏘️ 지역의 문제를 주민과 기업이 함께 해결했습니다.", "🏘️ 지역의 자원과 주민 참여가 마을을 변화시킵니다."]
+    };
+
+    const MISSIONS = [
+      { title: "식사 어려운 어르신의 식사 문제", req: {2:1, 1:1}, result: "🍲 나눔식당 건설", bonus: 500, jobs: 0, residents: 3, solves: ["care-gap"], msg: "🍲 주민과 사회적기업이 함께 운영하는 나눔식당을 만들었습니다." },
+      { title: "청년 인구 유출", req: {4:1, 5:1}, result: "💼 청년 사회적기업 창업", bonus: 700, jobs: 3, residents: 0, solves: ["youth-out"], msg: "💼 지역 자원을 활용하는 청년 사회적기업이 문을 열었습니다." },
+      { title: "지역 농산물 판매 부족", req: {3:1, 1:1, 5:1}, result: "🍎 지역 농산물 판매망", bonus: 900, jobs: 4, residents: 0, solves: ["local-decline"], msg: "🍎 농가·기업·주민이 함께하는 지역 농산물 판매망이 만들어졌습니다." },
+      { title: "이동이 불편한 주민", req: {2:1, 4:1, 1:1}, result: "🚌 마을 이동지원 서비스", bonus: 1000, jobs: 2, residents: 4, solves: ["job-lack"], msg: "🚌 주민과 함께 운영하는 이동지원 서비스가 시작되었습니다." },
+      { title: "상생마을 완성", req: {1:1, 2:1, 3:1, 4:1, 5:1}, result: "🎊 상생마을 네트워크", bonus: 2000, jobs: 5, residents: 6, solves: ["environment", "final-gap"], msg: "🎊 주민·기업·공공기관이 연결된 상생마을을 완성했습니다." }
+    ];
+
+    const PROBLEMS = {
+      "care-gap": { icon: "🍽️", name: "돌봄 공백" },
+      "youth-out": { icon: "🚶", name: "청년 유출" },
+      "job-lack": { icon: "⚠️", name: "일자리 부족" },
+      "environment": { icon: "♻️", name: "환경 문제" },
+      "local-decline": { icon: "🏚️", name: "지역 쇠퇴" },
+      "final-gap": { icon: "🕳️", name: "연결 부족" }
+    };
+
+    let grid = [];
+    let currentBubble = null;
+    let nextBubble = null;
+    let mouse = { x: SHOOTER_X, y: SHOOTER_Y - 150 };
+    let score = 0;
+    let valueScores = {};
+    let cardStore = {};
+    let missionIndex = 0;
+    let completedMissions = 0;
+    let jobsCreated = 0;
+    let helpedResidents = 0;
+    let socialEnterprises = 0;
+    let solvedProblems = 0;
+    let combo = 0;
+    let bestCombo = 0;
+    let isGameOver = false;
+    let isPaused = true;
+    let started = false;
+    let particles = [];
+    let popEffects = [];
+    let messageTimer = 0;
+    let bgmOn = false;
+    let audioCtx = null;
+    let bgmTimer = null;
+
+    class Bubble {
+      constructor(x, y, type, problemKey = null) {
+        this.x = x;
+        this.y = y;
+        this.type = type;
+        this.problemKey = problemKey;
+        this.radius = R;
+        this.vx = 0;
+        this.vy = 0;
+        this.moving = false;
+      }
+      draw() {
+        ctx.save();
+        if (this.type === 99) drawProblemBubble(this);
+        else drawValueBubble(this);
+        ctx.restore();
+      }
+    }
+
+    function drawValueBubble(bubble) {
+      const v = VALUE_TYPES[bubble.type];
+      ctx.beginPath();
+      ctx.arc(bubble.x, bubble.y, bubble.radius, 0, Math.PI * 2);
+      ctx.fillStyle = v.color;
+      ctx.fill();
+      ctx.lineWidth = 3;
+      ctx.strokeStyle = "rgba(255,255,255,0.85)";
+      ctx.stroke();
+      ctx.fillStyle = bubble.type === 2 ? "#2b2b2b" : "#fff";
+      ctx.textAlign = "center";
+      ctx.textBaseline = "middle";
+      ctx.font = "18px 'Malgun Gothic'";
+      ctx.fillText(v.icon, bubble.x, bubble.y - 7);
+      ctx.font = "bold 10px 'Malgun Gothic'";
+      ctx.fillText(v.shortText, bubble.x, bubble.y + 10);
+    }
+
+    function drawProblemBubble(bubble) {
+      const p = PROBLEMS[bubble.problemKey];
+      const pulse = 1 + Math.sin(Date.now() * 0.01) * 0.04;
+      ctx.beginPath();
+      ctx.arc(bubble.x, bubble.y, bubble.radius * pulse, 0, Math.PI * 2);
+      ctx.fillStyle = "#62646b";
+      ctx.fill();
+      ctx.lineWidth = 3;
+      ctx.strokeStyle = "#2d3035";
+      ctx.stroke();
+      ctx.fillStyle = "#fff";
+      ctx.textAlign = "center";
+      ctx.textBaseline = "middle";
+      ctx.font = "16px 'Malgun Gothic'";
+      ctx.fillText(p.icon, bubble.x, bubble.y - 6);
+      ctx.font = "bold 9px 'Malgun Gothic'";
+      ctx.fillText(p.name, bubble.x, bubble.y + 10);
+    }
+
+    function resetGame(keepMusic = true) {
+      score = 0;
+      valueScores = {1:0,2:0,3:0,4:0,5:0};
+      cardStore = {1:0,2:0,3:0,4:0,5:0};
+      missionIndex = 0;
+      completedMissions = 0;
+      jobsCreated = 0;
+      helpedResidents = 0;
+      socialEnterprises = 0;
+      solvedProblems = 0;
+      combo = 0;
+      bestCombo = 0;
+      isGameOver = false;
+      isPaused = !started;
+      particles = [];
+      popEffects = [];
+      messageTimer = 0;
+      grid = [];
+      initGrid();
+      nextBubble = null;
+      spawnShooter();
+      updateUI();
+      document.getElementById("end-screen").style.display = "none";
+      if (!keepMusic && bgmOn) toggleBGM();
+    }
+
+    function initGrid() {
+      for (let r = 0; r < ROWS; r++) {
+        grid[r] = [];
+        for (let c = 0; c < COLS; c++) grid[r][c] = null;
+      }
+      for (let r = 0; r < 4; r++) {
+        for (let c = 0; c < COLS; c++) {
+          if (r === 3 && Math.random() < 0.3) continue;
+          grid[r][c] = new Bubble(0, 0, weightedType());
+        }
+      }
+      const problemKeys = Object.keys(PROBLEMS);
+      for (let i = 0; i < 4; i++) {
+        const r = 1 + Math.floor(Math.random() * 3);
+        const c = Math.floor(Math.random() * COLS);
+        grid[r][c] = new Bubble(0, 0, 99, problemKeys[i]);
+      }
+      updateGridPositions();
+    }
+
+    function cellPosition(r, c) {
+      const offset = r % 2 ? R : 0;
+      return { x: LEFT + c * R * 2 + offset, y: TOP + r * ROW_GAP };
+    }
+
+    function updateGridPositions() {
+      for (let r = 0; r < ROWS; r++) {
+        for (let c = 0; c < COLS; c++) {
+          if (grid[r][c]) {
+            const p = cellPosition(r, c);
+            grid[r][c].x = p.x;
+            grid[r][c].y = p.y;
+          }
+        }
+      }
+    }
+
+    function getBoardTypes() {
+      const set = new Set();
+      for (let r = 0; r < ROWS; r++) {
+        for (let c = 0; c < COLS; c++) {
+          const b = grid[r][c];
+          if (b && b.type !== 99) set.add(b.type);
+        }
+      }
+      return [...set];
+    }
+
+    function weightedType() {
+      const available = getBoardTypes();
+      const needed = getNeededTypes();
+      const pool = available.length ? available.slice() : [1,2,3,4,5];
+      needed.forEach((type) => {
+        if (!pool.includes(type)) pool.push(type);
+        pool.push(type, type);
+      });
+      return pool[Math.floor(Math.random() * pool.length)] || (Math.floor(Math.random() * NUM_VALUES) + 1);
+    }
+
+    function getNeededTypes() {
+      const mission = MISSIONS[missionIndex];
+      if (!mission) return [];
+      return Object.keys(mission.req).map(Number).filter((type) => cardStore[type] < mission.req[type]);
+    }
+
+    function spawnShooter() {
+      if (isGameOver) return;
+      if (!nextBubble) nextBubble = new Bubble(90, canvas.height - 36, weightedType());
+      currentBubble = new Bubble(SHOOTER_X, SHOOTER_Y, nextBubble.type);
+      nextBubble = new Bubble(90, canvas.height - 36, weightedType());
+    }
+
+    function pointerPos(e) {
+      const rect = canvas.getBoundingClientRect();
+      const point = e.touches ? e.touches[0] : e;
+      return {
+        x: (point.clientX - rect.left) * (canvas.width / rect.width),
+        y: (point.clientY - rect.top) * (canvas.height / rect.height)
+      };
+    }
+
+    function setAim(e) {
+      const p = pointerPos(e);
+      mouse.x = p.x;
+      mouse.y = Math.min(p.y, SHOOTER_Y - 12);
+    }
+
+    function shoot() {
+      if (isPaused || isGameOver || !currentBubble || currentBubble.moving) return;
+      const dx = mouse.x - currentBubble.x;
+      const dy = mouse.y - currentBubble.y;
+      if (dy > -12) return;
+      const len = Math.hypot(dx, dy);
+      if (!len) return;
+      const speed = 12.5;
+      currentBubble.vx = dx / len * speed;
+      currentBubble.vy = dy / len * speed;
+      currentBubble.moving = true;
+      combo = combo || 0;
+      playSfx("shoot");
+    }
+
+    canvas.addEventListener("mousemove", setAim);
+    canvas.addEventListener("click", shoot);
+    canvas.addEventListener("touchstart", (e) => { e.preventDefault(); setAim(e); }, { passive: false });
+    canvas.addEventListener("touchmove", (e) => { e.preventDefault(); setAim(e); }, { passive: false });
+    canvas.addEventListener("touchend", (e) => { e.preventDefault(); shoot(); }, { passive: false });
+
+    function update() {
+      if (isPaused || isGameOver) return;
+      if (messageTimer > 0) {
+        messageTimer--;
+        if (messageTimer <= 0) messageCard.style.display = "none";
+      }
+      updateEffects();
+      if (currentBubble && currentBubble.moving) {
+        currentBubble.x += currentBubble.vx;
+        currentBubble.y += currentBubble.vy;
+        if (currentBubble.x - R < 0) {
+          currentBubble.x = R;
+          currentBubble.vx *= -1;
+          playSfx("bounce");
+        }
+        if (currentBubble.x + R > canvas.width) {
+          currentBubble.x = canvas.width - R;
+          currentBubble.vx *= -1;
+          playSfx("bounce");
+        }
+        if (currentBubble.y - R < 0) {
+          snapToGrid(currentBubble);
+        } else {
+          for (let r = 0; r < ROWS; r++) {
+            for (let c = 0; c < COLS; c++) {
+              const b = grid[r][c];
+              if (b && Math.hypot(currentBubble.x - b.x, currentBubble.y - b.y) < R * 1.75) {
+                snapToGrid(currentBubble);
+                return;
+              }
+            }
+          }
+        }
+      }
+    }
+
+    function snapToGrid(bubble) {
+      bubble.moving = false;
+      let best = null;
+      let minDist = Infinity;
+      for (let r = 0; r < ROWS; r++) {
+        for (let c = 0; c < COLS; c++) {
+          if (!grid[r][c]) {
+            const p = cellPosition(r, c);
+            const d = Math.hypot(bubble.x - p.x, bubble.y - p.y);
+            if (d < minDist) {
+              minDist = d;
+              best = { r, c };
+            }
+          }
+        }
+      }
+      if (!best) {
+        endGame(false);
+        return;
+      }
+      grid[best.r][best.c] = new Bubble(0, 0, bubble.type);
+      updateGridPositions();
+      const matches = findMatches(best.r, best.c, bubble.type);
+      if (matches.length >= 3) {
+        resolveMatch(matches, bubble.type);
+      } else {
+        combo = 0;
+      }
+      removeFloatingBubbles();
+      solveCardBasedProblems();
+      checkMissionCompletion();
+      if (checkSuccess()) {
+        endGame(true);
+        return;
+      }
+      if (checkFailure()) {
+        endGame(false);
+        return;
+      }
+      spawnShooter();
+      updateUI();
+    }
+
+    function findMatches(r, c, type) {
+      if (type === 99) return [];
+      const found = [];
+      const seen = new Set();
+      const stack = [{ r, c }];
+      while (stack.length) {
+        const cur = stack.pop();
+        const key = `${cur.r},${cur.c}`;
+        if (seen.has(key)) continue;
+        seen.add(key);
+        const b = grid[cur.r] && grid[cur.r][cur.c];
+        if (!b || b.type !== type) continue;
+        found.push(cur);
+        getNeighbors(cur.r, cur.c).forEach((n) => stack.push(n));
+      }
+      return found;
+    }
+
+    function getNeighbors(r, c) {
+      const odd = r % 2 === 1;
+      const dirs = odd
+        ? [[-1,0],[-1,1],[0,-1],[0,1],[1,0],[1,1]]
+        : [[-1,-1],[-1,0],[0,-1],[0,1],[1,-1],[1,0]];
+      return dirs
+        .map(([dr, dc]) => ({ r: r + dr, c: c + dc }))
+        .filter((n) => n.r >= 0 && n.r < ROWS && n.c >= 0 && n.c < COLS);
+    }
+
+    function resolveMatch(matches, type) {
+      matches.forEach((cell) => {
+        const b = grid[cell.r][cell.c];
+        if (b) popEffects.push({ x: b.x, y: b.y, radius: R, alpha: 1, color: VALUE_TYPES[type].color });
+        grid[cell.r][cell.c] = null;
+      });
+      combo++;
+      bestCombo = Math.max(bestCombo, combo);
+      const cards = matches.length >= 7 ? 3 : matches.length >= 5 ? 2 : 1;
+      cardStore[type] += cards;
+      const multiplier = comboMultiplier();
+      const gained = Math.round((matches.length * 20 + cards * 50) * multiplier);
+      score += gained;
+      valueScores[type] += gained;
+      showValueMessage(type, cards, gained);
+      animateCardGain(type);
+      playSfx("match");
+    }
+
+    function comboMultiplier() {
+      if (combo >= 5) return 3;
+      if (combo === 4) return 2;
+      if (combo === 3) return 1.5;
+      if (combo === 2) return 1.2;
+      return 1;
+    }
+
+    function comboName() {
+      if (combo >= 5) return "지역사회 변화";
+      if (combo === 4) return "상생 네트워크";
+      if (combo === 3) return "협력 확산";
+      if (combo === 2) return "주민 참여";
+      return "가치 발견";
+    }
+
+    function showValueMessage(type, cards, gained) {
+      const messages = VALUE_MESSAGES[type];
+      const base = messages[Math.floor(Math.random() * messages.length)];
+      const comboText = combo > 1 ? `<br>🎊 ${comboName()} ${combo}연속! x${comboMultiplier()}` : "";
+      showMessage(`${base}<br>가치카드 +${cards}, 사회적 가치 +${gained}${comboText}`);
+    }
+
+    function removeFloatingBubbles() {
+      const connected = Array.from({ length: ROWS }, () => Array(COLS).fill(false));
+      const queue = [];
+      for (let c = 0; c < COLS; c++) {
+        if (grid[0][c]) {
+          connected[0][c] = true;
+          queue.push({ r: 0, c });
+        }
+      }
+      while (queue.length) {
+        const cur = queue.shift();
+        getNeighbors(cur.r, cur.c).forEach((n) => {
+          if (grid[n.r][n.c] && !connected[n.r][n.c]) {
+            connected[n.r][n.c] = true;
+            queue.push(n);
+          }
+        });
+      }
+      let dropped = 0;
+      for (let r = 1; r < ROWS; r++) {
+        for (let c = 0; c < COLS; c++) {
+          if (grid[r][c] && !connected[r][c]) {
+            popEffects.push({ x: grid[r][c].x, y: grid[r][c].y, radius: R, alpha: 1, color: "#7fbf8a" });
+            grid[r][c] = null;
+            dropped++;
+          }
+        }
+      }
+      if (dropped) score += dropped * 15;
+    }
+
+    function checkMissionCompletion() {
+      const mission = MISSIONS[missionIndex];
+      if (!mission) return;
+      const ready = Object.keys(mission.req).every((type) => cardStore[type] >= mission.req[type]);
+      if (!ready) return;
+      Object.keys(mission.req).forEach((type) => cardStore[type] -= mission.req[type]);
+      missionIndex++;
+      completedMissions++;
+      jobsCreated += mission.jobs;
+      helpedResidents += mission.residents;
+      socialEnterprises++;
+      score += mission.bonus;
+      solveProblems(mission.solves);
+      showMessage(`${mission.msg}<br>${mission.result} · 보너스 +${mission.bonus}`);
+      addCelebration(80);
+      playSfx("mission");
+      updateUI();
+    }
+
+    function solveProblems(keys) {
+      keys.forEach((key) => {
+        for (let r = 0; r < ROWS; r++) {
+          for (let c = 0; c < COLS; c++) {
+            const b = grid[r][c];
+            if (b && b.type === 99 && b.problemKey === key) {
+              popEffects.push({ x: b.x, y: b.y, radius: R + 8, alpha: 1, color: "#f7f7f7" });
+              grid[r][c] = null;
+              solvedProblems++;
+              score += 300;
+              showMessage(`✨ ${PROBLEMS[key].name} 문제가 해결되었습니다. +300`);
+              playSfx("problem");
+            }
+          }
+        }
+      });
+    }
+
+    function solveCardBasedProblems() {
+      if (cardStore[4] >= 2) solveProblems(["job-lack"]);
+      if (cardStore[5] >= 1 && cardStore[3] >= 1) solveProblems(["environment"]);
+    }
+
+    function checkSuccess() {
+      const problemLeft = grid.flat().some((b) => b && b.type === 99);
+      const allBubblesGone = !grid.flat().some(Boolean);
+      return completedMissions >= MISSIONS.length || !problemLeft || allBubblesGone;
+    }
+
+    function checkFailure() {
+      for (let r = 0; r < ROWS; r++) {
+        for (let c = 0; c < COLS; c++) {
+          const b = grid[r][c];
+          if (b && b.y + R >= FAIL_Y) return true;
+        }
+      }
+      return false;
+    }
+
+    function updateUI() {
+      scoreEl.textContent = score.toLocaleString();
+      missionCountEl.textContent = completedMissions;
+      const mission = MISSIONS[missionIndex] || MISSIONS[MISSIONS.length - 1];
+      missionTitleEl.textContent = missionIndex < MISSIONS.length ? mission.title : "모든 지역 미션 완료";
+      missionResultEl.textContent = missionIndex < MISSIONS.length ? `완성 결과: ${mission.result}` : "상생마을 네트워크가 완성되었습니다.";
+      missionNeedsEl.innerHTML = missionIndex < MISSIONS.length
+        ? Object.keys(mission.req).map((type) => {
+            const done = cardStore[type] >= mission.req[type];
+            const v = VALUE_TYPES[type];
+            return `<div class="need-row ${done ? "done" : ""}"><span>${done ? "✓" : "□"} ${v.icon} ${v.name}</span><b>${cardStore[type]}/${mission.req[type]}</b></div>`;
+          }).join("")
+        : "<div class='need-row done'>✓ 모든 가치 조합 완료</div>";
+      storageListEl.innerHTML = Object.keys(VALUE_TYPES).map((type) => {
+        const v = VALUE_TYPES[type];
+        return `<div class="storage-row" data-type="${type}"><span>${v.icon} ${v.name}</span><b>${cardStore[type]}</b></div>`;
+      }).join("");
+      legendEl.innerHTML = Object.keys(VALUE_TYPES).map((type) => {
+        const v = VALUE_TYPES[type];
+        const textColor = Number(type) === 2 ? "#333" : "#fff";
+        return `<span style="background:${v.color};color:${textColor}">${v.icon} ${v.name}</span>`;
+      }).join("");
+      const notes = [
+        "비어 있는 마을입니다. 주민의 손길이 필요합니다.",
+        "나눔식당이 생기고 따뜻한 불빛이 켜졌습니다.",
+        "청년 사회적기업이 문을 열고 새 일자리가 생겼습니다.",
+        "지역 농산물 판매망이 연결되어 마을 경제가 살아납니다.",
+        "이동지원 서비스가 시작되어 더 많은 주민이 함께합니다.",
+        "상생마을이 완성되어 주민과 기업이 함께 축하합니다."
+      ];
+      villageNoteEl.textContent = notes[Math.min(completedMissions, 5)];
+    }
+
+    function animateCardGain(type) {
+      setTimeout(() => {
+        const row = storageListEl.querySelector(`[data-type="${type}"]`);
+        if (row) {
+          row.classList.add("flash");
+          setTimeout(() => row.classList.remove("flash"), 500);
+        }
+      }, 30);
+    }
+
+    function showMessage(html) {
+      messageCard.innerHTML = html;
+      messageCard.style.display = "block";
+      messageTimer = 120;
+    }
+
+    function draw() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      drawVillage();
+      drawBoard();
+      drawShooter();
+      drawEffects();
+    }
+
+    function drawVillage() {
+      ctx.fillStyle = "#e9f7ef";
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+      ctx.fillStyle = "#b8dfc4";
+      ctx.fillRect(0, canvas.height - 110, canvas.width, 110);
+      ctx.fillStyle = "#8dc99d";
+      ctx.fillRect(0, canvas.height - 78, canvas.width, 78);
+      drawCloud(85, 45);
+      drawCloud(610, 56);
+      drawSmallTree(36, 462);
+      drawSmallTree(686, 468);
+      if (completedMissions >= 1) drawBuilding(38, 410, 88, 62, "#ffd166", "나눔식당", "🍲");
+      else drawEmptyLot(38, 412, "빈 건물");
+      if (completedMissions >= 2) drawBuilding(570, 395, 110, 78, "#80deea", "청년기업", "💼");
+      else drawEmptyLot(575, 414, "꺼진 상점");
+      if (completedMissions >= 3) {
+        drawMarket(146, 420);
+        drawTruck(242, 444);
+      }
+      if (completedMissions >= 4) {
+        drawBus(470, 454);
+        drawResident(535, 450, "♿");
+      }
+      if (completedMissions >= 5) {
+        drawPark(340, 430);
+        for (let i = 0; i < 10; i++) drawResident(300 + i * 18, 456 + Math.sin(Date.now() * 0.004 + i) * 4, i % 2 ? "🎉" : "🙂");
+      }
+      ctx.fillStyle = "rgba(255,255,255,0.72)";
+      ctx.fillRect(0, 0, canvas.width, 372);
+    }
+
+    function drawCloud(x, y) {
+      ctx.fillStyle = "rgba(255,255,255,0.82)";
+      ctx.beginPath();
+      ctx.arc(x, y, 18, 0, Math.PI * 2);
+      ctx.arc(x + 22, y - 7, 24, 0, Math.PI * 2);
+      ctx.arc(x + 50, y, 17, 0, Math.PI * 2);
+      ctx.fill();
+    }
+
+    function drawSmallTree(x, y) {
+      ctx.fillStyle = "#7b4a28";
+      ctx.fillRect(x - 4, y, 8, 34);
+      ctx.fillStyle = "#4caf50";
+      ctx.beginPath();
+      ctx.arc(x, y, 21, 0, Math.PI * 2);
+      ctx.fill();
+    }
+
+    function drawEmptyLot(x, y, text) {
+      ctx.fillStyle = "#cfd8dc";
+      ctx.fillRect(x, y, 96, 48);
+      ctx.strokeStyle = "#8d9aa0";
+      ctx.strokeRect(x, y, 96, 48);
+      ctx.fillStyle = "#607d8b";
+      ctx.font = "bold 12px 'Malgun Gothic'";
+      ctx.textAlign = "center";
+      ctx.fillText(text, x + 48, y + 28);
+    }
+
+    function drawBuilding(x, y, w, h, color, name, icon) {
+      ctx.fillStyle = color;
+      ctx.fillRect(x, y, w, h);
+      ctx.fillStyle = "#6d4c41";
+      ctx.beginPath();
+      ctx.moveTo(x - 8, y);
+      ctx.lineTo(x + w / 2, y - 26);
+      ctx.lineTo(x + w + 8, y);
+      ctx.closePath();
+      ctx.fill();
+      ctx.fillStyle = "#fffde7";
+      ctx.fillRect(x + 14, y + 18, w - 28, 18);
+      ctx.fillStyle = "#27352d";
+      ctx.font = "bold 12px 'Malgun Gothic'";
+      ctx.textAlign = "center";
+      ctx.fillText(`${icon} ${name}`, x + w / 2, y + 32);
+    }
+
+    function drawMarket(x, y) {
+      drawBuilding(x, y, 96, 54, "#f6ad55", "농산물장터", "🍎");
+      ctx.fillStyle = "#e53e3e";
+      ctx.fillRect(x + 12, y + 44, 16, 12);
+      ctx.fillStyle = "#38a169";
+      ctx.fillRect(x + 36, y + 44, 16, 12);
+    }
+
+    function drawTruck(x, y) {
+      ctx.fillStyle = "#90cdf4";
+      ctx.fillRect(x, y, 62, 26);
+      ctx.fillStyle = "#2b6cb0";
+      ctx.fillRect(x + 42, y - 14, 28, 40);
+      ctx.fillStyle = "#1a202c";
+      ctx.beginPath(); ctx.arc(x + 14, y + 28, 7, 0, Math.PI * 2); ctx.arc(x + 55, y + 28, 7, 0, Math.PI * 2); ctx.fill();
+    }
+
+    function drawBus(x, y) {
+      ctx.fillStyle = "#f6e05e";
+      ctx.fillRect(x, y, 92, 34);
+      ctx.fillStyle = "#2c7a7b";
+      ctx.fillRect(x + 8, y + 8, 66, 12);
+      ctx.fillStyle = "#1a202c";
+      ctx.beginPath(); ctx.arc(x + 20, y + 36, 7, 0, Math.PI * 2); ctx.arc(x + 72, y + 36, 7, 0, Math.PI * 2); ctx.fill();
+    }
+
+    function drawPark(x, y) {
+      ctx.fillStyle = "#68d391";
+      ctx.beginPath();
+      ctx.ellipse(x, y + 35, 78, 32, 0, 0, Math.PI * 2);
+      ctx.fill();
+      drawSmallTree(x - 45, y + 8);
+      drawSmallTree(x + 48, y + 5);
+      ctx.fillStyle = "#fff";
+      ctx.font = "20px serif";
+      ctx.fillText("✿ ✦ ✿", x - 22, y + 42);
+    }
+
+    function drawResident(x, y, icon) {
+      ctx.font = "20px 'Malgun Gothic'";
+      ctx.textAlign = "center";
+      ctx.fillText(icon, x, y);
+    }
+
+    function drawBoard() {
+      for (let r = 0; r < ROWS; r++) {
+        for (let c = 0; c < COLS; c++) if (grid[r][c]) grid[r][c].draw();
+      }
+      ctx.strokeStyle = "rgba(231, 76, 60, 0.38)";
+      ctx.setLineDash([7, 7]);
+      ctx.beginPath();
+      ctx.moveTo(0, FAIL_Y);
+      ctx.lineTo(canvas.width, FAIL_Y);
+      ctx.stroke();
+      ctx.setLineDash([]);
+    }
+
+    function drawShooter() {
+      const dx = mouse.x - SHOOTER_X;
+      const dy = mouse.y - SHOOTER_Y;
+      const angle = Math.atan2(dx, -dy);
+      ctx.save();
+      ctx.translate(SHOOTER_X, SHOOTER_Y);
+      ctx.rotate(angle);
+      ctx.strokeStyle = "#3f9b59";
+      ctx.lineWidth = 3;
+      ctx.setLineDash([5, 6]);
+      ctx.beginPath();
+      ctx.moveTo(0, -12);
+      ctx.lineTo(0, -150);
+      ctx.stroke();
+      ctx.setLineDash([]);
+      ctx.fillStyle = "#3f9b59";
+      ctx.beginPath();
+      ctx.moveTo(0, -165);
+      ctx.lineTo(-8, -148);
+      ctx.lineTo(8, -148);
+      ctx.closePath();
+      ctx.fill();
+      ctx.restore();
+      drawCharacter(SHOOTER_X, SHOOTER_Y + 20);
+      if (currentBubble) currentBubble.draw();
+      ctx.fillStyle = "#265f38";
+      ctx.font = "bold 12px 'Malgun Gothic'";
+      ctx.textAlign = "center";
+      ctx.fillText("다음 가치", 90, canvas.height - 70);
+      if (nextBubble) nextBubble.draw();
+    }
+
+    function drawCharacter(x, y) {
+      ctx.save();
+      ctx.translate(x, y);
+      ctx.fillStyle = "#34495e";
+      ctx.beginPath();
+      ctx.moveTo(-24, 36);
+      ctx.lineTo(-13, 3);
+      ctx.lineTo(13, 3);
+      ctx.lineTo(24, 36);
+      ctx.closePath();
+      ctx.fill();
+      ctx.fillStyle = "#ffd8c8";
+      ctx.beginPath();
+      ctx.arc(0, -14, 19, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.fillStyle = "#2d3436";
+      ctx.beginPath();
+      ctx.arc(-7, -16, 2.2, 0, Math.PI * 2);
+      ctx.arc(7, -16, 2.2, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.fillStyle = "#ff7675";
+      ctx.fillRect(-25, -32, 50, 7);
+      ctx.restore();
+    }
+
+    function updateEffects() {
+      for (let i = particles.length - 1; i >= 0; i--) {
+        const p = particles[i];
+        p.y += p.vy;
+        p.x += p.vx;
+        p.alpha -= 0.018;
+        if (p.alpha <= 0) particles.splice(i, 1);
+      }
+      for (let i = popEffects.length - 1; i >= 0; i--) {
+        const p = popEffects[i];
+        p.radius += 1.6;
+        p.alpha -= 0.04;
+        if (p.alpha <= 0) popEffects.splice(i, 1);
+      }
+    }
+
+    function drawEffects() {
+      popEffects.forEach((p) => {
+        ctx.save();
+        ctx.globalAlpha = Math.max(0, p.alpha);
+        ctx.strokeStyle = p.color;
+        ctx.lineWidth = 4;
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, p.radius, 0, Math.PI * 2);
+        ctx.stroke();
+        ctx.restore();
+      });
+      particles.forEach((p) => {
+        ctx.save();
+        ctx.globalAlpha = Math.max(0, p.alpha);
+        ctx.fillStyle = p.color;
+        ctx.font = `${p.size}px serif`;
+        ctx.fillText(p.text, p.x, p.y);
+        ctx.restore();
+      });
+    }
+
+    function addCelebration(count) {
+      for (let i = 0; i < count; i++) {
+        particles.push({
+          x: canvas.width / 2 + (Math.random() - 0.5) * 240,
+          y: 260 + (Math.random() - 0.5) * 80,
+          vx: (Math.random() - 0.5) * 3,
+          vy: -Math.random() * 3 - 1,
+          alpha: 1,
+          size: 16 + Math.random() * 12,
+          color: ["#e74c3c", "#f1c40f", "#2ecc71", "#9b59b6"][Math.floor(Math.random() * 4)],
+          text: ["✦", "●", "★", "✿"][Math.floor(Math.random() * 4)]
+        });
+      }
+    }
+
+    function endGame(win) {
+      isGameOver = true;
+      isPaused = true;
+      playSfx(win ? "success" : "fail");
+      const grade = getGrade();
+      const highest = Object.keys(valueScores).sort((a, b) => valueScores[b] - valueScores[a])[0];
+      const lowest = Object.keys(valueScores).sort((a, b) => valueScores[a] - valueScores[b])[0];
+      document.getElementById("end-title").textContent = grade;
+      document.getElementById("final-score").textContent = `${score.toLocaleString()}점`;
+      document.getElementById("end-quote").textContent = grade === "상생마을 설계자"
+        ? "나눔과 상생, 협동의 힘으로 모두가 함께 성장하는 마을을 완성했습니다."
+        : "사회적 가치는 하나만으로 완성되지 않습니다. 다양한 가치를 연결해 다시 상생마을을 만들어 보세요.";
+      document.getElementById("report-body").innerHTML = buildReport(highest, lowest);
+      endScreen.style.display = "flex";
+    }
+
+    function getGrade() {
+      if (completedMissions >= 5 && score >= 8000) return "상생마을 설계자";
+      if (completedMissions >= 4) return "사회적경제 실천가";
+      if (completedMissions >= 3) return "지역사회 협력가";
+      if (completedMissions >= 1) return "따뜻한 이웃";
+      return "새로운 상생의 시작";
+    }
+
+    function buildReport(highest, lowest) {
+      const analysisHigh = `${VALUE_TYPES[highest].name} 가치가 가장 높습니다. ${VALUE_TYPES[highest].description}`;
+      const analysisLow = `${VALUE_TYPES[lowest].name} 가치가 가장 약합니다. 다음 도전에서는 이 가치를 더 많이 연결해 보세요.`;
+      const maxScore = Math.max(1, ...Object.values(valueScores));
+      const bars = Object.keys(VALUE_TYPES).map((type) => {
+        const v = VALUE_TYPES[type];
+        const width = Math.max(4, Math.round(valueScores[type] / maxScore * 100));
+        return `<div class="bar-row">${v.icon} ${v.name}: ${valueScores[type].toLocaleString()}<div class="bar-bg"><div class="bar-fill" style="width:${width}%;background:${v.color}"></div></div></div>`;
+      }).join("");
+      return `
+        <div class="report-grid">
+          <div>완료한 지역 미션: ${completedMissions}개</div>
+          <div>해결한 사회문제: ${solvedProblems}개</div>
+          <div>창출한 일자리: ${jobsCreated}개</div>
+          <div>지원받은 주민: ${helpedResidents}명</div>
+          <div>연결한 사회적기업: ${socialEnterprises}곳</div>
+          <div>최고 콤보: ${bestCombo}연속</div>
+        </div>
+        ${bars}
+        <p>${analysisHigh}</p>
+        <p>${analysisLow}</p>
+      `;
+    }
+
+    function loop() {
+      update();
+      draw();
+      requestAnimationFrame(loop);
+    }
+
+    function ensureAudio() {
+      if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+      return audioCtx;
+    }
+
+    function playTone(freq, duration, type = "sine", volume = 0.08) {
+      const ac = ensureAudio();
+      const osc = ac.createOscillator();
+      const gain = ac.createGain();
+      osc.type = type;
+      osc.frequency.value = freq;
+      gain.gain.setValueAtTime(volume, ac.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.001, ac.currentTime + duration);
+      osc.connect(gain);
+      gain.connect(ac.destination);
+      osc.start();
+      osc.stop(ac.currentTime + duration);
+    }
+
+    function playSfx(kind) {
+      if (!audioCtx && !bgmOn) return;
+      const map = {
+        shoot: [520, 0.08, "triangle", 0.05],
+        bounce: [330, 0.05, "square", 0.035],
+        match: [660, 0.13, "sine", 0.08],
+        mission: [880, 0.28, "triangle", 0.1],
+        problem: [740, 0.18, "sawtooth", 0.06],
+        success: [1040, 0.5, "triangle", 0.11],
+        fail: [160, 0.4, "sine", 0.08]
+      };
+      playTone(...(map[kind] || map.match));
+    }
+
+    function toggleBGM() {
+      const btn = document.getElementById("bgm-btn");
+      if (!bgmOn) {
+        ensureAudio();
+        bgmOn = true;
+        btn.textContent = "🔇 상생 음악 OFF";
+        let step = 0;
+        const notes = [392, 440, 523, 587, 523, 440, 392, 330];
+        bgmTimer = setInterval(() => {
+          playTone(notes[step % notes.length], 0.16, step % 2 ? "triangle" : "sine", 0.035);
+          if (step % 4 === 0) playTone(196, 0.22, "sine", 0.04);
+          step++;
+        }, 210);
+      } else {
+        bgmOn = false;
+        btn.textContent = "🎵 상생 음악 ON";
+        clearInterval(bgmTimer);
+      }
+    }
+
+    function fillLearning() {
+      document.getElementById("learn-list").innerHTML = Object.keys(VALUE_TYPES).map((type) => {
+        const v = VALUE_TYPES[type];
+        return `<div><strong>${v.icon} ${v.name}</strong><br>${v.description}</div>`;
+      }).join("");
+    }
+
+    document.getElementById("start-btn").addEventListener("click", () => {
+      started = true;
+      isPaused = false;
+      startScreen.style.display = "none";
+      resetGame();
+    });
+    document.getElementById("reset-btn").addEventListener("click", () => {
+      started = true;
+      isPaused = false;
+      startScreen.style.display = "none";
+      resetGame();
+    });
+    document.getElementById("restart-btn").addEventListener("click", () => {
+      started = true;
+      isPaused = false;
+      endScreen.style.display = "none";
+      resetGame();
+    });
+    document.getElementById("bgm-btn").addEventListener("click", toggleBGM);
+    document.getElementById("learn-btn").addEventListener("click", () => {
+      if (!isGameOver) isPaused = true;
+      learnScreen.style.display = "flex";
+    });
+    document.getElementById("continue-btn").addEventListener("click", () => {
+      learnScreen.style.display = "none";
+      if (started && !isGameOver) isPaused = false;
+    });
+
+    fillLearning();
+    resetGame();
+    loop();
+  </script>
+</body>
+</html>

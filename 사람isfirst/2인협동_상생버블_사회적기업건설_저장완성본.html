@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <title>🌱 사회적 가치 재료 모으기</title>
+  <style>
+    *{box-sizing:border-box;user-select:none}
+    body{margin:0;min-height:100vh;background:linear-gradient(rgba(234,246,239,.7),rgba(234,246,239,.7)),url("assets/social-economy-background.png") center/cover fixed no-repeat;font-family:"Malgun Gothic",Arial,sans-serif;color:#203529;overflow:hidden;display:flex;align-items:center;justify-content:center}
+    .app{width:min(1120px,100vw);height:min(740px,100vh);background:#fff;border:4px solid #3f9b59;border-radius:14px;box-shadow:0 18px 42px rgba(0,0,0,.18);display:grid;grid-template-rows:auto 1fr auto;overflow:hidden;position:relative}
+    header{background:#3f9b59;color:#fff;padding:9px 12px;display:flex;gap:8px;align-items:center;justify-content:space-between;flex-wrap:wrap}
+    header h1{font-size:clamp(18px,2.6vw,24px);margin:0} header small{display:block;font-size:12px;opacity:.9}
+    .pill{background:rgba(0,0,0,.18);border-radius:8px;padding:6px 9px;font-weight:800;font-size:13px;white-space:nowrap}
+    button{border:0;border-radius:8px;padding:8px 10px;font-weight:900;cursor:pointer;background:#ffd95b;color:#203529}button:disabled{opacity:.45;cursor:not-allowed}.danger{background:#ff7675;color:#fff}.ghost{background:#e8f5ee}.ok{background:#38a169;color:#fff}
+    .main{display:grid;grid-template-columns:210px minmax(0,1fr);min-height:0;background:#f7fcf9}
+    .panel{padding:9px;border-right:2px solid #d8eadf;overflow:auto}.right{border-right:0;border-left:2px solid #d8eadf}
+    .card{background:#fff;border:1px solid #d5eadf;border-radius:8px;padding:9px;margin-bottom:8px}.card h3{margin:0 0 7px;color:#265f38;font-size:14px}
+    .role{font-weight:900;color:#265f38}.status{font-size:13px;line-height:1.45;word-break:keep-all}
+    .resource-bar{display:flex;gap:5px;flex-wrap:wrap}.res{padding:4px 6px;border-radius:8px;background:#eef8f2;font-weight:900;font-size:13px}.res.flash{animation:flash .45s ease}@keyframes flash{50%{transform:scale(1.12);background:#fff0a8}}
+    .value-grid,.special-grid{display:grid;grid-template-columns:1fr;gap:5px}.value-btn,.special-btn{display:flex;justify-content:space-between;align-items:center;text-align:left;font-size:13px;padding:7px;border:2px solid transparent}.value-btn.selected{border-color:#111;transform:translateX(2px)}
+    .coop-info{border:2px solid #ffd95b;background:linear-gradient(135deg,#fffbe5,#effaf3)}.secret{font-size:13px;line-height:1.55;font-weight:800}.secret b{color:#d9485f}.gauge{height:12px;background:#dfece4;border-radius:99px;overflow:hidden;margin-top:6px}.gauge>i{display:block;height:100%;width:0;background:linear-gradient(90deg,#49b96f,#ffd95b,#ff7675);transition:width .25s}
+    .canvas-wrap{display:flex;align-items:center;justify-content:center;padding:6px;position:relative;min-width:0}canvas{width:min(720px,100%);height:auto;aspect-ratio:720/560;border:2px solid #cfe6d8;border-radius:10px;background:#fbfffc}
+    .message{position:absolute;top:18px;left:50%;transform:translateX(-50%);width:min(540px,90%);background:rgba(255,255,255,.96);border:2px solid #ffd95b;border-radius:10px;padding:10px;display:none;text-align:center;font-weight:900;box-shadow:0 8px 20px rgba(0,0,0,.16);z-index:6}
+    .biz{border:1px solid #d8eadf;border-radius:8px;padding:8px;margin-bottom:7px;background:#fbfefc}.biz.locked{opacity:.62}.biz-title{font-weight:900}.cost{font-size:12px;margin:5px 0;display:flex;gap:4px;flex-wrap:wrap}.missing{color:#e53e3e;font-weight:900}.ready{box-shadow:0 0 0 2px #ffd95b inset}.check{font-size:12px;line-height:1.45}
+    footer{display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap;padding:7px 10px;background:#f0faf4;border-top:2px solid #d8eadf;font-size:12px}
+    .touch{display:flex;gap:6px;flex-wrap:wrap}.touch button{min-width:42px}
+    .overlay{position:absolute;inset:0;background:rgba(10,29,19,.93);z-index:20;color:#fff;display:flex;align-items:center;justify-content:center;text-align:center;padding:20px}.overlay-card{width:min(720px,96%);max-height:96%;overflow:auto;background:#10291b;border:2px solid #ffd95b;border-radius:14px;padding:22px}.overlay h2{color:#ffd95b;margin:0 0 10px}.overlay p{line-height:1.65;word-break:keep-all}.start-actions{display:flex;gap:8px;justify-content:center;flex-wrap:wrap}.report{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;text-align:left;margin:12px 0}.report div{background:rgba(255,255,255,.08);border-radius:8px;padding:8px}
+    input[type=file]{display:none}
+    @media(max-width:880px){.app{height:100vh;border:0;border-radius:0}.main{grid-template-columns:1fr;grid-template-rows:auto auto auto;overflow:auto}.panel,.right{border:0;border-bottom:2px solid #d8eadf;max-height:210px}.value-grid,.special-grid{grid-template-columns:repeat(3,1fr)}.report{grid-template-columns:1fr}}
+  </style>
+</head>
+<body>
+<div class="app">
+  <header>
+    <div><h1>🌱 사회적 가치 재료 모으기</h1><small>모두가 행복한 지속가능한 지역사회를 만들기 위해 사회적 가치를 버블을 통해 모아주세요!</small></div>
+    <div class="pill">사회적 가치 <span id="score">0</span></div>
+    <div class="pill">상생마을 <span id="progress">0</span>%</div>
+    <div class="pill">콤보 <span id="combo">0</span></div>
+    <div class="pill" id="save-state">저장 대기</div>
+    <button id="music-btn">🎵 상생 음악 ON</button>
+    <button id="export-btn" class="ghost">저장 데이터 내보내기</button>
+    <button id="import-btn" class="ghost">저장 데이터 불러오기</button>
+    <input id="import-file" type="file" accept="application/json">
+  </header>
+  <div class="main">
+    <aside class="panel">
+      <div class="card"><h3>자원 보관함</h3><div id="resources" class="resource-bar"></div><div class="status" id="last-save">마지막 저장: 없음</div></div>
+      <div class="card"><h3>조준</h3><div class="role">A / ←, D / →</div><div class="status">방향을 바꾸면 다음 발사가 준비됩니다.</div><div class="status" id="p1-state"></div></div>
+      <div class="card"><h3>현재·다음 버블</h3><div class="role">버블은 무작위로 준비됩니다. Enter / Space 발사</div><div id="value-buttons" class="value-grid"></div></div>
+    </aside>
+    <section class="canvas-wrap"><canvas id="game" width="720" height="560"></canvas><div id="message" class="message"></div></section>
+  </div>
+  <footer>
+    <div>A/D 또는 방향키로 조준하고 Enter/Space로 발사합니다. 최종 센터는 H를 1.5초 눌러 건설합니다.</div>
+    <div class="touch">
+      <button id="t-left">◀</button><button id="t-right">▶</button>
+      <button id="t-fire" class="ok">발사</button>
+    </div>
+  </footer>
+  <div id="start" class="overlay">
+    <div class="overlay-card">
+      <h2>🌱 사회적 가치 재료 모으기</h2>
+      <p>모두가 행복한 지속가능한 지역사회를 만들기 위해 사회적 가치를 버블을 통해 모아주세요!<br><br>같은 색 버블을 3개 이상 연결하면 사회적 가치를 모을 수 있어요.<br>A/D 또는 방향키로 조준하고 Enter/Space로 발사하세요.</p>
+      <div class="start-actions">
+        <button id="start-btn">게임 시작</button>
+      </div>
+    </div>
+  </div>
+  <div id="end" class="overlay" style="display:none"><div class="overlay-card"><h2 id="end-title"></h2><p id="end-quote"></p><div id="end-report" class="report"></div><button id="restart" class="ok">계속 건설하기</button></div></div>
+</div>
+<script src="fox_character_model.js"></script>
+<script>
+const SAVE_KEY='yeongju_coop_bubble_save_v1';
+const PIPELINE_KEY='social_economy_pipeline_v1',DEBT_LIMIT=1200;
+function pipelineDefault(){return{capital:0,material1:0,material2:0,material3:0,material1Multiplier:1,material2Multiplier:1,material3Multiplier:1,debt:0,products:{food:0,education:0,welfare:0,clothing:0,service:0,festival:0},revenue:0,bankrupt:false,loanStarted:false}}
+function loadPipeline(){try{return Object.assign(pipelineDefault(),JSON.parse(localStorage.getItem(PIPELINE_KEY)||'{}'))}catch(e){return pipelineDefault()}}
+function savePipeline(p){localStorage.setItem(PIPELINE_KEY,JSON.stringify(p));if(parent!==window)parent.postMessage({type:'pipeline-save',data:p},'*');renderPipeline()}
+window.addEventListener('message',e=>{if(e.data?.type==='pipeline-sync'){localStorage.setItem(PIPELINE_KEY,JSON.stringify(e.data.data));renderPipeline()}});
+function mandatoryLoan(){let p=loadPipeline();p.loanStarted=true;p.bankrupt=false;p.debt=0;savePipeline(p);return true}
+function borrowPipeline(){}
+function repayPipeline(){}
+function resetAllGameData(){resettingAll=true;gamePaused=true;localStorage.removeItem(SAVE_KEY);localStorage.removeItem('social_economy_tetris_reset_data');const empty=pipelineDefault();localStorage.setItem(PIPELINE_KEY,JSON.stringify(empty));if(parent!==window)parent.postMessage({type:'reset-all-games',data:empty},'*');else setTimeout(()=>location.reload(),100)}
+function resetPipeline(){if(confirm('상생마을·생산 투자 레벨을 모두 초기화할까요?'))resetAllGameData()}
+function renderPipeline(){let el=document.getElementById('pipeline-ledger');if(el)el.remove()}
+const INPUT_MAP={left:['KeyA','ArrowLeft'],right:['KeyD','ArrowRight'],fire:['Enter','Space'],value1:['Digit1'],value2:['Digit2'],value3:['Digit3']};
+const VALUE_TYPES={material1:{name:'연대',shortText:'연대',icon:'🤝',color:'#ef4444'},material2:{name:'협력',shortText:'협력',icon:'🧩',color:'#3b82f6'},material3:{name:'상생',shortText:'상생',icon:'🌱',color:'#10b981'}};
+const VALUE_KEYS=Object.keys(VALUE_TYPES);
+const SPECIALS={rainbow:{icon:'🌈',name:'연대 버블'},bomb:{icon:'💣',name:'협력 폭탄'},star:{icon:'⭐',name:'상생별'}};
+const BUSINESSES=[
+ {id:'socialEnterprise',icon:'🏢',name:'사회적기업',boostType:'material1',boostLabel:'연대',boostRate:1.1,base:{material1:2,material2:2,material3:2},score:700,msg:'🏢 사회적기업: 연대 획득 배율 상승!',effect:s=>{s.residents+=3}},
+ {id:'socialCoop',icon:'🤲',name:'사회적협동조합',boostType:'all',boostLabel:'모든 재료',boostRate:1.05,base:{material1:5,material2:5,material3:5},score:1200,msg:'🤲 사회적협동조합: 모든 재료 획득 배율 상승!',effect:s=>{s.residents+=5;s.jobs+=2}},
+ {id:'villageEnterprise',icon:'🏡',name:'마을기업',boostType:'material2',boostLabel:'협력',boostRate:1.1,base:{material1:2,material2:3,material3:2},score:700,msg:'🏡 마을기업: 협력 획득 배율 상승!',effect:s=>{s.environment+=5}},
+ {id:'selfReliance',icon:'🧑‍🔧',name:'자활기업',boostType:'material3',boostLabel:'상생',boostRate:1.1,base:{material1:2,material2:2,material3:3},score:700,msg:'🧑‍🔧 자활기업: 상생 획득 배율 상승!',effect:s=>{s.jobs+=5}}
+];
+const FINAL_COST={material1:10,material2:10,material3:10};
+const canvas=document.getElementById('game'),ctx=canvas.getContext('2d');
+let grid=[],current=null,next=null,selected='material1',angle=0,aimMoved=false,score=0,resources={},specials={},buildCounts={},finalBuilt=false,combo=0,bestCombo=0,totalPlays=0,shotsSinceBomb=0,lastSave='',savingTimer=0,gamePaused=true,messageTimer=0,particles=[],audio=null,bgmTimer=null,bgmOn=false,keysDown={},holdStart=null,rolesSwapped=false,roleSwapAt=0,synergyGauge=0,coopHoldStart=null,stage=1,shotQueue=[],shotsUsed=0,shotLimit=0,misses=0,resettingAll=false;
+let stats={jobs:0,helped:0,residents:0,environment:0,jobBoost:0,allBoost:0,bombEvery:0,shield:false,aimLength:170,comboGrace:0,preview:1};
+const ROWS=8,COLS=10,R=22,LEFT=140,TOP=40,ROWG=38,SHOOTX=360,SHOOTY=505,FAILY=298;
+class Bubble{constructor(x,y,type){this.x=x;this.y=y;this.type=type;this.vx=0;this.vy=0;this.moving=false}draw(){drawBubble(this.x,this.y,this.type,R)}}
+function blankState(){resources={};specials={rainbow:0,bomb:0,star:0};VALUE_KEYS.forEach(k=>resources[k]=0);buildCounts={};BUSINESSES.forEach(b=>buildCounts[b.id]=0);score=0;combo=0;bestCombo=0;totalPlays=0;finalBuilt=false;stage=1;current=null;next=null;shotQueue=[];shotsUsed=0;shotLimit=0;misses=0;stats={jobs:0,helped:0,residents:0,environment:0,jobBoost:0,allBoost:0,bombEvery:0,shield:false,aimLength:170,comboGrace:0,preview:1};}
+function chargeEntry(){return true}
+function newGame(){if(!mandatoryLoan()||!chargeEntry())return;blankState();syncBusinessBonuses();initGrid();selected='material1';rolesSwapped=false;roleSwapAt=Number.POSITIVE_INFINITY;synergyGauge=0;spawn();gamePaused=false;document.getElementById('start').style.display='none';updateUI();saveGame();}
+function fillNewBoard(){grid=Array.from({length:ROWS},()=>Array(COLS).fill(null));const filledRows=Math.min(5,3+Math.floor((stage-1)/3));for(let r=0;r<filledRows;r++)for(let c=0;c<COLS;c++){if(r===filledRows-1&&Math.random()<.18)continue;grid[r][c]=new Bubble(0,0,VALUE_KEYS[Math.floor(Math.random()*VALUE_KEYS.length)])}misses=0;updateGrid();}
+function initGrid(){fillNewBoard();}
+function cellPos(r,c){return{x:LEFT+c*R*2+(r%2?R:0),y:TOP+r*ROWG}}
+function updateGrid(){for(let r=0;r<ROWS;r++)for(let c=0;c<COLS;c++)if(grid[r][c]){const p=cellPos(r,c);grid[r][c].x=p.x;grid[r][c].y=p.y}}
+function puzzleShotType(){return weightedType()}
+function spawn(){if(grid.length&&grid.every(row=>row.every(cell=>!cell))){stage++;score+=stage*200;fillNewBoard();showMsg(`🎉 보드 클리어! 스테이지 ${stage} 시작`)}const type=next?.type||weightedType();selected=type;current=new Bubble(SHOOTX,SHOOTY,type);next=new Bubble(88,518,weightedType())}
+function weightedType(){let pool=VALUE_KEYS.slice();VALUE_KEYS.forEach(k=>{if(resources[k]<3)pool.push(k,k)});return pool[Math.floor(Math.random()*pool.length)]}
+function setSelected(type){selected=type;if(current&&!current.moving)current.type=type;updateUI();}
+function moveAim(delta){angle=Math.max(-1.15,Math.min(1.15,angle+delta));aimMoved=true;updateReady();}
+function fire(){if(gamePaused||!current||current.moving)return;current.vx=Math.sin(angle)*11.5;current.vy=-Math.cos(angle)*11.5;current.moving=true;showMsg(`${VALUE_TYPES[current.type].icon} ${VALUE_TYPES[current.type].name} 발사!`);playSfx(520,.08,'triangle');}
+function update(){if(gamePaused)return;if(messageTimer>0&&--messageTimer<=0)document.getElementById('message').style.display='none';updateParticles();checkFinalHold();if(current&&current.moving){current.x+=current.vx;current.y+=current.vy;if(current.x<R){current.x=R;current.vx*=-1;playSfx(270,.04,'square')}if(current.x>canvas.width-R){current.x=canvas.width-R;current.vx*=-1;playSfx(270,.04,'square')}if(current.y<R){snap(current);return}for(let r=0;r<ROWS;r++)for(let c=0;c<COLS;c++){let b=grid[r][c];if(b&&Math.hypot(current.x-b.x,current.y-b.y)<R*1.72){snap(current);return}}}}
+function addPressureRow(){for(let r=ROWS-1;r>0;r--)grid[r]=grid[r-1];grid[0]=Array.from({length:COLS},()=>new Bubble(0,0,VALUE_KEYS[Math.floor(Math.random()*VALUE_KEYS.length)]));updateGrid();showMsg('⚠ 실패 5회! 새 버블 줄이 내려옵니다.')}
+function snap(b){b.moving=false;let best={r:0,c:0,d:1e9};for(let r=0;r<ROWS;r++)for(let c=0;c<COLS;c++)if(!grid[r][c]){const p=cellPos(r,c),d=Math.hypot(b.x-p.x,b.y-p.y);if(d<best.d)best={r,c,d}};if(best.d===1e9){endGame(false);return}grid[best.r][best.c]=new Bubble(0,0,b.type);updateGrid();let removed=false;if(b.type==='rainbow')removed=removeRainbow(best.r,best.c);else if(b.type==='bomb')removed=removeBomb(best.r,best.c);else if(b.type==='star'){gainResource(selected,2);removed=true}else{const m=findMatches(best.r,best.c,b.type);if(m.length>=3){removeCells(m);gainByMatch(b.type,m.length);removed=true}else showMsg('같은 색 버블 3개 이상을 연결하세요!')}const fallen=removeFloating();if(fallen>0)score+=fallen*20;if(removed){misses=0;combo++;bestCombo=Math.max(bestCombo,combo);applyComboRewards()}else{misses++;combo=0;if(misses>=5){misses=0;addPressureRow()}}if(checkFail())endGame(false);spawn();updateUI();saveGame();}
+function findMatches(r,c,type){let out=[],seen=new Set(),st=[{r,c}];while(st.length){let n=st.pop(),key=n.r+','+n.c;if(seen.has(key))continue;seen.add(key);let b=grid[n.r]?.[n.c];if(!b||b.type!==type)continue;out.push(n);neighbors(n.r,n.c).forEach(x=>st.push(x))}return out}
+function neighbors(r,c){const dirs=r%2?[[-1,0],[-1,1],[0,-1],[0,1],[1,0],[1,1]]:[[-1,-1],[-1,0],[0,-1],[0,1],[1,-1],[1,0]];return dirs.map(([dr,dc])=>({r:r+dr,c:c+dc})).filter(n=>n.r>=0&&n.r<ROWS&&n.c>=0&&n.c<COLS)}
+function removeCells(cells){cells.forEach(n=>{let b=grid[n.r][n.c];if(b)burst(b.x,b.y,VALUE_TYPES[b.type]?.color||'#fff');grid[n.r][n.c]=null})}
+function removeRainbow(r,c){const target=grid[r][c]?.type;let cells=[];for(let rr=0;rr<ROWS;rr++)for(let cc=0;cc<COLS;cc++)if(grid[rr][cc]&&grid[rr][cc].type===selected)cells.push({r:rr,c:cc});removeCells(cells.length?cells:[{r,c}]);gainByMatch(selected,Math.max(3,cells.length));return true}
+function removeBomb(r,c){let cells=[{r,c},...neighbors(r,c)];removeCells(cells);score+=200;return true}
+function removeFloating(){let con=Array.from({length:ROWS},()=>Array(COLS).fill(false)),q=[];for(let c=0;c<COLS;c++)if(grid[0][c]){con[0][c]=true;q.push({r:0,c})}while(q.length){let n=q.shift();neighbors(n.r,n.c).forEach(x=>{if(grid[x.r][x.c]&&!con[x.r][x.c]){con[x.r][x.c]=true;q.push(x)}})}let fallen=0;for(let r=1;r<ROWS;r++)for(let c=0;c<COLS;c++)if(grid[r][c]&&!con[r][c]){let type=grid[r][c].type;grid[r][c]=null;fallen++;if(VALUE_KEYS.includes(type)&&fallen%3===0)gainResource(type,1)}return fallen}
+function gainByMatch(type,count){let amount=count>=6?4:count>=5?3:count>=4?2:1;if(type==='jobs')amount+=Math.floor(amount*stats.jobBoost);amount+=Math.floor(amount*stats.allBoost);gainResource(type,amount);score+=Math.round(count*40*(combo>=3?1.5:1));showMsg(`${VALUE_TYPES[type].icon} ${VALUE_TYPES[type].name} +${amount}`)}
+function gainResource(type,n){let before=resources[type]||0;resources[type]=Math.min(30,before+n);if(before+n>30)score+=(before+n-30)*50;flashRes(type)}
+function applyComboRewards(){if(combo===2){gainResource(selected,1);showMsg('2 COMBO! 협력 시작')}if(combo===5){VALUE_KEYS.forEach(k=>gainResource(k,1));showMsg('5 COMBO! 상생 확산')}if(combo===7){specials.rainbow++;showMsg('7 COMBO! 연대 버블 +1')}if(combo===10){specials.bomb++;showMsg('10 COMBO! 협력 폭탄 +1')}if(stats.bombEvery&&++shotsSinceBomb>=stats.bombEvery){shotsSinceBomb=0;specials.bomb++}}
+function canAfford(cost){return Object.keys(cost).every(k=>(resources[k]||0)>=cost[k])}
+function scaledCost(biz){let lv=buildCounts[biz.id]||0,m=lv===0?1:lv===1?1.5:lv===2?2:2.5,out={};Object.keys(biz.base).forEach(k=>out[k]=Math.ceil(biz.base[k]*m));return out}
+function businessOwnMultiplier(biz){return Math.pow(biz.boostRate,buildCounts[biz.id]||0)}
+function businessMultiplier(type){let specific=BUSINESSES.find(b=>b.boostType===type),coop=BUSINESSES.find(b=>b.boostType==='all'),specificBonus=specific?businessOwnMultiplier(specific):1,allBonus=coop?businessOwnMultiplier(coop):1;return specificBonus*allBonus}
+function syncBusinessBonuses(){let p=loadPipeline();VALUE_KEYS.forEach(type=>p[type+'Multiplier']=Number(businessMultiplier(type).toFixed(4)));savePipeline(p)}
+function buildBusiness(id){let biz=BUSINESSES.find(b=>b.id===id),cost=scaledCost(biz);if(!canAfford(cost)){showMsg('자원이 부족합니다.');return}Object.keys(cost).forEach(k=>resources[k]-=cost[k]);buildCounts[id]=(buildCounts[id]||0)+1;score+=biz.score;biz.effect(stats);syncBusinessBonuses();showMsg(`${biz.msg} 현재 x${businessOwnMultiplier(biz).toFixed(2)}`);burst(360,330,'#ffd95b',50);updateUI();saveGame();checkRoundGoal();}
+function finalUnlocked(){let builtTypes=BUSINESSES.filter(b=>buildCounts[b.id]>0).length;return builtTypes>=4&&BUSINESSES.every(b=>buildCounts[b.id]>0)&&score>=4000&&bestCombo>=5}
+function canBuildFinal(){return finalUnlocked()&&!finalBuilt&&canAfford(FINAL_COST)}
+function checkFinalHold(){if(finalBuilt||!finalUnlocked())return;let approve=keysDown.KeyH;if(approve){if(!holdStart)holdStart=performance.now();let ratio=Math.min(1,(performance.now()-holdStart)/1500);document.documentElement.style.setProperty('--hold',ratio);if(ratio>=1&&canBuildFinal())buildFinal();else if(ratio>=1)showMsg('상생복합센터 자원이 부족합니다.')}else holdStart=null}
+function buildFinal(){Object.keys(FINAL_COST).forEach(k=>resources[k]-=FINAL_COST[k]);finalBuilt=true;score+=5000;VALUE_KEYS.forEach(k=>gainResource(k,3));specials.rainbow+=3;stats.residents+=20;showMsg('🎊 상생복합센터가 완성되었습니다!');burst(360,260,'#ffd95b',120);updateUI();saveGame();endGame(true)}
+function checkRoundGoal(){let built=BUSINESSES.reduce((a,b)=>a+(buildCounts[b.id]||0),0);if(progress()>=100||built>=2)showMsg('이번 목표 달성! 계속 건설해 장기 목표에 도전하세요.')}
+function progress(){let built=BUSINESSES.reduce((a,b)=>a+(buildCounts[b.id]||0),0);return Math.min(100,Math.round((built*10)+(score/160)+(finalBuilt?35:0)))}
+function checkFail(){for(let r=0;r<ROWS;r++)for(let c=0;c<COLS;c++)if(grid[r][c]&&grid[r][c].y>FAILY)return true;return false}
+function dropTopRows(){for(let r=ROWS-1;r>0;r--)grid[r]=grid[r-1];grid[0]=Array(COLS).fill(null);updateGrid()}
+function draw(){ctx.clearRect(0,0,720,560);drawTown();drawBoard();drawShooter();drawParticles()}
+function drawTown(){ctx.fillStyle='#e8f7ef';ctx.fillRect(0,0,720,560);ctx.fillStyle='#bde5ca';ctx.fillRect(0,380,720,180);ctx.fillStyle='#8dc99d';ctx.fillRect(0,432,720,128);drawPlot(24,412,'빈 부지');drawPlot(610,412,'빈 부지');BUSINESSES.forEach((b,i)=>{let lv=buildCounts[b.id]||0;if(lv>0)drawBizBuilding(28+(i%3)*110,398+Math.floor(i/3)*55,b,lv)});if(finalBuilt)drawCenter();ctx.fillStyle='rgba(255,255,255,.76)';ctx.fillRect(0,0,720,350)}
+function drawPlot(x,y,t){ctx.fillStyle='#d3dde0';ctx.fillRect(x,y,84,38);ctx.strokeStyle='#97a5a9';ctx.strokeRect(x,y,84,38);ctx.fillStyle='#5c6b70';ctx.font='11px Malgun Gothic';ctx.textAlign='center';ctx.fillText(t,x+42,y+24)}
+function drawBizBuilding(x,y,b,lv){let w=86+lv*5,h=42+lv*5;ctx.fillStyle=['#ffd166','#80deea','#a7f3d0','#fbd38d','#c4b5fd','#fda4af'][BUSINESSES.indexOf(b)%6];ctx.fillRect(x,y-h,w,h);ctx.fillStyle='#5d4037';ctx.beginPath();ctx.moveTo(x-6,y-h);ctx.lineTo(x+w/2,y-h-18);ctx.lineTo(x+w+6,y-h);ctx.fill();ctx.fillStyle='#fff';ctx.font='12px Malgun Gothic';ctx.textAlign='center';ctx.fillText(b.icon+' Lv.'+lv,x+w/2,y-h+24)}
+function drawCenter(){ctx.fillStyle='#ffd95b';ctx.fillRect(292,330,138,92);ctx.fillStyle='#4a5568';ctx.beginPath();ctx.moveTo(278,330);ctx.lineTo(360,285);ctx.lineTo(444,330);ctx.fill();ctx.fillStyle='#123';ctx.font='bold 15px Malgun Gothic';ctx.textAlign='center';ctx.fillText('🎊 상생복합센터',360,375)}
+function drawBoard(){for(let r=0;r<ROWS;r++)for(let c=0;c<COLS;c++)if(grid[r][c])grid[r][c].draw();ctx.setLineDash([6,6]);ctx.strokeStyle='rgba(231,76,60,.45)';ctx.beginPath();ctx.moveTo(0,FAILY);ctx.lineTo(720,FAILY);ctx.stroke();ctx.setLineDash([])}
+function drawShooter(){ctx.save();ctx.translate(SHOOTX,SHOOTY);ctx.rotate(angle);ctx.strokeStyle=aimMoved?'#2563eb':'#f59e0b';ctx.shadowColor='rgba(255,255,255,.95)';ctx.shadowBlur=5;ctx.lineWidth=5;ctx.setLineDash([10,7]);ctx.beginPath();ctx.moveTo(0,-34);ctx.lineTo(0,-stats.aimLength);ctx.stroke();ctx.setLineDash([]);ctx.fillStyle=aimMoved?'#2563eb':'#f59e0b';ctx.beginPath();ctx.moveTo(0,-stats.aimLength-12);ctx.lineTo(-8,-stats.aimLength+2);ctx.lineTo(8,-stats.aimLength+2);ctx.closePath();ctx.fill();ctx.fillStyle='rgba(245,158,11,.22)';ctx.beginPath();ctx.arc(0,-48,18,0,Math.PI*2);ctx.fill();ctx.restore();if(window.FoxMascot)FoxMascot.draw(ctx,SHOOTX,SHOOTY+54,.62,{});else drawBubbleBear(SHOOTX,SHOOTY+38,.58,angle);if(current&&!current.moving)current.draw();if(current&&current.moving)current.draw();ctx.font='bold 12px Malgun Gothic';ctx.fillStyle='#265f38';ctx.textAlign='center';ctx.fillText('다음',88,492);if(next)next.draw()}
+function drawBubbleBear(x,y,scale,aimAngle=0){const h=150*scale;ctx.save();ctx.translate(x,y);ctx.fillStyle='rgba(30,41,59,.22)';ctx.beginPath();ctx.ellipse(0,5,50*scale,14*scale,0,0,Math.PI*2);ctx.fill();ctx.rotate(Math.max(-.45,Math.min(.45,aimAngle*.28)));ctx.fillStyle='#a1887f';ctx.strokeStyle='#5d4037';ctx.lineWidth=3*scale;ctx.beginPath();ctx.arc(-22*scale,-h+25*scale,14*scale,0,Math.PI*2);ctx.fill();ctx.stroke();ctx.fillStyle='#d7ccc8';ctx.beginPath();ctx.arc(-22*scale,-h+25*scale,8*scale,0,Math.PI*2);ctx.fill();ctx.fillStyle='#a1887f';ctx.beginPath();ctx.arc(22*scale,-h+25*scale,14*scale,0,Math.PI*2);ctx.fill();ctx.stroke();ctx.fillStyle='#d7ccc8';ctx.beginPath();ctx.arc(22*scale,-h+25*scale,8*scale,0,Math.PI*2);ctx.fill();ctx.fillStyle='#a1887f';ctx.beginPath();ctx.arc(0,-h+50*scale,32*scale,0,Math.PI*2);ctx.fill();ctx.stroke();ctx.fillStyle='#3b82f6';ctx.beginPath();ctx.moveTo(-25*scale,-h+75*scale);ctx.lineTo(25*scale,-h+75*scale);ctx.lineTo(30*scale,-10*scale);ctx.lineTo(-30*scale,-10*scale);ctx.closePath();ctx.fill();ctx.stroke();ctx.fillStyle='#ffeb3b';ctx.fillRect(-38*scale,-h+82*scale,13*scale,30*scale);ctx.strokeRect(-38*scale,-h+82*scale,13*scale,30*scale);ctx.fillStyle='#ff8a80';ctx.fillRect(25*scale,-h+82*scale,13*scale,30*scale);ctx.strokeRect(25*scale,-h+82*scale,13*scale,30*scale);ctx.fillStyle='#2d1b12';ctx.beginPath();ctx.arc(-10*scale,-h+46*scale,3*scale,0,Math.PI*2);ctx.arc(10*scale,-h+46*scale,3*scale,0,Math.PI*2);ctx.fill();ctx.strokeStyle='#2d1b12';ctx.beginPath();ctx.arc(0,-h+56*scale,8*scale,0,Math.PI);ctx.stroke();ctx.restore()}function drawBubble(x,y,type,rad){if(SPECIALS[type]){ctx.fillStyle=type==='bomb'?'#333':type==='rainbow'?'#7dd3fc':'#fde68a';ctx.beginPath();ctx.arc(x,y,rad,0,Math.PI*2);ctx.fill();ctx.fillStyle=type==='bomb'?'#fff':'#222';ctx.font='20px serif';ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText(SPECIALS[type].icon,x,y);return}let v=VALUE_TYPES[type];ctx.fillStyle=v.color;ctx.beginPath();ctx.arc(x,y,rad,0,Math.PI*2);ctx.fill();ctx.strokeStyle='rgba(255,255,255,.9)';ctx.lineWidth=3;ctx.stroke();ctx.fillStyle=type==='sharing'?'#222':'#fff';ctx.font='17px serif';ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText(v.icon,x,y-7);ctx.font='bold 10px Malgun Gothic';ctx.fillText(v.shortText,x,y+10)}
+function burst(x,y,color,count=16){for(let i=0;i<count;i++)particles.push({x,y,vx:(Math.random()-.5)*5,vy:(Math.random()-.5)*5,a:1,color})}
+function updateParticles(){for(let i=particles.length-1;i>=0;i--){let p=particles[i];p.x+=p.vx;p.y+=p.vy;p.a-=.025;if(p.a<=0)particles.splice(i,1)}}
+function drawParticles(){particles.forEach(p=>{ctx.globalAlpha=Math.max(0,p.a);ctx.fillStyle=p.color;ctx.beginPath();ctx.arc(p.x,p.y,4,0,Math.PI*2);ctx.fill();ctx.globalAlpha=1})}
+function showMsg(t){let el=document.getElementById('message');el.textContent=t;el.style.display='block';messageTimer=120}
+function updateReady(){document.getElementById('p1-state').textContent=`현재 각도 ${Math.round(angle*57.3)}° · 같은 색 3개를 연결하세요.`}
+function updateUI(){document.getElementById('score').textContent=score.toLocaleString();document.getElementById('progress').textContent=progress();document.getElementById('combo').textContent=combo;document.getElementById('resources').innerHTML=VALUE_KEYS.map(k=>`<span class="res" data-res="${k}">${VALUE_TYPES[k].icon} ${resources[k]||0}</span>`).join('');renderButtons();renderBusinesses();renderFinal();updateReady();document.getElementById('last-save').textContent=lastSave?'마지막 저장: '+lastSave:'마지막 저장: 없음'}
+function renderButtons(){document.getElementById('value-buttons').innerHTML=`<div class="value-btn selected" style="background:${VALUE_TYPES[current?.type]?.color||'#64748b'};color:#fff;cursor:default"><span>🎯 현재: ${VALUE_TYPES[current?.type]?.icon||''} ${VALUE_TYPES[current?.type]?.name||'준비 중'}</span></div><div style="margin-top:7px;padding:8px;border:1px solid #86efac;border-radius:9px;background:#f0fdf4;color:#14532d;font-size:12px"><b>다음 버블</b><br><span style="display:inline-block;margin-top:5px;padding:5px 9px;border-radius:14px;background:${VALUE_TYPES[next?.type]?.color||'#64748b'};color:#fff;font-weight:900">${VALUE_TYPES[next?.type]?.icon||''} ${VALUE_TYPES[next?.type]?.name||'준비 중'}</span><br><span style="display:inline-block;margin-top:5px;color:#475569">🤝 연대 · 🧩 협력 · 🌱 상생</span></div>`}
+function renderBusinesses(){let list=document.getElementById('business-list');if(!list)return;list.innerHTML=BUSINESSES.map(b=>{let cost=scaledCost(b),ok=canAfford(cost),lv=buildCounts[b.id]||0,current=businessOwnMultiplier(b),next=current*b.boostRate,highCost=b.boostType==='all'?' · 고비용':'';return `<div class="biz ${ok?'ready':'locked'}"><div class="biz-title">${b.icon} ${b.name} Lv.${lv}</div><div class="cost">${Object.keys(cost).map(k=>`<span class="${resources[k]>=cost[k]?'':'missing'}">${VALUE_TYPES[k].icon}${cost[k]}</span>`).join('')}</div><div class="status">${b.boostLabel} 획득 x${current.toFixed(2)} → <b>x${next.toFixed(2)}</b>${highCost}<br>사회적 가치 +${b.score}</div><button ${ok?'':'disabled'} onclick="buildBusiness('${b.id}')">${lv?'업그레이드':'건설'}</button></div>`}).join('')}
+function renderFinal(){let card=document.getElementById('final-card');if(!card)return;let checks=[['사회적경제기업 4종 건설',BUSINESSES.every(b=>buildCounts[b.id]>0)],['사회적 가치 4,000+',score>=4000],['최고 콤보 5+',bestCombo>=5],['자원 각 10개',canAfford(FINAL_COST)]];card.innerHTML=`<div class="biz ${finalUnlocked()?'ready':'locked'}"><div class="biz-title">🎊 영주 상생복합센터</div><div class="check">${checks.map(c=>`${c[1]?'✓':'□'} ${c[0]}`).join('<br>')}</div><div class="cost">${VALUE_KEYS.map(k=>`<span class="${resources[k]>=10?'':'missing'}">${VALUE_TYPES[k].icon}10</span>`).join('')}</div><div class="status">H를 1.5초 누르면 건설됩니다.</div><button ${canBuildFinal()?'':'disabled'} onclick="showMsg('H를 1.5초 눌러주세요.')">${finalBuilt?'완성됨':'건설 승인 필요'}</button></div>`}
+function flashRes(k){setTimeout(()=>{let el=document.querySelector(`[data-res="${k}"]`);if(el){el.classList.add('flash');setTimeout(()=>el.classList.remove('flash'),450)}},30)}
+function endGame(win){gamePaused=true;document.getElementById('end-title').textContent=win?'상생마을 완성':'상생마을 중간 리포트';document.getElementById('end-quote').textContent=win?'사회적 가치와 자원을 모아 영주 사회적경제 상생마을을 완성했습니다.':'지금까지 만든 사회적경제기업 성과를 확인하고 계속 건설해 보세요.';document.getElementById('end-report').innerHTML=`<div>총 사회적 가치 ${score.toLocaleString()}</div><div>건설한 기업 ${BUSINESSES.reduce((a,b)=>a+(buildCounts[b.id]||0),0)}개</div><div>창출한 일자리 ${stats.jobs}개</div><div>지원 주민 ${stats.helped}명</div><div>최고 콤보 ${bestCombo}</div><div>상생복합센터 ${finalBuilt?'건설 완료':'미건설'}</div>`;document.getElementById('end').style.display='flex';saveGame();}
+function saveGame(){try{savingTimer=30;document.getElementById('save-state').textContent='💾 저장 중';let data={version:1,savedAt:new Date().toISOString(),score,resources,specials,buildCounts,finalBuilt,stats,bestCombo,totalPlays,bgmOn,stage};localStorage.setItem(SAVE_KEY,JSON.stringify(data));lastSave=new Date().toLocaleTimeString('ko-KR',{hour:'2-digit',minute:'2-digit'});setTimeout(()=>{document.getElementById('save-state').textContent='✅ 저장됨';updateUI()},120)}catch(e){document.getElementById('save-state').textContent='⚠️ 저장 실패'}}
+function loadGame(){try{let raw=localStorage.getItem(SAVE_KEY);if(!raw)return false;let d=JSON.parse(raw);if(!d||d.version!==1)return false;blankState();selected='material1';score=clampNum(d.score,0,1e9);resources=safeMap(d.resources,0,30);specials=safeSpecial(d.specials);buildCounts=safeBuilds(d.buildCounts);finalBuilt=!!d.finalBuilt;stats=Object.assign(stats,d.stats||{});bestCombo=clampNum(d.bestCombo,0,999);stage=Math.max(1,clampNum(d.stage,1,999));syncBusinessBonuses();initGrid();spawn();gamePaused=false;document.getElementById('start').style.display='none';lastSave=d.savedAt?new Date(d.savedAt).toLocaleTimeString('ko-KR',{hour:'2-digit',minute:'2-digit'}):'';updateUI();return true}catch(e){showMsg('올바른 상생마을 저장 파일이 아닙니다.');return false}}
+function safeMap(obj,min,max){let out={};VALUE_KEYS.forEach(k=>out[k]=clampNum(obj?.[k],min,max));return out}
+function safeSpecial(obj){let out={};Object.keys(SPECIALS).forEach(k=>out[k]=clampNum(obj?.[k],0,99));return out}
+function safeBuilds(obj){let out={};BUSINESSES.forEach(b=>out[b.id]=clampNum(obj?.[b.id],0,99));return out}
+function clampNum(v,min,max){v=Number(v);return Number.isFinite(v)?Math.max(min,Math.min(max,Math.floor(v))):min}
+function exportSave(){saveGame();let blob=new Blob([localStorage.getItem(SAVE_KEY)||'{}'],{type:'application/json'}),a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=`영주상생마을_저장데이터_${new Date().toISOString().slice(0,10)}.json`;a.click();URL.revokeObjectURL(a.href)}
+function importSave(file){let r=new FileReader();r.onload=()=>{try{let d=JSON.parse(r.result);if(!d||d.version!==1)throw Error();if(!confirm('현재 데이터를 덮어쓰고 불러올까요?'))return;localStorage.setItem(SAVE_KEY,JSON.stringify(d));loadGame();showMsg('저장 데이터를 불러왔습니다.')}catch(e){alert('올바른 상생마을 저장 파일이 아닙니다.')}};r.readAsText(file)}
+function ensureAudio(){if(!audio)audio=new(window.AudioContext||window.webkitAudioContext)();return audio}
+function playSfx(f,d,t='sine'){if(!bgmOn&&!audio)return;let ac=ensureAudio(),o=ac.createOscillator(),g=ac.createGain();o.type=t;o.frequency.value=f;g.gain.setValueAtTime(.06,ac.currentTime);g.gain.exponentialRampToValueAtTime(.001,ac.currentTime+d);o.connect(g);g.connect(ac.destination);o.start();o.stop(ac.currentTime+d)}
+function toggleMusic(){let btn=document.getElementById('music-btn');if(!bgmOn){ensureAudio();bgmOn=true;btn.textContent='🔇 상생 음악 OFF';let n=0,notes=[392,440,523,587,523,440];bgmTimer=setInterval(()=>{playSfx(notes[n++%notes.length],.16,n%2?'triangle':'sine')},230)}else{bgmOn=false;btn.textContent='🎵 상생 음악 ON';clearInterval(bgmTimer)}saveGame()}
+const baseGainByMatch=gainByMatch;
+gainByMatch=function(type,count){baseGainByMatch(type,count);let p=loadPipeline(),multiplier=businessMultiplier(type),gain=Math.ceil(count*multiplier);p[type]=Math.ceil(p[type]+gain);p[type+'Multiplier']=Number(multiplier.toFixed(4));savePipeline(p);if(multiplier>1)showMsg(`${VALUE_TYPES[type].icon} 기업 보너스 x${multiplier.toFixed(2)} · 장부 +${gain}`)};
+window.addEventListener('keydown',e=>{keysDown[e.code]=true;if(INPUT_MAP.left.includes(e.code))moveAim(-.12);if(INPUT_MAP.right.includes(e.code))moveAim(.12);if(INPUT_MAP.fire.includes(e.code)){e.preventDefault();fire()}});
+window.addEventListener('keyup',e=>{keysDown[e.code]=false});
+window.addEventListener('beforeunload',()=>{if(!resettingAll)saveGame()});setInterval(()=>{if(!gamePaused&&!resettingAll)saveGame()},10000);
+document.getElementById('start-btn').onclick=()=>{if(localStorage.getItem(SAVE_KEY)){if(!mandatoryLoan()||!chargeEntry())return;if(!loadGame())newGame()}else newGame()};
+document.getElementById('restart').onclick=()=>{document.getElementById('end').style.display='none';gamePaused=false;saveGame()};
+document.getElementById('music-btn').onclick=toggleMusic;document.getElementById('export-btn').onclick=exportSave;document.getElementById('import-btn').onclick=()=>document.getElementById('import-file').click();document.getElementById('import-file').onchange=e=>e.target.files[0]&&importSave(e.target.files[0]);
+document.getElementById('t-left').onclick=()=>moveAim(-.12);document.getElementById('t-right').onclick=()=>moveAim(.12);document.getElementById('t-fire').onclick=fire;document.querySelectorAll('[data-touch-value]').forEach(b=>b.onclick=()=>setSelected(b.dataset.touchValue));
+function loop(){update();draw();requestAnimationFrame(loop)}
+const startInfo=document.querySelector('#start p');if(startInfo)startInfo.innerHTML='모두가 행복한 지속가능한 지역사회를 만들기 위해 사회적 가치를 버블을 통해 모아주세요!<br><br>같은 색 버블을 3개 이상 연결하면 사회적 가치를 모을 수 있어요.<br>A/D 또는 방향키로 조준하고 Enter/Space로 발사하세요.';blankState();initGrid();spawn();updateUI();renderPipeline();loop();
+</script>
+</body>
+</html>

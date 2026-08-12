@@ -1,0 +1,745 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>영주 곰돌이의 3D 따뜻한 동행 런! - 사회적경제 가치 체험</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            background-color: #110922;
+            font-family: 'Malgun Gothic', sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            overflow: hidden;
+            user-select: none;
+        }
+
+        #game-container {
+            width: 800px;
+            height: 600px;
+            position: relative;
+            border: 6px solid #ffd54f;
+            border-radius: 20px;
+            box-shadow: 0 15px 40px rgba(0,0,0,0.6);
+            overflow: hidden;
+            background: #110922;
+        }
+
+        canvas {
+            display: block;
+            width: 100%;
+            height: 100%;
+        }
+
+        /* 상단 UI 정보창 */
+        #ui-overlay {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            right: 20px;
+            display: flex;
+            justify-content: space-between;
+            pointer-events: none;
+            z-index: 10;
+        }
+
+        .ui-card {
+            background: rgba(17, 9, 34, 0.9);
+            color: #fff;
+            padding: 10px 20px;
+            border-radius: 15px;
+            font-weight: bold;
+            font-size: 16px;
+            border: 2px solid #ffb300;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+        }
+
+        #health-bar-bg {
+            width: 120px;
+            height: 16px;
+            background: #331e40;
+            border-radius: 8px;
+            overflow: hidden;
+            border: 1px solid #fff;
+        }
+
+        #health-bar-fill {
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(to right, #ff1744, #ff5252);
+            transition: width 0.1s linear;
+        }
+
+        /* 컨트롤 팁 가이드 */
+        #control-tip {
+            position: absolute;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(0, 0, 0, 0.75);
+            color: #fff;
+            padding: 8px 20px;
+            border-radius: 20px;
+            font-size: 13px;
+            pointer-events: none;
+            z-index: 10;
+            border: 1px dashed rgba(255,255,255,0.5);
+            text-align: center;
+        }
+
+        /* 시작 & 엔드 스크린 */
+        .screen {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            background: rgba(17, 9, 34, 0.95);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 20;
+            color: white;
+            text-align: center;
+            padding: 30px;
+            box-sizing: border-box;
+        }
+
+        .screen h1 {
+            font-size: 34px;
+            color: #ffd54f;
+            text-shadow: 0 4px 10px rgba(255,213,79,0.3);
+            margin-bottom: 15px;
+            line-height: 1.3;
+        }
+
+        .screen p {
+            font-size: 16px;
+            line-height: 1.8;
+            margin-bottom: 30px;
+            color: #e0f2f1;
+            max-width: 550px;
+        }
+
+        .btn {
+            padding: 15px 45px;
+            font-size: 20px;
+            font-weight: bold;
+            color: #3e1b00;
+            background: linear-gradient(to bottom, #ffee58, #fdd835);
+            border: none;
+            border-radius: 35px;
+            cursor: pointer;
+            box-shadow: 0 6px 0px #f57f17;
+            transition: 0.1s;
+        }
+
+        .btn:active {
+            transform: translateY(4px);
+            box-shadow: 0 2px 0px #f57f17;
+        }
+    </style>
+</head>
+<body>
+
+    <div id="game-container">
+        <div id="screen-start" class="screen">
+            <h1>🧸 영주 곰돌이의 3D 동행 런 🧸<br><span style="font-size: 20px; color: #80deea;">- 사회적경제 가치 체험 게임 -</span></h1>
+            <p>
+                <b>사랑, 배려, 존중을 실천하며 함께 달려요!</b><br>
+                길가의 사회적경제지원센터와 기업들을 지나며<br>
+                <b>❤️ 사랑</b>, <b>🤝 배려</b>, <b>✨ 존중</b>, <b>🌱 연대</b>, <b>🏘️ 협력</b>의 온기를 모아보세요.<br>
+                함께 연대하고 협력하는 사회적경제의 가치를 몸으로 체험하는 동행 런입니다.
+            </p>
+            <button class="btn" onclick="startGame()">새롭게 출발하기!</button>
+        </div>
+
+        <div id="screen-end" class="screen" style="display: none;">
+            <h1 id="end-title">도착했습니다! 🎉</h1>
+            <p id="end-msg">따뜻함을 품고 센터에 성공적으로 도달했습니다!</p>
+            <h2 id="final-score" style="color: #ffd54f; font-size: 32px; margin-top: 0;">최종 점수: 0점</h2>
+            <button class="btn" onclick="restartGame()">다시 함께 달리기</button>
+        </div>
+
+        <div id="ui-overlay">
+            <div class="ui-card" id="score-display">점수: 0</div>
+            <div class="ui-card">
+                온기 게이지: 
+                <div id="health-bar-bg">
+                    <div id="health-bar-fill"></div>
+                </div>
+            </div>
+            <div class="ui-card" id="distance-display">남은 거리: 500m</div>
+        </div>
+
+        <div id="control-tip">PC: ← / → (레인 이동) | Space (점프) <br> 사랑·배려·존중·연대·협력의 온기를 모아 사회적경제 가치를 체험하세요</div>
+
+        <canvas id="gameCanvas" width="800" height="600"></canvas>
+    </div>
+
+    <script>
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+
+        // UI 요소들
+        const scoreEl = document.getElementById('score-display');
+        const healthFillEl = document.getElementById('health-bar-fill');
+        const distanceEl = document.getElementById('distance-display');
+        const endScreen = document.getElementById('screen-end');
+        const endTitle = document.getElementById('end-title');
+        const endMsg = document.getElementById('end-msg');
+        const finalScoreEl = document.getElementById('final-score');
+
+        // 게임 핵심 시스템 변수
+        let gameActive = false;
+        let score = 0;
+        let health = 100;
+        let distanceLeft = 500; // 목표 거리 (m)
+
+        // 3D 투영 세팅
+        const lanesX = [-1, 0, 1]; 
+        let currentLane = 1; // 0:왼쪽, 1:중앙, 2:오른쪽
+        let targetLaneX = 0; 
+        let playerY = 0; 
+        let jumpVelocity = 0;
+        let isJumping = false;
+        const gravity = 0.45;
+        const jumpStrength = 9.5;
+
+        let respectMode = false; // '존중' 무적 상태
+        let respectTimer = 0;
+
+        let objects = [];
+        let spawnTimer = 0;
+        let gameSpeed = 5; 
+
+        // 배경 스크롤 오프셋
+        let bgOffset = 0;
+
+        // 입력 처리
+        window.addEventListener('keydown', (e) => {
+            if (!gameActive) return;
+            if (e.code === 'ArrowLeft' || e.code === 'KeyA') {
+                if (currentLane > 0) currentLane--;
+            }
+            if (e.code === 'ArrowRight' || e.code === 'KeyD') {
+                if (currentLane < 2) currentLane++;
+            }
+            if (e.code === 'Space' || e.code === 'ArrowUp') {
+                if (!isJumping) {
+                    isJumping = true;
+                    jumpVelocity = jumpStrength;
+                }
+            }
+        });
+
+        // 모바일 터치 제어
+        canvas.addEventListener('touchstart', (e) => {
+            if (!gameActive) return;
+            const touchX = e.touches[0].clientX;
+            const screenW = window.innerWidth;
+            
+            if (touchX < screenW / 2) {
+                if (currentLane > 0) currentLane--;
+            } else {
+                if (currentLane < 2) currentLane++;
+            }
+            
+            if (e.touches.length > 1 && !isJumping) {
+                isJumping = true;
+                jumpVelocity = jumpStrength;
+            }
+        });
+
+        function startGame() {
+            document.getElementById('screen-start').style.display = 'none';
+            endScreen.style.display = 'none';
+            
+            gameActive = true;
+            score = 0;
+            health = 100;
+            distanceLeft = 500;
+            currentLane = 1;
+            targetLaneX = 0;
+            playerY = 0;
+            jumpVelocity = 0;
+            isJumping = false;
+            respectMode = false;
+            respectTimer = 0;
+            objects = [];
+            spawnTimer = 0;
+            gameSpeed = 4.5;
+
+            loop();
+        }
+
+        function restartGame() {
+            startGame();
+        }
+
+        // 3D 원근법 수식 보정 (비선형 깊이 보간)
+        function project3D(x, y, z) {
+            const vanishingX = canvas.width / 2;
+            const vanishingY = 220; 
+            const factor = 1 / (z * 6 + 1.2); 
+            const screenX = vanishingX + (x * 450 * factor);
+            const screenY = vanishingY + (420 * factor) - (y * 300 * factor);
+            const scale = factor * 1.5;
+            return { x: screenX, y: screenY, scale: scale };
+        }
+
+        function update() {
+            const targetX = (currentLane - 1);
+            targetLaneX += (targetX - targetLaneX) * 0.2;
+
+            if (isJumping) {
+                playerY += jumpVelocity;
+                jumpVelocity -= gravity;
+                if (playerY <= 0) {
+                    playerY = 0;
+                    isJumping = false;
+                    jumpVelocity = 0;
+                }
+            }
+
+            distanceLeft -= 0.12;
+            if (distanceLeft <= 0) {
+                distanceLeft = 0;
+                winGame();
+                return;
+            }
+            distanceEl.innerText = `남은 거리: ${Math.floor(distanceLeft)}m`;
+            gameSpeed = 4.5 + (500 - distanceLeft) * 0.005; 
+
+            if (respectMode) {
+                respectTimer--;
+                if (respectTimer <= 0) {
+                    respectMode = false;
+                }
+            }
+
+            health -= 0.035;
+            if (health <= 0) {
+                health = 0;
+                loseGame();
+                return;
+            }
+            healthFillEl.style.width = health + '%';
+
+            spawnTimer++;
+            if (spawnTimer > 55) {
+                spawnTimer = 0;
+                spawnObject();
+            }
+
+            for (let i = objects.length - 1; i >= 0; i--) {
+                let obj = objects[i];
+                obj.z -= gameSpeed * 0.0016; 
+                if (obj.z <= 0.10 && obj.z >= 0.02) {
+                    if (obj.lane === currentLane) {
+                        const isObstacle = (obj.type === 'obstacle' || obj.type === 'obstacle_cold');
+                        if (isObstacle && playerY > 25) {
+                        } else {
+                            handleCollision(obj);
+                            objects.splice(i, 1);
+                            continue;
+                        }
+                    }
+                }
+                if (obj.z <= 0) {
+                    objects.splice(i, 1);
+                }
+            }
+            bgOffset += gameSpeed;
+            score += 1;
+            scoreEl.innerText = `점수: ${score}`;
+        }
+
+        function spawnObject() {
+            const types = [
+                { type: 'heart', emoji: '❤️', color: '#ff4a5a' },
+                { type: 'care', emoji: '🤝', color: '#4caf50' },
+                { type: 'respect', emoji: '✨', color: '#ffd54f' },
+                { type: 'solidarity', emoji: '🌱', color: '#66bb6a' },
+                { type: 'cooperation', emoji: '🏘️', color: '#80deea' },
+                { type: 'obstacle', emoji: '🧱', color: '#ffcc80' },
+                { type: 'obstacle_cold', emoji: '❄️', color: '#80deea' }
+            ];
+            let roll = Math.random();
+            let selected;
+            if (roll < 0.5) {
+                selected = types[Math.floor(Math.random() * 5)]; 
+            } else {
+                selected = types[5 + Math.floor(Math.random() * 2)]; 
+            }
+            objects.push({
+                type: selected.type,
+                emoji: selected.emoji,
+                color: selected.color,
+                lane: Math.floor(Math.random() * 3),
+                z: 1.0 
+            });
+        }
+
+        function handleCollision(obj) {
+            if (obj.type === 'heart') {
+                score += 1000;
+                createParticleEffect('❤️ 사랑 공유! +1000', obj.color);
+            } else if (obj.type === 'care') {
+                health = Math.min(100, health + 20);
+                score += 500;
+                createParticleEffect('🤝 이웃 배려! (따뜻함 충전)', obj.color);
+            } else if (obj.type === 'respect') {
+                respectMode = true;
+                respectTimer = 220; 
+                createParticleEffect('✨ 존중 무적 방패 돌입!', obj.color);
+            } else if (obj.type === 'solidarity') {
+                score += 700;
+                health = Math.min(100, health + 10);
+                createParticleEffect('🌱 연대로 함께 회복! +700', obj.color);
+            } else if (obj.type === 'cooperation') {
+                score += 900;
+                distanceLeft = Math.max(0, distanceLeft - 8);
+                createParticleEffect('🏘️ 협력으로 한 걸음 더! +900', obj.color);
+            } else {
+                if (respectMode) {
+                    score += 800;
+                    createParticleEffect('💥 벽을 부수고 전진! +800', '#ffee58');
+                } else {
+                    health = Math.max(0, health - 18);
+                    createParticleEffect('⚠️ 차가운 장벽 충전 실패! 체력 -18', '#ff1744');
+                }
+            }
+        }
+
+        let particles = [];
+        function createParticleEffect(text, color) {
+            particles.push({ text: text, color: color, y: 340, alpha: 1.0 });
+        }
+
+        function loop() {
+            if (!gameActive) return;
+            update();
+            draw();
+            requestAnimationFrame(loop);
+        }
+
+        // === 그리기 엔진 ===
+        function draw() {
+            const skyGrad = ctx.createLinearGradient(0, 0, 0, 220);
+            skyGrad.addColorStop(0, '#0f051d');
+            skyGrad.addColorStop(0.6, '#231131');
+            skyGrad.addColorStop(1, '#4e1f3d');
+            ctx.fillStyle = skyGrad;
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            ctx.fillStyle = '#1c0a22';
+            ctx.beginPath();
+            ctx.moveTo(0, 220);
+            ctx.lineTo(80, 140);
+            ctx.lineTo(220, 180);
+            ctx.lineTo(400, 90);
+            ctx.lineTo(580, 190);
+            ctx.lineTo(710, 130);
+            ctx.lineTo(800, 220);
+            ctx.closePath();
+            ctx.fill();
+
+            ctx.strokeStyle = 'rgba(255, 213, 79, 0.3)';
+            ctx.lineWidth = 1;
+            ctx.beginPath();
+            ctx.moveTo(0, 140);
+            ctx.bezierCurveTo(200, 180, 600, 180, 800, 140);
+            ctx.stroke();
+            for (let x = 50; x < 800; x += 100) {
+                ctx.fillStyle = '#ffca28';
+                ctx.beginPath();
+                ctx.arc(x, 153 + (Math.sin(x) * 4), 3, 0, Math.PI * 2);
+                ctx.fill();
+            }
+
+            ctx.fillStyle = '#3a202d';
+            ctx.fillRect(0, 220, canvas.width, canvas.height - 220);
+
+            const pFarLeft = project3D(-1.6, 0, 1.0);
+            const pFarRight = project3D(1.6, 0, 1.0);
+            const pNearLeft = project3D(-1.6, 0, 0.0);
+            const pNearRight = project3D(1.6, 0, 0.0);
+
+            ctx.fillStyle = '#21131b';
+            ctx.beginPath();
+            ctx.moveTo(pFarLeft.x, pFarLeft.y);
+            ctx.lineTo(pFarRight.x, pFarRight.y);
+            ctx.lineTo(pNearRight.x, pNearRight.y);
+            ctx.lineTo(pNearLeft.x, pNearLeft.y);
+            ctx.closePath();
+            ctx.fill();
+
+            ctx.strokeStyle = '#df8969';
+            ctx.lineWidth = 3;
+            for (let laneIdx = -0.5; laneIdx <= 0.5; laneIdx += 1.0) {
+                ctx.beginPath();
+                const start = project3D(laneIdx, 0, 1.0);
+                const end = project3D(laneIdx, 0, 0.0);
+                ctx.moveTo(start.x, start.y);
+                ctx.lineTo(end.x, end.y);
+                ctx.stroke();
+            }
+
+            ctx.strokeStyle = '#ffa726';
+            ctx.lineWidth = 5;
+            ctx.beginPath();
+            ctx.moveTo(pFarLeft.x, pFarLeft.y);
+            ctx.lineTo(pNearLeft.x, pNearLeft.y);
+            ctx.moveTo(pFarRight.x, pFarRight.y);
+            ctx.lineTo(pNearRight.x, pNearRight.y);
+            ctx.stroke();
+
+            // 4. [배경 - 글자 추가] 사회적 경제 / 기업 글자가 티 나게 보이는 배경 한옥 빌딩들
+            const buildingSpans = [0.15, 0.4, 0.65, 0.9];
+            buildingSpans.forEach((z, idx) => {
+                let currentZ = z - ((bgOffset % 120) / 800);
+                if (currentZ < 0) currentZ += 1.0;
+
+                // 좌측 건물
+                let projL = project3D(-2.5, 0, currentZ);
+                // idx가 짝수일 때 '사회적 경제', 홀수일 때 '기업' 글자 배치
+                const textIdxL = (idx % 2 === 0) ? 0 : 1;
+                drawYeongjuCenterSide(projL.x, projL.y, projL.scale, true, textIdxL);
+
+                // 우측 건물
+                let projR = project3D(2.5, 0, currentZ);
+                // 좌측과 반대 텍스트 배치
+                const textIdxR = (idx % 2 === 0) ? 1 : 0;
+                drawYeongjuCenterSide(projR.x, projR.y, projR.scale, false, textIdxR);
+            });
+
+            // 5. [골인 엔딩] 도착지 정면 센터 메인 사옥
+            if (distanceLeft < 80) {
+                let centerZ = (distanceLeft / 80.0);
+                let centerProj = project3D(0, 0, centerZ);
+                drawYeongjuCenterMain(centerProj.x, centerProj.y, centerProj.scale);
+            }
+
+            // 6. 장애물 및 아이템 렌더링
+            objects.sort((a, b) => b.z - a.z);
+            objects.forEach(obj => {
+                const laneX = obj.lane - 1;
+                const proj = project3D(laneX, 0, obj.z);
+                ctx.save();
+                ctx.shadowBlur = 20 * proj.scale;
+                ctx.shadowColor = obj.color;
+                const baseSize = 48;
+                const finalSize = baseSize * proj.scale;
+                ctx.font = `${finalSize}px 'Malgun Gothic'`;
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                const floatY = (obj.type !== 'obstacle' && obj.type !== 'obstacle_cold') ? Math.sin(Date.now() * 0.008 + obj.z * 12) * 8 * proj.scale : 0;
+                ctx.fillText(obj.emoji, proj.x, proj.y - (finalSize / 1.5) + floatY);
+                ctx.restore();
+            });
+
+            // 7. 귀여운 곰돌이 캐릭터
+            const playerProj = project3D(targetLaneX, playerY, 0.13); 
+            drawBearPlayer(playerProj.x, playerProj.y, playerProj.scale);
+
+            // 8. 획득 텍스트 이펙트
+            particles.forEach((p, idx) => {
+                ctx.fillStyle = p.color;
+                ctx.font = "bold 22px 'Malgun Gothic'";
+                ctx.shadowBlur = 6;
+                ctx.shadowColor = '#000';
+                ctx.textAlign = 'center';
+                ctx.fillText(p.text, canvas.width / 2, p.y);
+                p.y -= 2.2;
+                p.alpha -= 0.02;
+                if (p.alpha <= 0) {
+                    particles.splice(idx, 1);
+                }
+            });
+        }
+
+        // [v2.1 배경 업데이트] 도로 변두리 센터 건물에 '사회적 경제' / '기업' 대형 글자 추가
+        function drawYeongjuCenterSide(x, y, scale, isLeft, textType) {
+            const w = 220 * scale;
+            const h = 130 * scale;
+
+            ctx.save();
+            ctx.translate(x, y);
+            if (!isLeft) ctx.scale(-1, 1); // 우측 대칭
+
+            // 건물 본체 목조 느낌 기둥벽
+            ctx.fillStyle = '#4e342e'; 
+            ctx.fillRect(-w/2, -h, w, h);
+
+            // 아기자기한 격자 한옥 창문 불빛 연출
+            ctx.fillStyle = '#ffe082';
+            ctx.fillRect(-w/3, -h + (35*scale), 40*scale, 50*scale);
+            ctx.fillRect(w/12, -h + (35*scale), 40*scale, 50*scale);
+
+            // 정성스러운 검정 기와지붕
+            ctx.fillStyle = '#212121';
+            ctx.beginPath();
+            ctx.moveTo(-w/2 - (25*scale), -h);
+            ctx.quadraticCurveTo(0, -h - (35*scale), w/2 + (25*scale), -h);
+            ctx.lineTo(w/2, -h + (15*scale));
+            ctx.quadraticCurveTo(0, -h + (3*scale), -w/2, -h + (15*scale));
+            ctx.closePath();
+            ctx.fill();
+
+            // 간판
+            ctx.fillStyle = '#fff8e1';
+            ctx.fillRect(-w/4, -h + (5*scale), w/2, 20*scale);
+            ctx.fillStyle = '#3e2723';
+            ctx.font = `bold ${8 * scale}px 'Malgun Gothic'`;
+            ctx.textAlign = 'center';
+            ctx.fillText('영주시사회적경제', 0, -h + (19*scale));
+
+            // *** [핵심 추가 - 티 나게!] 지붕 위 대형 텍스트 네온사인 연출 ***
+            const textLanes = [
+                { text: '사회적경제', color: '#ffd54f' },
+                { text: '연대·협력', color: '#80deea' }
+            ];
+            const selectedText = textLanes[textType];
+
+            // 글자가 뒤집히지 않게 다시 스케일 복원
+            if (!isLeft) ctx.scale(-1, 1); 
+
+            ctx.fillStyle = selectedText.color;
+            ctx.font = `bold ${18 * scale}px 'Malgun Gothic'`;
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'bottom';
+            // 글자에 후광 효과(Glow)를 주어 더 티 나게 함
+            ctx.shadowBlur = 10 * scale;
+            ctx.shadowColor = selectedText.color;
+            // 지붕 바로 위에 텍스트 배치
+            ctx.fillText(selectedText.text, isLeft ? 0 : 0, -h - (5*scale));
+            ctx.restore();
+        }
+
+        // 목적지 메인 센터 사옥
+        function drawYeongjuCenterMain(x, y, scale) {
+            const w = 480 * scale;
+            const h = 270 * scale;
+
+            ctx.save();
+            ctx.translate(x, y);
+
+            // 따뜻한 오라 이펙트
+            const glow = ctx.createRadialGradient(0, -h/2, 15, 0, -h/2, w);
+            glow.addColorStop(0, 'rgba(255, 213, 79, 0.45)');
+            glow.addColorStop(1, 'rgba(255, 213, 79, 0)');
+            ctx.fillStyle = glow;
+            ctx.beginPath();
+            ctx.arc(0, -h/2, w, 0, Math.PI * 2);
+            ctx.fill();
+
+            // 한옥 메인 몸체 (미백 흙벽 느낌)
+            ctx.fillStyle = '#efebe9';
+            ctx.strokeStyle = '#5d4037';
+            ctx.lineWidth = 5 * scale;
+            ctx.beginPath();
+            ctx.rect(-w/2, -h, w, h);
+            ctx.fill();
+            ctx.stroke();
+
+            // 따뜻하게 불이 켜진 창문들
+            ctx.fillStyle = '#fff59d';
+            for (let ox = -w/2 + (40*scale); ox < w/2 - (30*scale); ox += 75*scale) {
+                ctx.fillRect(ox, -h + (50*scale), 45*scale, 60*scale);
+                ctx.strokeRect(ox, -h + (50*scale), 45*scale, 60*scale);
+            }
+            ctx.fillStyle = '#ffe082';
+            ctx.fillRect(-w/5, -110*scale, w/2.5, 110*scale);
+            ctx.strokeRect(-w/5, -110*scale, w/2.5, 110*scale);
+
+            // 전통 웅장한 처마 기와지붕
+            ctx.fillStyle = '#263238';
+            ctx.beginPath();
+            ctx.moveTo(-w/2 - (40*scale), -h);
+            ctx.quadraticCurveTo(0, -h - (70*scale), w/2 + (40*scale), -h);
+            ctx.lineTo(w/2 + (15*scale), -h + (35*scale));
+            ctx.quadraticCurveTo(0, -h + (10*scale), -w/2 - (15*scale), -h + (35*scale));
+            ctx.closePath();
+            ctx.fill();
+
+            // 대형 메인 현판 간판
+            ctx.fillStyle = '#fafafa';
+            ctx.fillRect(-w/3.2, -h + (12*scale), (w/3.2)*2, 40*scale);
+            ctx.strokeRect(-w/3.2, -h + (12*scale), (w/3.2)*2, 40*scale);
+
+            // 메인 센터 이름 (글자 더 크고 티 나게!)
+            ctx.fillStyle = '#004d40';
+            ctx.font = `bold ${16 * scale}px 'Malgun Gothic'`;
+            ctx.textAlign = 'center';
+            ctx.fillText('영주시 사회적 경제지원센터 🏛️❤️', 0, -h + (37*scale));
+
+            ctx.restore();
+        }
+
+        // 귀여운 곰돌이 뒷모습 렌더러
+        function drawBearPlayer(x, y, scale) {
+            const w = 110 * scale;
+            const h = 150 * scale;
+            ctx.save();
+            ctx.translate(x, y);
+            if (respectMode) {
+                ctx.shadowBlur = 25;
+                ctx.shadowColor = '#fff59d';
+                ctx.strokeStyle = '#fff59d';
+                ctx.lineWidth = 6;
+                ctx.beginPath();
+                ctx.arc(0, -h / 2, w / 1.5, 0, Math.PI * 2);
+                ctx.stroke();
+            }
+            ctx.fillStyle = '#a1887f';
+            ctx.strokeStyle = '#5d4037';
+            ctx.lineWidth = 3;
+            // 왼쪽 귀
+            ctx.beginPath(); ctx.arc(-22 * scale, -h + (25 * scale), 14 * scale, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
+            ctx.fillStyle = '#d7ccc8'; ctx.beginPath(); ctx.arc(-22 * scale, -h + (25 * scale), 8 * scale, 0, Math.PI * 2); ctx.fill();
+            // 오른쪽 귀
+            ctx.fillStyle = '#a1887f'; ctx.beginPath(); ctx.arc(22 * scale, -h + (25 * scale), 14 * scale, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
+            ctx.fillStyle = '#d7ccc8'; ctx.beginPath(); ctx.arc(22 * scale, -h + (25 * scale), 8 * scale, 0, Math.PI * 2); ctx.fill();
+            // 머리
+            ctx.fillStyle = '#a1887f'; ctx.beginPath(); ctx.arc(0, -h + (50 * scale), 32 * scale, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
+            // 한복 비단옷
+            ctx.fillStyle = '#80deea'; 
+            ctx.beginPath(); ctx.moveTo(-25 * scale, -h + (75 * scale)); ctx.lineTo(25 * scale, -h + (75 * scale)); ctx.lineTo(30 * scale, -10 * scale); ctx.lineTo(-30 * scale, -10 * scale); ctx.closePath(); ctx.fill(); ctx.stroke();
+            // 소매 색동
+            ctx.fillStyle = '#ffeb3b'; ctx.fillRect(-32 * scale, -h + (80 * scale), 10 * scale, 25 * scale); ctx.strokeRect(-32 * scale, -h + (80 * scale), 10 * scale, 25 * scale);
+            ctx.fillStyle = '#ff8a80'; ctx.fillRect(22 * scale, -h + (80 * scale), 10 * scale, 25 * scale); ctx.strokeRect(22 * scale, -h + (80 * scale), 10 * scale, 25 * scale);
+            // 저고리 하트
+            ctx.fillStyle = '#ff1744'; ctx.font = `bold ${16 * scale}px 'Malgun Gothic'`; ctx.textAlign = 'center'; ctx.fillText('❤️', 0, -h + (102 * scale));
+            // 다리 액션
+            const legSwing = Math.sin(Date.now() * 0.15) * 6 * scale;
+            ctx.fillStyle = '#ab47bc'; 
+            ctx.fillRect(-22 * scale, -15 * scale, 12 * scale, 15 * scale + (isJumping ? 0 : legSwing)); ctx.strokeRect(-22 * scale, -15 * scale, 12 * scale, 15 * scale + (isJumping ? 0 : legSwing));
+            ctx.fillRect(10 * scale, -15 * scale, 12 * scale, 15 * scale + (isJumping ? 0 : -legSwing)); ctx.strokeRect(10 * scale, -15 * scale, 12 * scale, 15 * scale + (isJumping ? 0 : -legSwing));
+            ctx.restore();
+        }
+
+        function winGame() {
+            gameActive = false;
+            endTitle.innerText = "영주시 사회적 경제지원센터 골인! 🏛️";
+            endMsg.innerText = "최고입니다! 사랑, 배려, 존중을 실천하며 연대와 협력으로 사회적경제의 가치를 완성했습니다! 🧸🎉";
+            finalScoreEl.innerText = `최종 점수: ${score}점`;
+            endScreen.style.display = 'flex';
+        }
+
+        function loseGame() {
+            gameActive = false;
+            endTitle.innerText = "조금 더 따뜻해질 시간! 🧸";
+            endMsg.innerText = "이기주의와 차가움에 부딪혀 온기가 모두 식어버렸습니다. 사랑과 배려, 존중을 다시 모아 함께 연대하고 협력해봐요!";
+            finalScoreEl.innerText = `최종 점수: ${score}점`;
+            endScreen.style.display = 'flex';
+        }
+    </script>
+</body>
+</html>

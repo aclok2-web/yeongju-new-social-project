@@ -1,0 +1,1067 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>가치 순환: 사회적 경제 테트리스 RESET</title>
+    <style>
+        body {
+            margin: 0;
+            background: radial-gradient(circle, #0f172a 0%, #020617 100%);
+            color: #ffffff;
+            font-family: 'Malgun Gothic', 'Apple SD Gothic Neo', sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            overflow: hidden;
+        }
+        h1 {
+            margin: 0 0 3px 0;
+            font-size: 24px;
+            color: #10b981;
+            text-shadow: 0 0 10px rgba(16, 185, 129, 0.4);
+            letter-spacing: 1px;
+        }
+        p.subtitle {
+            margin: 0 0 12px 0;
+            font-size: 13px;
+            color: #94a3b8;
+            text-align: center;
+            max-width: 580px;
+            line-height: 1.4;
+        }
+        #arcade-cabinet {
+            display: flex;
+            background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+            padding: 18px;
+            border-radius: 20px;
+            border: 4px solid #10b981;
+            box-shadow: 0 0 25px rgba(16, 185, 129, 0.3), inset 0 0 15px rgba(255,255,255,0.05);
+            gap: 18px;
+            position: relative;
+        }
+        #screen-area {
+            width: 320px;
+            height: 520px;
+            position: relative;
+            background: #090d16;
+            border: 3px solid #334155;
+            border-radius: 10px;
+            overflow: hidden;
+            box-shadow: inset 0 0 20px rgba(0,0,0,0.8);
+        }
+        canvas {
+            display: block;
+        }
+        .screen-overlay {
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(15, 23, 42, 0.95);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            z-index: 10;
+            text-align: center;
+            box-sizing: border-box;
+            padding: 15px;
+        }
+        .pulse-text {
+            font-size: 15px;
+            color: #10b981;
+            font-weight: bold;
+            cursor: pointer;
+            animation: pulse 1.5s infinite;
+            border: 2px solid #10b981;
+            padding: 10px 20px;
+            border-radius: 30px;
+            background: rgba(16, 185, 129, 0.1);
+            box-shadow: 0 0 15px rgba(16, 185, 129, 0.3);
+            margin-top: 15px;
+            user-select: none;
+        }
+        @keyframes pulse {
+            0% { transform: scale(1); opacity: 0.8; }
+            50% { transform: scale(1.05); opacity: 1; box-shadow: 0 0 20px rgba(16, 185, 129, 0.6); }
+            100% { transform: scale(1); opacity: 0.8; }
+        }
+        .menu-title {
+            font-size: 15px;
+            color: #38bdf8;
+            margin-bottom: 8px;
+            font-weight: bold;
+            text-shadow: 0 0 8px rgba(56, 189, 248, 0.3);
+        }
+        .difficulty-btn {
+            width: 240px;
+            padding: 10px 0;
+            margin: 5px 0;
+            font-size: 13px;
+            font-weight: bold;
+            color: #ffffff;
+            background: #1e293b;
+            border: 2px solid #475569;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s;
+            outline: none;
+        }
+        .difficulty-btn:hover {
+            background: #10b981;
+            border-color: #34d399;
+            box-shadow: 0 0 12px rgba(16, 185, 129, 0.4);
+            transform: translateY(-2px);
+        }
+        
+        /* 사회적가치 선택 카드 스타일 */
+        .shop-item {
+            width: 270px;
+            background: rgba(30, 41, 59, 0.85);
+            border: 1px solid #475569;
+            border-radius: 8px;
+            padding: 6px 10px;
+            margin: 4px 0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            text-align: left;
+            box-sizing: border-box;
+        }
+        .impact-grid{display:grid;grid-template-columns:1fr 1fr;gap:5px;font-size:10px}.impact-chip{padding:6px;border-radius:6px;background:rgba(16,185,129,.12);border:1px solid rgba(16,185,129,.35)}.impact-chip b{display:block;color:#4ade80;font-size:13px}.project-log{margin-top:7px;font-size:9px;line-height:1.45;color:#cbd5e1;max-height:75px;overflow:auto}.return-choices{display:flex;gap:6px;flex-wrap:wrap;justify-content:center;margin:10px 0}.return-choices button{font-size:10px;padding:8px;background:#10b981;color:#fff;border:0;border-radius:6px;font-weight:bold;cursor:pointer}
+        .shop-info {
+            display: flex;
+            flex-direction: column;
+            max-width: 170px;
+        }
+        .shop-name {
+            font-size: 11px;
+            font-weight: bold;
+            color: #facc15;
+        }
+        .shop-desc {
+            font-size: 9px;
+            color: #94a3b8;
+            margin-top: 1px;
+        }
+        .shop-cost {
+            font-size: 10px;
+            color: #10b981;
+            font-weight: bold;
+            margin-top: 1px;
+        }
+        .buy-btn {
+            background: #10b981;
+            color: white;
+            border: none;
+            padding: 5px 8px;
+            font-size: 10px;
+            font-weight: bold;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: background 0.2s;
+            white-space: nowrap;
+        }
+        .buy-btn:hover {
+            background: #059669;
+        }
+
+        #side-panel {
+            width: 170px;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+        }
+        .glass-box {
+            background: rgba(30, 41, 59, 0.7);
+            border: 1px solid #334155;
+            padding: 8px 10px;
+            border-radius: 10px;
+            text-align: center;
+            margin-bottom: 8px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.15);
+        }
+        .box-title {
+            font-size: 10px;
+            color: #94a3b8;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 4px;
+        }
+        .box-value {
+            font-size: 14px;
+            font-weight: bold;
+            color: #facc15;
+            word-break: keep-all;
+        }
+        #reset-btn {
+            width: 100%;
+            padding: 12px 0;
+            font-size: 13px;
+            font-weight: bold;
+            background: #ef4444;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            box-shadow: 0 4px 0 #b91c1c;
+            transition: all 0.1s;
+            outline: none;
+        }
+        #reset-btn:active {
+            transform: translateY(3px);
+            box-shadow: none;
+        }
+        .tip {
+            margin-top: 10px;
+            font-size: 11px;
+            color: #64748b;
+            text-align: center;
+            line-height: 1.4;
+        }
+        .key-badge {
+            background: #334155;
+            color: #cbd5e1;
+            padding: 1px 4px;
+            border-radius: 3px;
+            font-size: 10px;
+        }
+    </style>
+</head>
+<body>
+
+    <h1>🌱 사회적가치 테트리스: 모두가 살기 좋은 세상 만들기</h1>
+    <p class="subtitle">연대·협력·상생 블록을 맞춰 취약계층 지원, 우범지대 개선, 지역경제 활성화 같은 사회적가치를 만들어 보세요.</p>
+
+    <div id="arcade-cabinet">
+        <div id="screen-area">
+            <!-- 1. 시작 인트로 화면 -->
+            <div id="start-screen" class="screen-overlay">
+                <h2 style="color: #10b981; margin-bottom: 5px; font-size: 22px; text-shadow: 0 0 10px rgba(16, 185, 129, 0.4);">사회적가치 만들기</h2>
+                <p style="color: #64748b; font-size: 11px; margin-top: 0; margin-bottom: 30px;">블록을 맞춰 지역에 필요한 가치를 완성하세요</p>
+                
+                <div class="glass-box" style="width: 220px; background: rgba(16, 185, 129, 0.1); border-color: rgba(16, 185, 129, 0.3); margin-bottom: 10px;">
+                    <div class="box-title" style="color: #10b981;">누적 사회적가치</div>
+                    <div id="start-accumulated-fund" class="box-value" style="color: #10b981; font-size: 16px;">0점</div>
+                </div>
+
+                <div class="pulse-text" onclick="showDifficultySelect()">가치 만들기 시작</div>
+            </div>
+
+            <!-- 2. 사회적가치 난이도 선택 화면 -->
+            <div id="difficulty-screen" class="screen-overlay" style="display: none; justify-content: flex-start; overflow-y: auto; padding-top: 15px;">
+                <div class="menu-title" style="font-size: 15px; margin-bottom: 10px;">🎯 만들 가치의 규모를 선택하세요</div>
+                <button class="difficulty-btn" onclick="selectDifficulty(8, '기초 지원 설계 (하)', 1000)">하: 기초 지원 설계 (8칸)</button>
+                <button class="difficulty-btn" onclick="selectDifficulty(10, '지역 문제 해결 (중)', 700)">중: 지역 문제 해결 (10칸)</button>
+                <button class="difficulty-btn" onclick="selectDifficulty(12, '모두가 살기 좋은 세상 (상)', 450)">상: 모두가 살기 좋은 세상 (12칸)</button>
+            </div>
+
+            <!-- 3. 게임 오버 / 행복 환원 성공 화면 -->
+            <div id="gameover-screen" class="screen-overlay" style="display: none;">
+                <h2 id="gameover-title" style="color: #ef4444; text-shadow: 0 0 10px #ef4444; margin-bottom: 5px;">임무 종료</h2>
+                <p id="gameover-desc" style="color: #94a3b8; font-size: 11px; margin-bottom: 15px;">이번 회차 사회적 기금을 성공적으로 적립했습니다.</p>
+                
+                <div class="glass-box" style="width: 220px; margin-bottom: 10px;">
+                    <div class="box-title" id="final-score-title">이번에 완성한 사회적가치</div>
+                    <div id="final-score" class="box-value" style="color: #facc15;">0점</div>
+                </div>
+
+                <div class="glass-box" style="width: 220px; margin-bottom: 25px; background: rgba(16, 185, 129, 0.1); border-color: rgba(16, 185, 129, 0.3);">
+                    <div class="box-title" style="color: #10b981;">누적 사회적가치</div>
+                    <div id="final-accumulated" class="box-value" style="color: #10b981;">0점</div>
+                </div>
+
+                <button class="difficulty-btn" style="background: #3b82f6; border: none;" onclick="showDifficultySelect()">다시 가치 만들기</button>
+            </div>
+
+            <!-- 실제 게임 Canvas -->
+            <canvas id="tetris" width="320" height="520"></canvas>
+        </div>
+
+        <!-- 우측 정보 보드 -->
+        <div id="side-panel">
+            <div class="glass-box" style="border-color:#10b981">
+                <div class="box-title" style="color:#4ade80">사회적가치 제작 현황</div>
+                <label style="display:block;font-size:10px;margin:6px 0">만들 사회적가치
+                    <select id="manufacture-type" style="width:100%;margin-top:4px;padding:5px;border-radius:5px">
+                        <option value="food">🫶 취약계층 지원 (연대 2·협력 1·상생 1)</option>
+                        <option value="education">🛡 우범지대 개선 (연대 1·협력 2·상생 1)</option>
+                        <option value="welfare">🏘 지역경제 활성화 (연대 1·협력 1·상생 2)</option>
+                    </select>
+                </label>
+                <div id="impact-grid" class="impact-grid"></div>
+                <div id="project-log" class="project-log">아직 완성한 사회적가치가 없습니다.</div>
+            </div>
+            <div>
+                <div class="glass-box">
+                    <div class="box-title">누적 가치 점수</div>
+                    <div id="info-accumulated" class="box-value" style="color: #10b981;">0점</div>
+                </div>
+                <div class="glass-box" style="border-color: #f43f5e; background: rgba(244, 63, 94, 0.05);">
+                    <div class="box-title" style="color: #f43f5e; font-weight: bold;">공동체 행복도</div>
+                    <div id="info-happy" class="box-value" style="color: #f43f5e; font-size: 18px;">0%</div>
+                </div>
+                <div class="glass-box">
+                    <div class="box-title">실시간 가치 제작</div>
+                    <div id="info-score" class="box-value">0점</div>
+                </div>
+                <div class="glass-box">
+                    <div class="box-title">완성한 가치 라인</div>
+                    <div id="info-lines" class="box-value" style="color: #4ade80;">0개</div>
+                </div>
+            </div>
+
+            <button id="reset-btn" onclick="backToMain()">메인 화면으로</button>
+        </div>
+    </div>
+
+    <div class="tip">
+        [↑] 회전 | [←][→] 이동 | [↓] 소프트 드롭 | [Space] 하드 드롭<br>
+        <span style="color: #f43f5e; font-weight: bold;">💡 행복도 100% 도달 시:</span> 완성한 사회적가치가 지역사회에 확산되며 다음 도전을 시작합니다!
+    </div>
+
+<script src="fox_character_model.js"></script>
+<script>
+    const PIPELINE_KEY='social_economy_pipeline_v1',DEBT_LIMIT=1200;
+    function pipelineDefault(){return{capital:0,material1:0,material2:0,material3:0,material1Multiplier:1,material2Multiplier:1,material3Multiplier:1,debt:0,products:{food:0,education:0,welfare:0,clothing:0,service:0,festival:0},revenue:0,bankrupt:false,loanStarted:false}}
+    function loadPipeline(){try{let p=Object.assign(pipelineDefault(),JSON.parse(localStorage.getItem(PIPELINE_KEY)||'{}'));p.products=Object.assign(pipelineDefault().products,p.products||{});return p}catch(e){return pipelineDefault()}}
+    function savePipeline(p){localStorage.setItem(PIPELINE_KEY,JSON.stringify(p));if(parent!==window)parent.postMessage({type:'pipeline-save',data:p},'*');renderPipeline()}
+    window.addEventListener('message',e=>{if(e.data?.type==='pipeline-sync'){localStorage.setItem(PIPELINE_KEY,JSON.stringify(e.data.data));renderPipeline()}});
+    function mandatoryLoan(){let p=loadPipeline();p.loanStarted=true;p.bankrupt=false;p.debt=0;savePipeline(p);return true}
+    function borrowPipeline(){}
+    function repayPipeline(){}
+    function resetPipeline(){localStorage.removeItem(PIPELINE_KEY);location.reload()}
+    function renderPipeline(){let el=document.getElementById('pipeline-ledger');if(el)el.remove()}
+    const canvas = document.getElementById('tetris');
+    const ctx = canvas.getContext('2d');
+    
+    const startScreen = document.getElementById('start-screen');
+    const difficultyScreen = document.getElementById('difficulty-screen');
+    const gameoverScreen = document.getElementById('gameover-screen');
+    
+    const startAccumulatedText = document.getElementById('start-accumulated-fund');
+    const shopAvailableText = document.getElementById('shop-available-fund');
+    const finalScoreText = document.getElementById('final-score');
+    const finalAccumulatedText = document.getElementById('final-accumulated');
+    
+    const infoAccumulated = document.getElementById('info-accumulated');
+    const infoScore = document.getElementById('info-score');
+    const infoLines = document.getElementById('info-lines');
+    const infoHappy = document.getElementById('info-happy');
+
+    const lvSpeedText = document.getElementById('lv-speed');
+    const lvRotationText = document.getElementById('lv-rotation');
+    const lvMultiplierText = document.getElementById('lv-multiplier');
+    const costSpeedText = document.getElementById('cost-speed');
+    const costRotationText = document.getElementById('cost-rotation');
+    const costMultiplierText = document.getElementById('cost-multiplier');
+
+    let cols = 10;
+    const rows = 16;
+    const GUIDE_H = 118;
+    let blockW, blockH;
+
+    let board = [];
+    let currentScore = 0;
+    let lines = 0;
+    let happiness = 0;
+    let impact = {environment:0,work:0,inclusion:0,local:0,care:0,recycle:0,trust:0};
+    let completedProjects = [];
+    const VALUE_IMPACT = {
+        1:{key:'environment',name:'친환경',icon:'🌱'},2:{key:'work',name:'공정노동',icon:'🤝'},
+        3:{key:'inclusion',name:'포용',icon:'💜'},4:{key:'local',name:'지역경제',icon:'🍊'},
+        5:{key:'care',name:'돌봄',icon:'🩷'},6:{key:'recycle',name:'자원순환',icon:'📦'},
+        7:{key:'trust',name:'투명경영',icon:'🛡️'}
+    };
+
+    let isPlaying = false;
+    
+    let baseDropInterval = 700;
+    let dropInterval = 700;
+    let lastTime = 0;
+    let dropCounter = 0;
+    let animationId = null;
+
+    let userData = {
+        accumulatedFund: 0,
+        upgrades: {
+            speed: 0,       
+            rotation: 0,    
+            multiplier: 0   
+        }
+    };
+
+    function getUpgradeCost(type, level) {
+        const baseCosts = { speed: 100, rotation: 150, multiplier: 200 };
+        return Math.ceil(baseCosts[type] * Math.pow(1.5, level) / 10) * 10;
+    }
+
+    function loadUserData() {
+        const saved = localStorage.getItem('social_economy_tetris_reset_data');
+        if (saved) {
+            try {
+                const parsed = JSON.parse(saved);
+                if (parsed && typeof parsed === 'object') {
+                    userData = { ...userData, ...parsed };
+                }
+            } catch (e) {
+                console.error("데이터 복원 오류");
+            }
+        }
+        updateDashboardValues();
+    }
+
+    function saveUserData() {
+        localStorage.setItem('social_economy_tetris_reset_data', JSON.stringify(userData));
+        updateDashboardValues();
+    }
+
+    function updateDashboardValues() {
+        const fundText = Math.ceil(loadPipeline().capital).toLocaleString() + '점';
+        if(startAccumulatedText) startAccumulatedText.innerText = fundText;
+        if(shopAvailableText) shopAvailableText.innerText = fundText;
+        if(infoAccumulated) infoAccumulated.innerText = fundText;
+        
+        if(lvSpeedText) lvSpeedText.innerText = 'Lv.' + userData.upgrades.speed;
+        if(lvRotationText) lvRotationText.innerText = 'Lv.' + userData.upgrades.rotation;
+        if(lvMultiplierText) lvMultiplierText.innerText = 'Lv.' + userData.upgrades.multiplier;
+
+        if(costSpeedText) costSpeedText.innerText = getUpgradeCost('speed', userData.upgrades.speed).toLocaleString();
+        if(costRotationText) costRotationText.innerText = getUpgradeCost('rotation', userData.upgrades.rotation).toLocaleString();
+        if(costMultiplierText) costMultiplierText.innerText = getUpgradeCost('multiplier', userData.upgrades.multiplier).toLocaleString();
+    }
+
+    function buyInfiniteUpgrade(type) {
+        const cost = getUpgradeCost(type, userData.upgrades[type]);
+        const pipeline=loadPipeline();
+        if (pipeline.capital >= cost) {
+            pipeline.capital -= cost;
+            userData.upgrades[type]++;
+            savePipeline(pipeline);
+            saveUserData();
+            alert(`가치 포인트 ${cost}점을 사용했습니다. 제작 효과가 ×${Math.pow(1.5,userData.upgrades[type]).toFixed(2)}가 되었습니다!`);
+        } else {
+            alert(`가치 포인트가 부족합니다. 필요한 포인트: ${cost}점`);
+        }
+    }
+
+    const colors = [
+        '#000000',
+        '#10b981', // 친환경
+        '#3b82f6', // 공정무역
+        '#8b5cf6', // 다양성 연대
+        '#f59e0b', // 로컬 푸드
+        '#ec4899', // 사회 안전망
+        '#14b8a6', // 자원 순환
+        '#ef4444'  // 불균형 철폐
+    ];
+
+    const shapes = {
+        T: [[0,1,0],[1,1,1],[0,0,0]],
+        I: [[0,2,0,0],[0,2,0,0],[0,2,0,0],[0,2,0,0]],
+        O: [[3,3],[3,3]],
+        L: [[0,4,0],[0,4,0],[0,4,4]],
+        J: [[0,5,0],[0,5,0],[5,5,0]],
+        S: [[0,6,6],[6,6,0],[0,0,0]],
+        Z: [[7,7,0],[0,7,7],[0,0,0]]
+    };
+
+    const blockKeys = ['T', 'I', 'O', 'L', 'J', 'S', 'Z'];
+
+    let currentBlock = {
+        matrix: null,
+        x: 0,
+        y: 0
+    };
+    let manufactureEffects = [];
+
+    function showDifficultySelect() {
+        startScreen.style.display = 'none';
+        gameoverScreen.style.display = 'none';
+        difficultyScreen.style.display = 'flex';
+        updateDashboardValues();
+    }
+
+    function selectDifficulty(gridCols, modeName, speed) {
+        if(!mandatoryLoan())return;
+        difficultyScreen.style.display = 'none';
+        
+        cols = gridCols;
+        blockW = 320 / cols;
+        blockH = (520 - GUIDE_H) / rows;
+        baseDropInterval = speed;
+
+        dropInterval = baseDropInterval;
+
+        resetGameData();
+        isPlaying = true;
+        
+        spawnBlock();
+        
+        if (animationId) {
+            cancelAnimationFrame(animationId);
+            animationId = null;
+        }
+        
+        lastTime = performance.now();
+        animationId = requestAnimationFrame(update);
+    }
+
+    function backToMain() {
+        isPlaying = false;
+        if (animationId) {
+            cancelAnimationFrame(animationId);
+            animationId = null;
+        }
+        startScreen.style.display = 'flex';
+        difficultyScreen.style.display = 'none';
+        gameoverScreen.style.display = 'none';
+        resetGameData();
+        updateDashboardValues();
+    }
+
+    function resetGameData() {
+        currentScore = 0;
+        lines = 0;
+        happiness = 0;
+        impact = {environment:0,work:0,inclusion:0,local:0,care:0,recycle:0,trust:0};
+        completedProjects = [];
+        manufactureEffects = [];
+        infoScore.innerText = '0점';
+        infoLines.innerText = '0개';
+        infoHappy.innerText = '0%';
+        renderImpact();
+        initBoard();
+        draw();
+    }
+
+    function initBoard() {
+        board = [];
+        for (let r = 0; r < rows; r++) {
+            board.push(new Array(cols).fill(0));
+        }
+    }
+
+    function spawnBlock() {
+        const randomKey = blockKeys[Math.floor(Math.random() * blockKeys.length)];
+        const nextMatrix = shapes[randomKey].map(row=>row.map(cell=>cell?6:0));
+        currentBlock.matrix = nextMatrix;
+        currentBlock.y = 0;
+        currentBlock.x = Math.floor((cols - currentBlock.matrix[0].length) / 2);
+
+        if (checkCollision(currentBlock.x, currentBlock.y, currentBlock.matrix)) {
+            triggerGameOver();
+        }
+    }
+
+    function triggerGameOver() {
+        isPlaying = false;
+        if (animationId) {
+            cancelAnimationFrame(animationId);
+            animationId = null;
+        }
+
+        const isHappinessMaxed = (happiness >= 100);
+        const titleEl = document.getElementById('gameover-title');
+        const descEl = document.getElementById('gameover-desc');
+        const finalScoreTitleEl = document.getElementById('final-score-title');
+
+        if (isHappinessMaxed) {
+            userData.accumulatedFund = 0;
+            saveUserData();
+
+            titleEl.innerText = "💖 사회 환원 성공!";
+            titleEl.style.color = "#10b981";
+            titleEl.style.textShadow = "0 0 10px #10b981";
+            descEl.innerText = "축하합니다! 취약계층 지원, 우범지대 개선, 지역경제 활성화가 어우러져 공동체 행복도 100%를 달성했습니다.";
+            finalScoreTitleEl.innerText = "지역에 확산된 사회적가치";
+            finalScoreText.innerText = (currentScore).toLocaleString() + '점';
+        } else {
+            userData.accumulatedFund += currentScore;
+            saveUserData();
+
+            titleEl.innerText = "가치 만들기 완료";
+            titleEl.style.color = "#ef4444";
+            titleEl.style.textShadow = "0 0 10px #ef4444";
+            descEl.innerText = "이번 활동에서 만든 사회적가치를 다음 배달 단계로 이어갑니다.";
+            finalScoreTitleEl.innerText = "이번에 완성한 사회적가치";
+            finalScoreText.innerText = currentScore.toLocaleString() + '점';
+        }
+
+        finalAccumulatedText.innerText = userData.accumulatedFund.toLocaleString() + '점';
+        gameoverScreen.style.display = 'flex';
+    }
+
+    function checkCollision(ax, ay, matrix) {
+        for (let r = 0; r < matrix.length; r++) {
+            for (let c = 0; c < matrix[r].length; c++) {
+                if (matrix[r][c] !== 0) {
+                    let nextX = ax + c;
+                    let nextY = ay + r;
+
+                    if (nextX < 0 || nextX >= cols || nextY >= rows) {
+                        return true;
+                    }
+                    if (nextY >= 0 && board[nextY][nextX] !== 0) {
+                        return true;
+                    }
+                }
+            }
+        }
+        return false;
+    }
+
+    function lockBlock() {
+        const mat = currentBlock.matrix;
+        for (let r = 0; r < mat.length; r++) {
+            for (let c = 0; c < mat[r].length; c++) {
+                if (mat[r][c] !== 0) {
+                    if (currentBlock.y + r >= 0) {
+                        board[currentBlock.y + r][currentBlock.x + c] = mat[r][c];
+                    }
+                }
+            }
+        }
+    }
+
+    function clearLines() {
+        let cleared = 0;
+        for (let r = rows - 1; r >= 0; r--) {
+            if (board[r].every(val => val !== 0)) {
+                board.splice(r, 1);
+                board.unshift(new Array(cols).fill(0));
+                cleared++;
+                r++; 
+            }
+        }
+        if (cleared > 0) {
+            let addScore = cleared * 150000;
+            
+            const multLevel = userData.upgrades.multiplier;
+            addScore = Math.floor(addScore * Math.pow(1.15, multLevel));
+
+            currentScore += addScore;
+            lines += cleared;
+            
+            happiness = Math.min(100, happiness + (cleared * 15));
+
+            infoScore.innerText = currentScore.toLocaleString() + '점';
+            infoLines.innerText = lines + '개';
+            infoHappy.innerText = happiness + '%';
+
+            // 행복도가 100%에 가닿으면 영예롭게 게임 세션 종료 단계(강제 트리거)로 진입하여 환원 연출
+            if (happiness >= 100) {
+                setTimeout(() => {
+                    alert("✨ 대성공! 공동체 행복도 100% 달성!\n\n취약계층 지원, 우범지대 개선, 지역경제 활성화가 지역사회에 널리 확산됩니다.");
+                    triggerGameOver();
+                }, 300);
+            }
+        }
+    }
+
+    function draw() {
+        const bg = ctx.createLinearGradient(0, 0, 0, canvas.height);
+        bg.addColorStop(0, '#f8fafc');
+        bg.addColorStop(.55, '#ecfeff');
+        bg.addColorStop(1, '#dcfce7');
+        ctx.fillStyle = bg;
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+        drawFoxDropZone();
+
+        for (let r = 0; r < rows; r++) {
+            for (let c = 0; c < cols; c++) {
+                if (board[r][c] !== 0) {
+                    drawBlock(c, r, board[r][c]);
+                } else {
+                    ctx.strokeStyle = 'rgba(15, 23, 42, 0.18)';
+                    ctx.lineWidth = 0.5;
+                    ctx.strokeRect(c * blockW, GUIDE_H + r * blockH, blockW, blockH);
+                }
+            }
+        }
+
+        if (isPlaying && currentBlock.matrix) {
+            const mat = currentBlock.matrix;
+            for (let r = 0; r < mat.length; r++) {
+                for (let c = 0; c < mat[r].length; c++) {
+                    if (mat[r][c] !== 0) {
+                        drawBlock(currentBlock.x + c, currentBlock.y + r, mat[r][c]);
+                    }
+                }
+            }
+            drawTetrisBearGuide();
+        }
+        drawManufactureEffects();
+    }
+
+    function drawFoxDropZone() {
+        ctx.save();
+        const panelGrad = ctx.createLinearGradient(0, 0, canvas.width, GUIDE_H);
+        panelGrad.addColorStop(0, '#fff7ed');
+        panelGrad.addColorStop(.55, '#fef3c7');
+        panelGrad.addColorStop(1, '#ecfeff');
+        ctx.fillStyle = panelGrad;
+        ctx.fillRect(0, 0, canvas.width, GUIDE_H);
+        ctx.fillStyle = 'rgba(255,255,255,.64)';
+        ctx.fillRect(0, GUIDE_H - 24, canvas.width, 24);
+        ctx.strokeStyle = 'rgba(15,23,42,.22)';
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.moveTo(0, GUIDE_H);
+        ctx.lineTo(canvas.width, GUIDE_H);
+        ctx.stroke();
+        ctx.restore();
+    }
+
+    function queueManufactureEffect(rowsCleared, productKey, produced) {
+        const icons = { food: '🫶', education: '🛡', welfare: '🏘', clothing: '🤲', service: '🌱', festival: '🎪' };
+        const names = { food: '취약계층 지원', education: '우범지대 개선', welfare: '지역경제 활성화', clothing: '공동체 돌봄', service: '상생 서비스', festival: '지역 상생 축제' };
+        manufactureEffects.push({
+            rows: rowsCleared.slice(),
+            productKey,
+            produced,
+            icon: icons[productKey] || '📦',
+            name: names[productKey] || '완성한 사회적가치',
+            start: performance.now(),
+            duration: 1100
+        });
+    }
+
+    function drawManufactureEffects() {
+        if (!manufactureEffects.length) return;
+        const now = performance.now();
+        manufactureEffects = manufactureEffects.filter(effect => now - effect.start < effect.duration);
+
+        manufactureEffects.forEach(effect => {
+            const t = Math.min(1, (now - effect.start) / effect.duration);
+            const pulse = Math.sin(t * Math.PI);
+            ctx.save();
+
+            effect.rows.forEach(row => {
+                const y = GUIDE_H + row * blockH;
+                const bandGrad = ctx.createLinearGradient(0, y, canvas.width, y + blockH);
+                bandGrad.addColorStop(0, `rgba(16,185,129,${0.05 + pulse * 0.35})`);
+                bandGrad.addColorStop(0.5, `rgba(250,204,21,${0.1 + pulse * 0.55})`);
+                bandGrad.addColorStop(1, `rgba(56,189,248,${0.05 + pulse * 0.35})`);
+                ctx.fillStyle = bandGrad;
+                ctx.fillRect(0, y, canvas.width, blockH);
+                ctx.strokeStyle = `rgba(255,255,255,${0.2 + pulse * 0.65})`;
+                ctx.lineWidth = 2;
+                ctx.strokeRect(2, y + 2, canvas.width - 4, blockH - 4);
+            });
+
+            const boxX = canvas.width / 2;
+            const boxY = GUIDE_H + (rows * blockH) * 0.45 - pulse * 34;
+            const scale = 0.86 + pulse * 0.22;
+            ctx.translate(boxX, boxY);
+            ctx.scale(scale, scale);
+            ctx.globalAlpha = Math.max(0, Math.min(1, t < .82 ? 1 : (1 - t) / .18));
+            ctx.shadowColor = 'rgba(250,204,21,.8)';
+            ctx.shadowBlur = 20 * pulse;
+            ctx.fillStyle = 'rgba(15,23,42,.92)';
+            ctx.strokeStyle = '#facc15';
+            ctx.lineWidth = 2;
+            roundRect(ctx, -82, -39, 164, 78, 12);
+            ctx.fill();
+            ctx.stroke();
+            ctx.shadowBlur = 0;
+            ctx.font = '30px sans-serif';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillText(effect.icon, 0, -12);
+            ctx.font = 'bold 12px "Malgun Gothic"';
+            ctx.fillStyle = '#ffffff';
+            ctx.fillText('사회적가치 완성', 0, 14);
+            ctx.font = '10px "Malgun Gothic"';
+            ctx.fillStyle = '#bbf7d0';
+            ctx.fillText(`${effect.name} +${Math.ceil(effect.produced)}`, 0, 30);
+            ctx.restore();
+        });
+    }
+
+    function roundRect(ctx, x, y, w, h, r) {
+        ctx.beginPath();
+        ctx.moveTo(x + r, y);
+        ctx.lineTo(x + w - r, y);
+        ctx.quadraticCurveTo(x + w, y, x + w, y + r);
+        ctx.lineTo(x + w, y + h - r);
+        ctx.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
+        ctx.lineTo(x + r, y + h);
+        ctx.quadraticCurveTo(x, y + h, x, y + h - r);
+        ctx.lineTo(x, y + r);
+        ctx.quadraticCurveTo(x, y, x + r, y);
+        ctx.closePath();
+    }
+
+    function drawTetrisBearGuide() {
+        if (!currentBlock.matrix) return;
+        if (window.FoxMascot) {
+            const pieceWidth = currentBlock.matrix[0].length * blockW;
+            const x = currentBlock.x * blockW + pieceWidth / 2;
+            const y = 106;
+            ctx.save();
+            ctx.shadowColor = 'rgba(255, 255, 255, .95)';
+            ctx.shadowBlur = 10;
+            FoxMascot.draw(ctx, x, y, Math.max(.26, Math.min(.34, blockW / 48)), { tool: 'tetris' });
+            ctx.restore();
+            return;
+        }
+        const pieceWidth = currentBlock.matrix[0].length * blockW;
+        const x = currentBlock.x * blockW + pieceWidth / 2;
+        const y = Math.max(78, currentBlock.y * blockH - 10);
+        const scale = Math.max(.32, Math.min(.48, blockW / 34));
+        const h = 150 * scale;
+        ctx.save();
+        ctx.translate(x, y);
+        ctx.fillStyle = 'rgba(16,185,129,.14)';
+        ctx.beginPath();
+        ctx.arc(0, -h / 2, 62 * scale + Math.sin(Date.now() * .008) * 3, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.strokeStyle = '#4ade80';
+        ctx.lineWidth = 2;
+        ctx.setLineDash([6, 5]);
+        ctx.beginPath();
+        ctx.moveTo(-28 * scale, -8 * scale);
+        ctx.lineTo(-pieceWidth / 2 + 4, 24 * scale);
+        ctx.moveTo(28 * scale, -8 * scale);
+        ctx.lineTo(pieceWidth / 2 - 4, 24 * scale);
+        ctx.stroke();
+        ctx.setLineDash([]);
+        ctx.fillStyle = '#a1887f';
+        ctx.strokeStyle = '#5d4037';
+        ctx.lineWidth = 3 * scale;
+        ctx.beginPath(); ctx.arc(-22 * scale, -h + 25 * scale, 14 * scale, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
+        ctx.fillStyle = '#d7ccc8'; ctx.beginPath(); ctx.arc(-22 * scale, -h + 25 * scale, 8 * scale, 0, Math.PI * 2); ctx.fill();
+        ctx.fillStyle = '#a1887f'; ctx.beginPath(); ctx.arc(22 * scale, -h + 25 * scale, 14 * scale, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
+        ctx.fillStyle = '#d7ccc8'; ctx.beginPath(); ctx.arc(22 * scale, -h + 25 * scale, 8 * scale, 0, Math.PI * 2); ctx.fill();
+        ctx.fillStyle = '#a1887f'; ctx.beginPath(); ctx.arc(0, -h + 50 * scale, 32 * scale, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
+        ctx.fillStyle = '#80deea';
+        ctx.beginPath();
+        ctx.moveTo(-25 * scale, -h + 75 * scale);
+        ctx.lineTo(25 * scale, -h + 75 * scale);
+        ctx.lineTo(30 * scale, -10 * scale);
+        ctx.lineTo(-30 * scale, -10 * scale);
+        ctx.closePath();
+        ctx.fill();
+        ctx.stroke();
+        ctx.fillStyle = '#ffeb3b'; ctx.fillRect(-39 * scale, -h + 82 * scale, 13 * scale, 30 * scale); ctx.strokeRect(-39 * scale, -h + 82 * scale, 13 * scale, 30 * scale);
+        ctx.fillStyle = '#ff8a80'; ctx.fillRect(26 * scale, -h + 82 * scale, 13 * scale, 30 * scale); ctx.strokeRect(26 * scale, -h + 82 * scale, 13 * scale, 30 * scale);
+        ctx.fillStyle = '#2d1b12';
+        ctx.beginPath(); ctx.arc(-10 * scale, -h + 46 * scale, 3 * scale, 0, Math.PI * 2); ctx.arc(10 * scale, -h + 46 * scale, 3 * scale, 0, Math.PI * 2); ctx.fill();
+        ctx.strokeStyle = '#2d1b12';
+        ctx.beginPath(); ctx.arc(0, -h + 56 * scale, 8 * scale, 0, Math.PI); ctx.stroke();
+        ctx.font = `bold ${13 * scale}px "Malgun Gothic"`;
+        ctx.fillStyle = '#f8fafc';
+        ctx.textAlign = 'center';
+        ctx.fillText('제작!', 0, -h + 105 * scale);
+        ctx.restore();
+    }
+
+    function drawBlock(x, y, colorIndex) {
+        const drawX = x * blockW;
+        const drawY = GUIDE_H + y * blockH;
+
+        ctx.fillStyle = colors[colorIndex];
+        ctx.fillRect(drawX, drawY, blockW, blockH);
+
+        ctx.strokeStyle = 'rgba(255, 255, 255, 0.25)';
+        ctx.lineWidth = 1.5;
+        ctx.strokeRect(drawX + 1, drawY + 1, blockW - 2, blockH - 2);
+        const valueInfo = VALUE_IMPACT[colorIndex];
+        if (valueInfo && blockW >= 22) {
+            ctx.fillStyle = '#ffffff';
+            ctx.font = `${Math.max(10, Math.min(15, blockW * .42))}px sans-serif`;
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillText(valueInfo.icon, drawX + blockW / 2, drawY + blockH / 2);
+        }
+    }
+
+    function update(time = 0) {
+        if (!isPlaying) return;
+
+        const deltaTime = time - lastTime;
+        lastTime = time;
+
+        dropCounter += deltaTime;
+        if (dropCounter > dropInterval) {
+            moveDown();
+        }
+
+        draw();
+        animationId = requestAnimationFrame(update);
+    }
+
+    function moveDown() {
+        currentBlock.y++;
+        if (checkCollision(currentBlock.x, currentBlock.y, currentBlock.matrix)) {
+            currentBlock.y--;
+            lockBlock();
+            clearLines();
+            if (isPlaying) { // 행복도 100% 달성 시 clearLines 내부에서 게임오버를 먼저 트리거하므로 체크
+                spawnBlock();
+            }
+        }
+        dropCounter = 0;
+    }
+
+    function rotateBlock() {
+        const mat = currentBlock.matrix;
+        const n = mat.length;
+        let temp = Array.from({ length: n }, () => new Array(n).fill(0));
+        
+        for (let r = 0; r < n; r++) {
+            for (let c = 0; c < n; c++) {
+                temp[c][n - 1 - r] = mat[r][c];
+            }
+        }
+
+        let originalX = currentBlock.x;
+        
+        if (!checkCollision(currentBlock.x, currentBlock.y, temp)) {
+            currentBlock.matrix = temp;
+            return;
+        }
+        
+        if (!checkCollision(currentBlock.x - 1, currentBlock.y, temp)) {
+            currentBlock.x -= 1;
+            currentBlock.matrix = temp;
+            return;
+        }
+        if (!checkCollision(currentBlock.x + 1, currentBlock.y, temp)) {
+            currentBlock.x += 1;
+            currentBlock.matrix = temp;
+            return;
+        }
+
+        const maxOffset = 2;
+
+        for (let offset = 2; offset <= maxOffset; offset++) {
+            if (!checkCollision(currentBlock.x - offset, currentBlock.y, temp)) {
+                currentBlock.x -= offset;
+                currentBlock.matrix = temp;
+                return;
+            }
+            if (!checkCollision(currentBlock.x + offset, currentBlock.y, temp)) {
+                currentBlock.x += offset;
+                currentBlock.matrix = temp;
+                return;
+            }
+        }
+
+        currentBlock.x = originalX;
+    }
+
+    function renderImpact(){
+        const grid=document.getElementById('impact-grid'); if(!grid)return;
+        const p=loadPipeline();
+        const products=Object.assign(pipelineDefault().products,p.products||{});
+        const productLabels={
+            food:{icon:'🫶',name:'취약계층 지원'},
+            education:{icon:'🛡',name:'우범지대 개선'},
+            welfare:{icon:'🏘',name:'지역경제 활성화'}
+        };
+        grid.innerHTML=Object.keys(productLabels).map(key=>{
+            const item=productLabels[key],qty=Math.ceil(Number(products[key]||0));
+            return `<div class="impact-chip">${item.icon} ${item.name}<b>${qty}개</b></div>`;
+        }).join('');
+        document.getElementById('project-log').innerHTML=completedProjects.length?completedProjects.slice(-5).reverse().map(p=>'✅ '+p).join('<br>'):'아직 완성한 사회적가치가 없습니다.';
+    }
+    function checkValueProjects(counts){
+        const made=[];
+        const has=(a,b)=>counts[a]>0&&counts[b]>0;
+        if(has(1,6))made.push('취약계층 지원 기반');
+        if(has(2,4))made.push('우범지대 개선 계획');
+        if(has(3,5))made.push('지역경제 활성화 연결망');
+        if(has(2,7))made.push('상생 실천 약속');
+        made.forEach(name=>{completedProjects.push(name+' 협력 설계 보너스');currentScore+=50000;happiness=Math.min(100,happiness+5)});
+        return made;
+    }
+    clearLines = function(){
+        let cleared=0,counts={},clearedRows=[];
+        for(let r=rows-1;r>=0;r--){
+            if(board[r].every(val=>val!==0)){
+                board[r].forEach(v=>{counts[v]=(counts[v]||0)+1;const info=VALUE_IMPACT[v];if(info)impact[info.key]++});
+                clearedRows.push(r);board.splice(r,1);board.unshift(new Array(cols).fill(0));cleared++;r++;
+            }
+        }
+        if(!cleared)return;
+        lines+=cleared;happiness=Math.min(100,happiness+cleared*10);
+        const product=document.getElementById('manufacture-type').value;
+        const labels={food:'취약계층 지원',education:'우범지대 개선',welfare:'지역경제 활성화',clothing:'공동체 돌봄',service:'상생 서비스',festival:'지역 상생 축제'},recipes={food:{material1:2,material2:1,material3:1},education:{material1:1,material2:2,material3:1},welfare:{material1:1,material2:1,material3:2},clothing:{material1:2,material2:2,material3:1},service:{material1:1,material2:2,material3:2},festival:{material1:2,material2:1,material3:2}};
+        let pipeline=loadPipeline();
+        const recipe=recipes[product],upgradeType={food:'speed',clothing:'speed',welfare:'rotation',service:'rotation',education:'multiplier',festival:'multiplier'}[product],productionMultiplier=Math.pow(1.5,userData.upgrades[upgradeType]||0),socialBonus=Number(pipeline.socialProductionBonus||0),produced=(cleared+socialBonus)*productionMultiplier;
+        pipeline.products=Object.assign(pipelineDefault().products,pipeline.products||{});
+        Object.keys(recipe).forEach(k=>{const use=Math.min(Number(pipeline[k]||0),recipe[k]*cleared);pipeline[k]=Math.max(0,Number(pipeline[k]||0)-use)});
+        pipeline.products[product]=(pipeline.products[product]||0)+produced;currentScore+=produced*20;savePipeline(pipeline);completedProjects.push(`${labels[product]} ${produced.toLocaleString()}개 완성 · 가치 라인 ${cleared}줄 · 가치 점수 +${(produced*20).toLocaleString()}점`);
+        queueManufactureEffect(clearedRows, product, produced);
+        infoScore.innerText=currentScore.toLocaleString()+'점';infoLines.innerText=lines+'개';infoHappy.innerText=happiness+'%';renderImpact();
+        if(happiness>=100)setTimeout(triggerGameOver,300);
+    };
+    function completeReturn(area){
+        const labels={environment:'환경과 자원순환',care:'돌봄과 포용',work:'공정 일자리',local:'지역경제'};
+        const total=userData.accumulatedFund+currentScore;
+        userData.returnImpact=userData.returnImpact||{environment:0,care:0,work:0,local:0};
+        userData.returnImpact[area]=(userData.returnImpact[area]||0)+total;
+        userData.accumulatedFund=0;saveUserData();
+        document.getElementById('gameover-title').innerText='💖 사회 환원 완료';
+        document.getElementById('gameover-desc').innerText=`${total.toLocaleString()}원을 ${labels[area]}에 환원했습니다. 기금은 주민의 변화로 전환되어 새로운 가치 순환을 시작합니다.`;
+        document.getElementById('final-score-title').innerText=labels[area]+' 환원 금액';
+        finalScoreText.innerText=total.toLocaleString()+'원';finalAccumulatedText.innerText='0원';
+        const choices=document.getElementById('return-choices');if(choices)choices.remove();
+        const restart=gameoverScreen.querySelector('button');if(restart)restart.style.display='block';
+    }
+    triggerGameOver = function(){
+        if(!isPlaying&&gameoverScreen.style.display==='flex')return;
+        isPlaying=false;if(animationId){cancelAnimationFrame(animationId);animationId=null}
+        const title=document.getElementById('gameover-title'),desc=document.getElementById('gameover-desc');
+        title.innerText='어디에 가치를 환원할까요?';title.style.color='#10b981';
+        desc.innerText='라인에서 만든 사회적 가치와 기금을 실제 사회문제 해결 분야에 배분하세요.';
+        document.getElementById('final-score-title').innerText='환원 가능한 총 기금';
+        finalScoreText.innerText=(userData.accumulatedFund+currentScore).toLocaleString()+'원';
+        finalAccumulatedText.innerText=userData.accumulatedFund.toLocaleString()+'원';
+        let choices=document.getElementById('return-choices');if(!choices){choices=document.createElement('div');choices.id='return-choices';choices.className='return-choices';choices.innerHTML='<button onclick="completeReturn(\'environment\')">🌱 환경</button><button onclick="completeReturn(\'care\')">🩷 돌봄</button><button onclick="completeReturn(\'work\')">🤝 일자리</button><button onclick="completeReturn(\'local\')">🍊 지역경제</button>';desc.after(choices)}
+        const restart=gameoverScreen.querySelector('button.difficulty-btn');if(restart)restart.style.display='none';
+        gameoverScreen.style.display='flex';
+    };
+
+    document.addEventListener('keydown', e => {
+        if (!isPlaying) return;
+
+        if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'Space'].includes(e.key) || e.code === 'Space') {
+            e.preventDefault();
+        }
+
+        if (e.key === 'ArrowLeft') {
+            if (!checkCollision(currentBlock.x - 1, currentBlock.y, currentBlock.matrix)) {
+                currentBlock.x--;
+            }
+        } else if (e.key === 'ArrowRight') {
+            if (!checkCollision(currentBlock.x + 1, currentBlock.y, currentBlock.matrix)) {
+                currentBlock.x++;
+            }
+        } else if (e.key === 'ArrowDown') {
+            moveDown();
+        } else if (e.key === 'ArrowUp') {
+            rotateBlock();
+        } else if (e.code === 'Space') {
+            while (!checkCollision(currentBlock.x, currentBlock.y + 1, currentBlock.matrix)) {
+                currentBlock.y++;
+            }
+            lockBlock();
+            clearLines();
+            if (isPlaying) {
+                spawnBlock();
+            }
+        }
+        draw();
+    });
+
+    loadUserData();renderPipeline();
+    initBoard();
+    draw();
+</script>
+</body>
+</html>

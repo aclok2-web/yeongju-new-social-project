@@ -1,0 +1,1115 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <title>영주 붉은여우의 지역순환 상생배송</title>
+  <style>
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      padding: 0;
+      background: #160d21;
+      font-family: "Malgun Gothic", Arial, sans-serif;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+      overflow: hidden;
+      user-select: none;
+    }
+    #game-container {
+      width: min(800px, calc(100vw - 12px));
+      height: min(600px, calc(100vh - 12px));
+      aspect-ratio: 4 / 3;
+      position: relative;
+      border: 5px solid #ffd54f;
+      border-radius: 18px;
+      box-shadow: 0 14px 36px rgba(0,0,0,0.55);
+      overflow: hidden;
+      background: #110922;
+    }
+    canvas {
+      display: block;
+      width: 100%;
+      height: 100%;
+    }
+    #ui-overlay {
+      position: absolute;
+      top: 14px;
+      left: 14px;
+      right: 14px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+      pointer-events: none;
+      z-index: 10;
+    }
+    .ui-card {
+      background: rgba(17, 9, 34, 0.9);
+      color: #fff;
+      padding: 8px 12px;
+      border-radius: 8px;
+      font-weight: bold;
+      font-size: clamp(12px, 2.2vw, 15px);
+      border: 2px solid #ffb300;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      min-height: 36px;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.28);
+      white-space: nowrap;
+    }
+    #gauge-bg {
+      width: min(120px, 18vw);
+      height: 14px;
+      background: #331e40;
+      border-radius: 7px;
+      overflow: hidden;
+      border: 1px solid #fff;
+    }
+    #gauge-fill {
+      width: 0%;
+      height: 100%;
+      background: linear-gradient(90deg, #26c6da, #66bb6a, #ffee58);
+      transition: width 0.12s linear;
+    }
+    #control-tip {
+      position: absolute;
+      bottom: 14px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: rgba(0, 0, 0, 0.72);
+      color: #fff;
+      padding: 7px 16px;
+      border-radius: 8px;
+      font-size: clamp(11px, 2vw, 13px);
+      pointer-events: none;
+      z-index: 10;
+      border: 1px dashed rgba(255,255,255,0.45);
+      text-align: center;
+      width: min(92%, 650px);
+    }
+    .screen {
+      position: absolute;
+      inset: 0;
+      background: rgba(17, 9, 34, 0.96);
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      z-index: 20;
+      color: white;
+      text-align: center;
+      padding: clamp(18px, 4vw, 32px);
+    }
+    .screen h1 {
+      font-size: clamp(26px, 5vw, 38px);
+      color: #ffd54f;
+      text-shadow: 0 4px 10px rgba(255,213,79,0.28);
+      margin: 0 0 10px;
+      line-height: 1.24;
+    }
+    .subtitle {
+      color: #80deea;
+      font-weight: 800;
+      font-size: clamp(16px, 3vw, 22px);
+      margin-bottom: 14px;
+    }
+    .screen p {
+      font-size: clamp(13px, 2.2vw, 16px);
+      line-height: 1.7;
+      margin: 0 0 18px;
+      color: #e0f2f1;
+      max-width: 610px;
+    }
+    .how-to {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 7px 12px;
+      width: min(610px, 100%);
+      margin: 0 0 20px;
+      color: #fffde7;
+      font-size: clamp(12px, 2vw, 14px);
+      text-align: left;
+    }
+    .btn {
+      padding: 13px 38px;
+      font-size: clamp(17px, 3vw, 20px);
+      font-weight: bold;
+      color: #3e1b00;
+      background: linear-gradient(to bottom, #fff176, #fdd835);
+      border: none;
+      border-radius: 999px;
+      cursor: pointer;
+      box-shadow: 0 6px 0 #f57f17;
+    }
+    .btn:active {
+      transform: translateY(4px);
+      box-shadow: 0 2px 0 #f57f17;
+    }
+    #touch-controls {
+      position: absolute;
+      left: 0;
+      right: 0;
+      bottom: 54px;
+      z-index: 15;
+      display: none;
+      justify-content: center;
+      gap: 16px;
+      pointer-events: auto;
+    }
+    .touch-btn {
+      width: 62px;
+      height: 48px;
+      border-radius: 8px;
+      border: 2px solid rgba(255,255,255,0.7);
+      background: rgba(17, 9, 34, 0.78);
+      color: #fffde7;
+      font-size: 24px;
+      font-weight: 900;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.35);
+    }
+    .touch-btn:active { background: rgba(255, 213, 79, 0.9); color: #2b1600; }
+    #end-msg {
+      max-width: 680px;
+      margin-bottom: 12px;
+    }
+    .report-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 8px;
+      width: min(640px, 100%);
+      margin: 10px auto;
+      text-align: left;
+    }
+    .report-grid div {
+      background: rgba(255,255,255,0.08);
+      border: 1px solid rgba(255,213,79,0.38);
+      border-radius: 8px;
+      padding: 8px 10px;
+      font-size: clamp(12px, 2vw, 14px);
+    }
+    .parade {
+      font-size: clamp(22px, 4vw, 34px);
+      letter-spacing: 4px;
+      margin-top: 8px;
+    }
+    @media (max-width: 560px) {
+      .how-to, .report-grid { grid-template-columns: 1fr; }
+      #control-tip { display: none; }
+      #touch-controls { bottom: 12px; }
+      .ui-card { padding: 6px 8px; }
+    }
+  </style>
+</head>
+<body>
+  <div id="game-container">
+    <div id="screen-start" class="screen">
+      <h1>영주 붉은여우의 지역순환 상생배송</h1>
+      <div class="subtitle">빠른 배송보다 지역과 함께 성장</div>
+      <p>
+        완성된 사회적 가치 상품을 지역기업, 공공기관, 온라인 상점에 배송해 지역경제 순환을 만들어 보세요.
+        배송 성과는 누적되고, 이후 지역사회 환원과 돌봄 재투자로 이어집니다.
+        협력, 연대, 배려, 상생의 가치를 유통 과정으로 체험하는 배송 게임입니다.
+      </p>
+      <div class="how-to">
+        <div>상생택배차로 배달처를 방문하세요.</div>
+        <div>완성한 사회적가치를 배송해 신뢰를 만드세요.</div>
+        <div>장애물을 피하고 협력 게이지를 채우세요.</div>
+        <div>많은 배달처를 방문하고 사회적가치를 전달할수록 평가가 높아집니다.</div>
+      </div>
+      <button class="btn" onclick="startGame()">게임 시작하기</button>
+    </div>
+
+    <div id="screen-end" class="screen" style="display: none;">
+      <h1 id="end-title">사회적가치 리포트</h1>
+      <p id="end-msg"></p>
+      <h2 id="final-score" style="color:#ffd54f;font-size:clamp(24px,4vw,32px);margin:4px 0 12px;">최종 사회적가치: 0점</h2>
+      <button class="btn" onclick="restartGame()">다시 배송하기</button>
+    </div>
+
+    <div id="ui-overlay">
+      <div class="ui-card" id="score-display">사회적가치: 0</div>
+      <div class="ui-card">
+        협력 게이지
+        <div id="gauge-bg"><div id="gauge-fill"></div></div>
+        <span id="gauge-percent">0%</span>
+      </div>
+      <div class="ui-card" id="companion-display">동행 주민: 0명</div>
+      <div class="ui-card" id="distance-display">남은 거리: 350m</div>
+    </div>
+
+    <div id="control-tip">PC: ← / → 또는 A / D 이동 | 배달처를 방문해 지역순환 배송을 완성하세요.</div>
+
+    <div id="touch-controls">
+      <button class="touch-btn" id="touch-left" aria-label="왼쪽 이동">←</button>
+      <button class="touch-btn" id="touch-right" aria-label="오른쪽 이동">→</button>
+    </div>
+
+    <canvas id="gameCanvas" width="800" height="600"></canvas>
+  </div>
+
+  <script src="fox_character_model.js"></script>
+  <script>
+    const PIPELINE_KEY='social_economy_pipeline_v1',DEBT_LIMIT=1200;
+    function pipelineDefault(){return{capital:0,material1:0,material2:0,material3:0,material1Multiplier:1,material2Multiplier:1,material3Multiplier:1,debt:0,products:{food:0,education:0,welfare:0,clothing:0,service:0,festival:0},revenue:0,bankrupt:false,loanStarted:false}}
+    function loadPipeline(){try{let p=Object.assign(pipelineDefault(),JSON.parse(localStorage.getItem(PIPELINE_KEY)||'{}'));p.products=Object.assign(pipelineDefault().products,p.products||{});return p}catch(e){return pipelineDefault()}}
+    function savePipeline(p){localStorage.setItem(PIPELINE_KEY,JSON.stringify(p));if(parent!==window)parent.postMessage({type:'pipeline-save',data:p},'*');renderPipeline()}
+    window.addEventListener('message',e=>{if(e.data?.type==='pipeline-sync'){localStorage.setItem(PIPELINE_KEY,JSON.stringify(e.data.data));renderPipeline()}});
+    const DELIVERY_PLACES=['지역기업','공공기관','E-store'];
+    let distributedProduct='',runRevenue=0,deliveryCount=0,deliveryVisitCount=0,nextDeliveryAt=0,deliveryInterval=10000,deliveryDisplay=0,deliveredNames=[],deliveryHistory=[],visitedDeliveryPlaces=[],currentDeliveryPlace='';
+    function availableWholeProducts(products){return Object.values(products).reduce((sum,n)=>sum+Math.floor(Math.max(0,Number(n)||0)),0)}
+    function prepareDistribution(){let p=loadPipeline();if(availableWholeProducts(p.products)<2){alert('한 번에 배달할 사회적가치가 부족합니다. 테트리스에서 사회적가치를 2개 이상 완성하세요.');return false}return true}
+    function spawnDeliveryPlace(){const place=DELIVERY_PLACES[deliveryVisitCount%DELIVERY_PLACES.length],icons={'지역기업':'🏢','공공기관':'🏛️','E-store':'🛒'},colors={'지역기업':'#ffb74d','공공기관':'#64b5f6','E-store':'#ce93d8'};deliveryVisitCount++;objects.push({kind:'delivery',lane:Math.floor(Math.random()*3),z:1,emoji:icons[place],name:`${place} 배달`,color:colors[place],data:{place},cleared:false});createParticleEffect(`${icons[place]} ${place} 배달처가 나타났습니다!`,'#ffd54f')}
+function deliverProductsAtStop(place){let p=loadPipeline(),labels={food:'취약계층 지원',education:'우범지대 개선',welfare:'지역경제 활성화',clothing:'공동체 돌봄',service:'상생 서비스',festival:'지역 상생 축제'},requested=2+Math.floor(Math.random()*3),available=availableWholeProducts(p.products),target=Math.min(requested,available),delivered=0,names=[];currentDeliveryPlace=place;visitedDeliveryPlaces.push(place);if(target<2){deliveryHistory.push(`${place}: 재고 부족`);createParticleEffect(`🏪 ${place} · 사회적가치 2개 미만으로 배달 보류`,'#ffcc80');return false}while(delivered<target){let key=Object.keys(p.products).find(k=>p.products[k]>=1);if(!key)break;p.products[key]-=1;delivered++;names.push(labels[key])}const deliveryBonus=Number(p.socialDeliveryBonus||0),earned=Math.ceil(delivered*20*(1+deliveryBonus));p.capital+=earned;p.revenue+=earned;runRevenue+=earned;deliveryCount+=delivered;distributedProduct=names.join(', ');deliveredNames.push(...names);deliveryHistory.push(`${place}: ${delivered}개 · ${earned}점`);savePipeline(p);createParticleEffect(`🏪 ${place} ${delivered}개 배달! 전달 성과 +${earned}점${deliveryBonus?' · 사회가치 보너스':''}`,'#ffd54f');return true}
+    function borrowPipeline(){}
+    function repayPipeline(){}
+    function resetPipeline(){localStorage.removeItem(PIPELINE_KEY);location.reload()}
+    function renderPipeline(){let el=document.getElementById('pipeline-ledger');if(el)el.remove()}
+    const canvas = document.getElementById("gameCanvas");
+    const ctx = canvas.getContext("2d");
+
+    const startScreen = document.getElementById("screen-start");
+    const endScreen = document.getElementById("screen-end");
+    const endTitle = document.getElementById("end-title");
+    const endMsg = document.getElementById("end-msg");
+    const finalScoreEl = document.getElementById("final-score");
+    const scoreEl = document.getElementById("score-display");
+    const gaugeFillEl = document.getElementById("gauge-fill");
+    const gaugePercentEl = document.getElementById("gauge-percent");
+    const companionEl = document.getElementById("companion-display");
+    const distanceEl = document.getElementById("distance-display");
+    const touchControls = document.getElementById("touch-controls");
+
+    const lanesX = [-1, 0, 1];
+    const residentTypes = [
+      { emoji: "👵", name: "어르신", score: 700, gauge: 10, category: "care", msg: "👵 어르신의 짐을 함께 들었습니다!" },
+      { emoji: "👧", name: "어린이", score: 700, gauge: 10, category: "care", msg: "👧 어린이가 안전하게 길을 건넜습니다!" },
+      { emoji: "🧑‍🌾", name: "청년농부", score: 850, gauge: 12, category: "localEconomy", msg: "🧑‍🌾 청년농부의 지역 농산물을 응원했습니다!" },
+      { emoji: "🧑‍🦽", name: "휠체어 이용 주민", score: 850, gauge: 12, category: "care", msg: "🧑‍🦽 이동이 불편한 주민과 함께 길을 열었습니다!" },
+      { emoji: "👩‍💼", name: "사회적기업 직원", score: 900, gauge: 13, category: "cooperation", msg: "👩‍💼 사회적기업 직원과 새로운 일자리를 만들었습니다!" }
+    ];
+    const enterpriseTypes = [
+      { emoji: "🍎", name: "영주사과 청년농부", score: 800, gauge: 10, category: "localEconomy", msg: "🍎 지역 농산물 소비로 청년농부를 응원했습니다!" },
+      { emoji: "🌿", name: "풍기인삼 가공소", score: 900, gauge: 12, category: "localEconomy", msg: "🌿 지역 자원으로 새로운 일자리를 만들었습니다!" },
+      { emoji: "🏡", name: "마을기업", score: 1000, gauge: 15, category: "cooperation", msg: "🏡 주민이 함께 운영하는 마을기업을 응원했습니다!" },
+      { emoji: "🤝", name: "사회적경제지원센터", score: 1200, gauge: 20, category: "solidarity", msg: "🤝 연결과 협력으로 지역 문제를 해결했습니다!" },
+      { emoji: "♻️", name: "친환경기업", score: 900, gauge: 12, category: "environment", msg: "♻️ 환경을 지키는 착한 소비를 실천했습니다!" }
+    ];
+    const obstacleTypes = [
+      { emoji: "💰", name: "이기주의", penalty: 16, scoreLoss: 220, msg: "💰 나만의 이익만 생각하면 공동체가 약해집니다." },
+      { emoji: "🧱", name: "차별의 벽", penalty: 18, scoreLoss: 260, msg: "🧱 차별의 벽은 함께 넘어야 합니다." },
+      { emoji: "🗑️", name: "환경오염", penalty: 18, scoreLoss: 240, msg: "🗑️ 환경오염은 모두의 삶을 어렵게 합니다." },
+      { emoji: "❄️", name: "무관심", penalty: 15, scoreLoss: 200, msg: "❄️ 무관심보다 작은 관심이 큰 힘이 됩니다." }
+    ];
+
+    let gameActive = false;
+    let animationRunning = false;
+    let score = 0;
+    let cooperationGauge = 0;
+    let distanceLeft = 350;
+    let currentLane = 1;
+    let targetLaneX = 0;
+    let playerY = 0;
+    let objects = [];
+    let particles = [];
+    let companions = [];
+    let spawnTimer = 0;
+    let gameSpeed = 4.5;
+    let bgOffset = 0;
+    let companionCount = 0;
+    let socialEnterpriseVisits = 0;
+    let slowdownTimer = 0;
+    let solidarityBoost = false;
+    let solidarityTimer = 0;
+    let valueScores = {};
+
+    function resetGameState() {
+      score = 0;
+      cooperationGauge = 0;
+      distanceLeft = 350;
+      currentLane = 1;
+      targetLaneX = 0;
+      playerY = 0;
+      objects = [];
+      particles = [];
+      companions = [];
+      spawnTimer = 0;
+      gameSpeed = 4.5;
+      bgOffset = 0;
+      companionCount = 0;
+      socialEnterpriseVisits = 0;
+      slowdownTimer = 0;
+      solidarityBoost = false;
+      solidarityTimer = 0;
+      runRevenue = 0;
+      deliveryCount = 0;
+      deliveryVisitCount = 0;
+      deliveryDisplay = 0;
+      deliveredNames = [];
+      deliveryHistory = [];
+      visitedDeliveryPlaces = [];
+      currentDeliveryPlace = '';
+      valueScores = { care: 0, cooperation: 0, solidarity: 0, localEconomy: 0, environment: 0 };
+      updateUI();
+    }
+
+    function startGame() {
+      if(!prepareDistribution())return;
+      startScreen.style.display = "none";
+      endScreen.style.display = "none";
+      touchControls.style.display = "flex";
+      resetGameState();
+      const previousCompanions=Math.max(0,Number(loadPipeline().deliverySupport)||0);
+      deliveryInterval=Math.max(5000,10000-previousCompanions*1000);
+      nextDeliveryAt = Date.now() + deliveryInterval;
+      createParticleEffect(`이전 동행 주민 ${previousCompanions}명 · 배달처 ${deliveryInterval/1000}초 간격`,'#80deea');
+      gameActive = true;
+      if (!animationRunning) {
+        animationRunning = true;
+        requestAnimationFrame(loop);
+      }
+    }
+
+    function restartGame() {
+      startGame();
+    }
+
+    function moveLeft() {
+      if (gameActive && currentLane > 0) currentLane--;
+    }
+
+    function moveRight() {
+      if (gameActive && currentLane < 2) currentLane++;
+    }
+
+    window.addEventListener("keydown", (e) => {
+      if (e.code === "ArrowLeft" || e.code === "KeyA") moveLeft();
+      if (e.code === "ArrowRight" || e.code === "KeyD") moveRight();
+    });
+
+    canvas.addEventListener("touchstart", (e) => {
+      if (!gameActive) return;
+      e.preventDefault();
+      const rect = canvas.getBoundingClientRect();
+      const touchX = e.touches[0].clientX - rect.left;
+      if (touchX < rect.width / 2) {
+        moveLeft();
+      } else {
+        moveRight();
+      }
+    }, { passive: false });
+
+    document.getElementById("touch-left").addEventListener("pointerdown", (e) => { e.preventDefault(); moveLeft(); });
+    document.getElementById("touch-right").addEventListener("pointerdown", (e) => { e.preventDefault(); moveRight(); });
+
+    function project3D(x, y, z) {
+      const vanishingX = canvas.width / 2;
+      const vanishingY = 220;
+      const factor = 1 / (z * 6 + 1.2);
+      return {
+        x: vanishingX + (x * 450 * factor),
+        y: vanishingY + (420 * factor) - (y * 300 * factor),
+        scale: factor * 1.5
+      };
+    }
+
+    function addScore(amount, category) {
+      const gained = Math.round(amount * (solidarityBoost ? 2 : 1));
+      score += gained;
+      if (category && valueScores[category] !== undefined) valueScores[category] += gained;
+      return gained;
+    }
+
+    function increaseGauge(amount) {
+      if (solidarityBoost) return;
+      cooperationGauge = Math.min(100, cooperationGauge + amount);
+      if (cooperationGauge >= 100) triggerSolidarityBoost();
+    }
+
+    function triggerSolidarityBoost() {
+      solidarityBoost = true;
+      solidarityTimer = 300;
+      valueScores.solidarity += 1000;
+      createParticleEffect("🌈 연대 부스터! 함께하면 더 강해집니다!", "#ffee58");
+    }
+
+    function update() {
+      targetLaneX += ((currentLane - 1) - targetLaneX) * 0.2;
+
+      const speedModifier = solidarityBoost ? 1.14 : (slowdownTimer > 0 ? 0.5 : 1);
+      gameSpeed = (4.4 + (350 - distanceLeft) * 0.004) * speedModifier;
+      distanceLeft -= 0.18 * (slowdownTimer > 0 ? 0.75 : 1);
+      if (distanceLeft <= 0) {
+        distanceLeft = 0;
+        finishGame(true);
+        return;
+      }
+
+      if (solidarityBoost) {
+        solidarityTimer--;
+        if (solidarityTimer <= 0) {
+          solidarityBoost = false;
+          cooperationGauge = 0;
+          createParticleEffect("협력 게이지가 다시 0부터 차오릅니다.", "#80deea");
+        }
+      }
+      if (slowdownTimer > 0) slowdownTimer--;
+      if(Date.now()>=nextDeliveryAt){spawnDeliveryPlace();nextDeliveryAt+=deliveryInterval}
+
+      spawnTimer++;
+      if (spawnTimer > Math.max(70, 100 - Math.floor((350 - distanceLeft) / 30))) {
+        spawnTimer = 0;
+        spawnObject();
+      }
+
+      for (let i = objects.length - 1; i >= 0; i--) {
+        const obj = objects[i];
+        obj.z -= gameSpeed * 0.0016;
+        if (obj.z <= 0.1 && obj.z >= 0.02 && obj.lane === currentLane) {
+          handleCollision(obj);
+          objects.splice(i, 1);
+          continue;
+        }
+        if (obj.z <= 0) {
+          if (obj.kind === "obstacle" && obj.cleared && solidarityBoost) {
+            const gained = addScore(500, "solidarity");
+            createParticleEffect(`🌈 장애물을 함께 넘어섰습니다! +${gained}`, "#ffee58");
+          } else if(obj.kind === "delivery") {
+            deliveryHistory.push(`${obj.data.place}: 놓침`);
+            createParticleEffect(`${obj.data.place} 배달처를 놓쳤습니다.`,'#ff8a65');
+          }
+          objects.splice(i, 1);
+        }
+      }
+
+      bgOffset += gameSpeed;
+      updateUI();
+    }
+
+    function spawnObject() {
+      const roll = Math.random();
+      let selected;
+      if (roll < 0.15) {
+        selected = { kind: "resident", data: residentTypes[Math.floor(Math.random() * residentTypes.length)] };
+      } else if (roll < 0.50) {
+        selected = { kind: "enterprise", data: enterpriseTypes[Math.floor(Math.random() * enterpriseTypes.length)] };
+      } else {
+        selected = { kind: "obstacle", data: obstacleTypes[Math.floor(Math.random() * obstacleTypes.length)] };
+      }
+      objects.push({
+        kind: selected.kind,
+        lane: Math.floor(Math.random() * 3),
+        z: 1,
+        emoji: selected.data.emoji,
+        name: selected.data.name,
+        color: selected.kind === "obstacle" ? "#ff8a65" : (selected.kind === "resident" ? "#80deea" : "#ffd54f"),
+        data: selected.data,
+        cleared: false
+      });
+    }
+
+    function handleCollision(obj) {
+      if (obj.kind === "delivery") {
+        deliverProductsAtStop(obj.data.place);
+      } else if (obj.kind === "resident") {
+        const gained = addScore(obj.data.score, obj.data.category);
+        increaseGauge(obj.data.gauge);
+        companionCount++;
+        companions.push({
+          emoji: obj.emoji,
+          followX: targetLaneX + (Math.random() - 0.5) * 0.4,
+          offset: (companions.length % 8) - 3.5
+        });
+        valueScores.cooperation += 220;
+        createParticleEffect(`${obj.data.msg} +${gained}`, obj.color);
+      } else if (obj.kind === "enterprise") {
+        const gained = addScore(obj.data.score, obj.data.category);
+        increaseGauge(obj.data.gauge);
+        socialEnterpriseVisits++;
+        createParticleEffect(`${obj.data.msg} +${gained}`, obj.color);
+      } else if (solidarityBoost) {
+        const gained = addScore(500, "solidarity");
+        createParticleEffect(`🌈 ${obj.data.name}을 함께 넘어섰습니다! +${gained}`, "#ffee58");
+      } else {
+        cooperationGauge = Math.max(0, cooperationGauge - obj.data.penalty);
+        score = Math.max(0, score - obj.data.scoreLoss);
+        createParticleEffect(`${obj.data.msg} -${obj.data.scoreLoss}`, "#ff7043");
+      }
+    }
+
+    function updateUI() {
+      scoreEl.innerText = `사회적가치: ${score.toLocaleString()}`;
+      gaugeFillEl.style.width = `${Math.round(cooperationGauge)}%`;
+      gaugePercentEl.innerText = `${Math.round(cooperationGauge)}%`;
+      companionEl.innerText = `동행 주민: ${companionCount}명`;
+      distanceEl.innerText = `남은 거리: ${Math.max(0, Math.floor(distanceLeft))}m · 배달처 ${deliveryInterval/1000}초 간격 · 가치 ${deliveryCount}개 · 성과 ${runRevenue}점`;
+    }
+
+    function createParticleEffect(text, color) {
+      particles.push({ text, color, y: 340, alpha: 1 });
+    }
+
+    function loop() {
+      if (!gameActive) {
+        animationRunning = false;
+        return;
+      }
+      update();
+      draw();
+      requestAnimationFrame(loop);
+    }
+
+    function draw() {
+      const skyGrad = ctx.createLinearGradient(0, 0, 0, 220);
+      skyGrad.addColorStop(0, "#110922");
+      skyGrad.addColorStop(0.55, "#251333");
+      skyGrad.addColorStop(1, "#58304a");
+      ctx.fillStyle = skyGrad;
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+      drawMountains();
+      drawRoad();
+      drawSideBuildings();
+      drawFinishCenter();
+      drawObjects();
+      const playerProj = project3D(targetLaneX, playerY, 0.13);
+      drawCompanions(playerProj);
+      drawFoxRunner(playerProj.x, playerProj.y, playerProj.scale);
+      drawParticles();
+    }
+
+    function drawMountains() {
+      ctx.fillStyle = "#1c0a22";
+      ctx.beginPath();
+      ctx.moveTo(0, 220);
+      ctx.lineTo(80, 140);
+      ctx.lineTo(220, 180);
+      ctx.lineTo(400, 90);
+      ctx.lineTo(580, 190);
+      ctx.lineTo(710, 130);
+      ctx.lineTo(800, 220);
+      ctx.closePath();
+      ctx.fill();
+      ctx.strokeStyle = "rgba(255, 213, 79, 0.32)";
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      ctx.moveTo(0, 140);
+      ctx.bezierCurveTo(200, 180, 600, 180, 800, 140);
+      ctx.stroke();
+      for (let x = 50; x < 800; x += 100) {
+        ctx.fillStyle = "#ffca28";
+        ctx.beginPath();
+        ctx.arc(x, 153 + Math.sin(x) * 4, 3, 0, Math.PI * 2);
+        ctx.fill();
+      }
+    }
+
+    function drawRoad() {
+      ctx.fillStyle = "#3a202d";
+      ctx.fillRect(0, 220, canvas.width, canvas.height - 220);
+      const pFarLeft = project3D(-1.6, 0, 1);
+      const pFarRight = project3D(1.6, 0, 1);
+      const pNearLeft = project3D(-1.6, 0, 0);
+      const pNearRight = project3D(1.6, 0, 0);
+      ctx.fillStyle = "#21131b";
+      ctx.beginPath();
+      ctx.moveTo(pFarLeft.x, pFarLeft.y);
+      ctx.lineTo(pFarRight.x, pFarRight.y);
+      ctx.lineTo(pNearRight.x, pNearRight.y);
+      ctx.lineTo(pNearLeft.x, pNearLeft.y);
+      ctx.closePath();
+      ctx.fill();
+      ctx.strokeStyle = "#df8969";
+      ctx.lineWidth = 3;
+      for (let laneIdx = -0.5; laneIdx <= 0.5; laneIdx += 1) {
+        const start = project3D(laneIdx, 0, 1);
+        const end = project3D(laneIdx, 0, 0);
+        ctx.beginPath();
+        ctx.moveTo(start.x, start.y);
+        ctx.lineTo(end.x, end.y);
+        ctx.stroke();
+      }
+      ctx.strokeStyle = "#ffa726";
+      ctx.lineWidth = 5;
+      ctx.beginPath();
+      ctx.moveTo(pFarLeft.x, pFarLeft.y);
+      ctx.lineTo(pNearLeft.x, pNearLeft.y);
+      ctx.moveTo(pFarRight.x, pFarRight.y);
+      ctx.lineTo(pNearRight.x, pNearRight.y);
+      ctx.stroke();
+    }
+
+    function drawSideBuildings() {
+      [0.15, 0.4, 0.65, 0.9].forEach((z, idx) => {
+        let currentZ = z - ((bgOffset % 120) / 800);
+        if (currentZ < 0) currentZ += 1;
+        drawYeongjuCenterSide(project3D(-2.5, 0, currentZ), idx % 2 === 0 ? "사회적경제" : "연대·협력", true);
+        drawYeongjuCenterSide(project3D(2.5, 0, currentZ), idx % 2 === 0 ? "돌봄·상생" : "영주 동행", false);
+      });
+    }
+
+    function drawFinishCenter() {
+      if (distanceLeft < 80) {
+        const proj = project3D(0, 0, distanceLeft / 80);
+        drawYeongjuCenterMain(proj.x, proj.y, proj.scale);
+      }
+    }
+
+    function drawObjects() {
+      objects.sort((a, b) => b.z - a.z);
+      objects.forEach((obj) => {
+        const proj = project3D(obj.lane - 1, 0, obj.z);
+        if (obj.kind === "delivery") {
+          drawDeliveryDestination(proj.x, proj.y, proj.scale, obj);
+          return;
+        }
+        const finalSize = (obj.kind==='delivery'?68:48) * proj.scale;
+        const floatY = obj.kind === "obstacle" ? 0 : Math.sin(Date.now() * 0.008 + obj.z * 12) * 8 * proj.scale;
+        ctx.save();
+        ctx.shadowBlur = 20 * proj.scale;
+        ctx.shadowColor = obj.color;
+        ctx.font = `${finalSize}px "Malgun Gothic"`;
+        ctx.textAlign = "center";
+        ctx.textBaseline = "middle";
+        ctx.fillText(obj.emoji, proj.x, proj.y - finalSize / 1.5 + floatY);
+        ctx.font = `bold ${Math.max(10, 11 * proj.scale)}px "Malgun Gothic"`;
+        ctx.fillStyle = "#fffde7";
+        ctx.shadowBlur = 3;
+        ctx.fillText(obj.name, proj.x, proj.y - finalSize / 1.5 + floatY + finalSize * 0.72);
+        ctx.restore();
+      });
+    }
+
+    function drawDeliveryDestination(x, y, scale, obj) {
+      const s = Math.max(.35, scale * 1.35);
+      const w = 190 * s;
+      const h = 130 * s;
+      ctx.save();
+      ctx.translate(x, y);
+      const glow = ctx.createRadialGradient(0, -h / 2, 8 * s, 0, -h / 2, 150 * s);
+      glow.addColorStop(0, obj.color + "99");
+      glow.addColorStop(1, "rgba(255,255,255,0)");
+      ctx.fillStyle = glow;
+      ctx.beginPath();
+      ctx.arc(0, -h / 2, 150 * s, 0, Math.PI * 2);
+      ctx.fill();
+
+      ctx.fillStyle = "rgba(0,0,0,.28)";
+      ctx.beginPath();
+      ctx.ellipse(0, 8 * s, w * .48, 16 * s, 0, 0, Math.PI * 2);
+      ctx.fill();
+
+      ctx.fillStyle = "#fff7ed";
+      ctx.strokeStyle = obj.color;
+      ctx.lineWidth = 4 * s;
+      ctx.beginPath();
+      ctx.roundRect(-w / 2, -h, w, h, 12 * s);
+      ctx.fill();
+      ctx.stroke();
+
+      ctx.fillStyle = obj.color;
+      ctx.beginPath();
+      ctx.roundRect(-w / 2, -h, w, 34 * s, 10 * s);
+      ctx.fill();
+
+      ctx.fillStyle = "#263238";
+      ctx.font = `bold ${15 * s}px "Malgun Gothic"`;
+      ctx.textAlign = "center";
+      ctx.textBaseline = "middle";
+      ctx.fillText(obj.data.place, 0, -h + 18 * s);
+
+      ctx.fillStyle = "#fef3c7";
+      ctx.strokeStyle = "#78350f";
+      ctx.lineWidth = 2 * s;
+      ctx.beginPath();
+      ctx.roundRect(-32 * s, -68 * s, 64 * s, 46 * s, 7 * s);
+      ctx.fill();
+      ctx.stroke();
+      ctx.strokeStyle = "#d97706";
+      ctx.beginPath();
+      ctx.moveTo(0, -68 * s);
+      ctx.lineTo(0, -22 * s);
+      ctx.moveTo(-32 * s, -45 * s);
+      ctx.lineTo(32 * s, -45 * s);
+      ctx.stroke();
+
+      ctx.fillStyle = "#111827";
+      ctx.font = `bold ${18 * s}px "Malgun Gothic"`;
+      ctx.fillText("배송 도착", 0, -10 * s);
+      ctx.font = `${12 * s}px "Malgun Gothic"`;
+      ctx.fillStyle = "#475569";
+      ctx.fillText("차선을 맞춰 방문", 0, 12 * s);
+      ctx.restore();
+    }
+
+    function drawCompanions(playerProj) {
+      const visible = companions.slice(-8);
+      visible.forEach((comp, idx) => {
+        const row = Math.floor(idx / 4);
+        const col = idx % 4;
+        const desiredX = targetLaneX + (col - 1.5) * 0.16;
+        comp.followX += (desiredX - comp.followX) * 0.08;
+        const bounce = Math.sin(Date.now() * 0.008 + idx) * 1.5;
+        const proj = project3D(comp.followX, bounce, 0.21 + row * 0.035 + idx * 0.004);
+        ctx.save();
+        ctx.font = `${Math.max(16, 30 * proj.scale)}px "Malgun Gothic"`;
+        ctx.textAlign = "center";
+        ctx.textBaseline = "middle";
+        ctx.shadowBlur = 8 * proj.scale;
+        ctx.shadowColor = "#000";
+        ctx.fillText(comp.emoji, proj.x, proj.y - 22 * proj.scale);
+        ctx.restore();
+      });
+      const extra = companionCount - 8;
+      if (extra > 0) {
+        ctx.save();
+        ctx.fillStyle = "#fff176";
+        ctx.font = "bold 20px 'Malgun Gothic'";
+        ctx.textAlign = "center";
+        ctx.shadowBlur = 5;
+        ctx.shadowColor = "#000";
+        ctx.fillText(`+${extra}`, playerProj.x + 72, playerProj.y - 80);
+        ctx.restore();
+      }
+    }
+
+    function drawYeongjuCenterSide(proj, label, isLeft) {
+      const scale = proj.scale;
+      const w = 190 * scale;
+      const h = 105 * scale;
+      ctx.save();
+      ctx.translate(proj.x, proj.y);
+      ctx.fillStyle = "rgba(0,0,0,.18)";
+      ctx.beginPath();
+      ctx.ellipse(0, 6 * scale, w * .48, 12 * scale, 0, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.fillStyle = isLeft ? "#fef3c7" : "#e0f2fe";
+      ctx.strokeStyle = isLeft ? "#d97706" : "#0284c7";
+      ctx.lineWidth = 2 * scale;
+      ctx.beginPath();
+      ctx.roundRect(-w / 2, -h, w, h, 8 * scale);
+      ctx.fill();
+      ctx.stroke();
+      ctx.fillStyle = isLeft ? "#f59e0b" : "#38bdf8";
+      ctx.fillRect(-w / 2, -h, w, 24 * scale);
+      ctx.fillStyle = "#ffffff";
+      for (let ox = -w / 2 + 20 * scale; ox < w / 2 - 20 * scale; ox += 42 * scale) {
+        ctx.fillRect(ox, -h + 42 * scale, 24 * scale, 28 * scale);
+      }
+      ctx.fillStyle = "#1f2937";
+      ctx.fillRect(-22 * scale, -34 * scale, 44 * scale, 34 * scale);
+      ctx.fillStyle = "#111827";
+      ctx.font = `bold ${11 * scale}px "Malgun Gothic"`;
+      ctx.textAlign = "center";
+      ctx.fillText("영주", 0, -h + 16 * scale);
+      ctx.fillStyle = "#fff7ed";
+      ctx.font = `bold ${13 * scale}px "Malgun Gothic"`;
+      ctx.shadowBlur = 4 * scale;
+      ctx.shadowColor = "#000";
+      ctx.fillText(label, 0, -h - 5 * scale);
+      ctx.restore();
+    }
+
+    function drawYeongjuCenterMain(x, y, scale) {
+      const w = 480 * scale;
+      const h = 270 * scale;
+      ctx.save();
+      ctx.translate(x, y);
+      const glow = ctx.createRadialGradient(0, -h / 2, 15, 0, -h / 2, w);
+      glow.addColorStop(0, "rgba(255, 213, 79, 0.45)");
+      glow.addColorStop(1, "rgba(255, 213, 79, 0)");
+      ctx.fillStyle = glow;
+      ctx.beginPath();
+      ctx.arc(0, -h / 2, w, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.fillStyle = "#efebe9";
+      ctx.strokeStyle = "#5d4037";
+      ctx.lineWidth = 5 * scale;
+      ctx.beginPath();
+      ctx.rect(-w / 2, -h, w, h);
+      ctx.fill();
+      ctx.stroke();
+      ctx.fillStyle = "#fff59d";
+      for (let ox = -w / 2 + 40 * scale; ox < w / 2 - 30 * scale; ox += 75 * scale) {
+        ctx.fillRect(ox, -h + 50 * scale, 45 * scale, 60 * scale);
+        ctx.strokeRect(ox, -h + 50 * scale, 45 * scale, 60 * scale);
+      }
+      ctx.fillStyle = "#ffe082";
+      ctx.fillRect(-w / 5, -110 * scale, w / 2.5, 110 * scale);
+      ctx.strokeRect(-w / 5, -110 * scale, w / 2.5, 110 * scale);
+      ctx.fillStyle = "#263238";
+      ctx.beginPath();
+      ctx.moveTo(-w / 2 - 40 * scale, -h);
+      ctx.quadraticCurveTo(0, -h - 70 * scale, w / 2 + 40 * scale, -h);
+      ctx.lineTo(w / 2 + 15 * scale, -h + 35 * scale);
+      ctx.quadraticCurveTo(0, -h + 10 * scale, -w / 2 - 15 * scale, -h + 35 * scale);
+      ctx.closePath();
+      ctx.fill();
+      ctx.fillStyle = "#fafafa";
+      ctx.fillRect(-w / 3.2, -h + 12 * scale, (w / 3.2) * 2, 40 * scale);
+      ctx.strokeRect(-w / 3.2, -h + 12 * scale, (w / 3.2) * 2, 40 * scale);
+      ctx.fillStyle = "#004d40";
+      ctx.font = `bold ${16 * scale}px "Malgun Gothic"`;
+      ctx.textAlign = "center";
+      ctx.fillText("영주시 사회적경제지원센터", 0, -h + 37 * scale);
+      ctx.restore();
+    }
+
+    function drawFoxRunner(x, y, scale) {
+      drawFoxDeliveryTruck(x, y, scale);
+    }
+
+    function drawFoxDeliveryTruck(x, y, scale) {
+      const s = Math.max(.46, scale * 1.08);
+      const hop = Math.sin(Date.now() * .012) * 1.1;
+      ctx.save();
+      ctx.translate(x, y + 14 * s + hop);
+
+      if (solidarityBoost) {
+        const colors = ["#ff5252", "#ffee58", "#66bb6a", "#40c4ff", "#b388ff"];
+        colors.forEach((color, idx) => {
+          ctx.strokeStyle = color;
+          ctx.globalAlpha = 0.42;
+          ctx.lineWidth = 2.5 * s;
+          ctx.beginPath();
+          ctx.arc(0, -52 * s, 76 * s + idx * 5 * s + Math.sin(Date.now() * 0.01) * 3 * s, 0, Math.PI * 2);
+          ctx.stroke();
+        });
+        ctx.globalAlpha = 1;
+      }
+
+      ctx.fillStyle = "rgba(0,0,0,.28)";
+      ctx.beginPath();
+      ctx.ellipse(0, 14 * s, 78 * s, 16 * s, 0, 0, Math.PI * 2);
+      ctx.fill();
+
+      ctx.fillStyle = "#d1d5db";
+      ctx.strokeStyle = "#4b5563";
+      ctx.lineWidth = 3 * s;
+      ctx.beginPath();
+      ctx.roundRect(-76 * s, -102 * s, 152 * s, 98 * s, 4 * s);
+      ctx.fill();
+      ctx.stroke();
+
+      const rearGrad = ctx.createLinearGradient(0, -98 * s, 0, -9 * s);
+      rearGrad.addColorStop(0, "#f8fafc");
+      rearGrad.addColorStop(.55, "#eef7f8");
+      rearGrad.addColorStop(1, "#dce8eb");
+      ctx.fillStyle = rearGrad;
+      ctx.beginPath();
+      ctx.roundRect(-66 * s, -94 * s, 132 * s, 82 * s, 2 * s);
+      ctx.fill();
+
+      ctx.strokeStyle = "#9ca3af";
+      ctx.lineWidth = 1.5 * s;
+      ctx.beginPath();
+      ctx.moveTo(0, -94 * s);
+      ctx.lineTo(0, -12 * s);
+      ctx.stroke();
+
+      ctx.strokeStyle = "#6b7280";
+      ctx.lineWidth = 4 * s;
+      [-8, 8].forEach((mx) => {
+        ctx.beginPath();
+        ctx.moveTo(mx * s, -92 * s);
+        ctx.lineTo(mx * s, -16 * s);
+        ctx.stroke();
+        ctx.fillStyle = "#e5e7eb";
+        [-74, -48, -23].forEach((hy) => {
+          ctx.beginPath();
+          ctx.roundRect((mx - 5) * s, hy * s, 10 * s, 8 * s, 2 * s);
+          ctx.fill();
+          ctx.stroke();
+        });
+      });
+
+      ctx.fillStyle = "#9ca3af";
+      [-62, 62].forEach((hx) => {
+        [-76, -50, -23].forEach((hy) => {
+          ctx.beginPath();
+          ctx.roundRect((hx - 8) * s, hy * s, 16 * s, 8 * s, 2 * s);
+          ctx.fill();
+          ctx.stroke();
+        });
+      });
+
+      ctx.fillStyle = "#f3f4f6";
+      ctx.strokeStyle = "#6b7280";
+      ctx.lineWidth = 2 * s;
+      ctx.beginPath();
+      ctx.roundRect(-20 * s, -28 * s, 16 * s, 11 * s, 3 * s);
+      ctx.roundRect(4 * s, -28 * s, 16 * s, 11 * s, 3 * s);
+      ctx.fill();
+      ctx.stroke();
+
+      ctx.fillStyle = "#ef4444";
+      [-43, 43].forEach((tx) => {
+        ctx.beginPath();
+        ctx.roundRect((tx - 13) * s, -99 * s, 26 * s, 4.5 * s, 2 * s);
+        ctx.fill();
+      });
+
+      ctx.fillStyle = "#111827";
+      ctx.fillRect(-72 * s, -13 * s, 144 * s, 12 * s);
+      ctx.fillStyle = "#fbbf24";
+      ctx.fillRect(-45 * s, 0, 90 * s, 5 * s);
+      ctx.fillStyle = "#e5e7eb";
+      ctx.fillRect(-25 * s, -8 * s, 50 * s, 8 * s);
+
+      [-55, -35, 35, 55].forEach((lx, idx) => {
+        ctx.fillStyle = idx < 2 ? "#ef4444" : "#ef4444";
+        ctx.beginPath();
+        ctx.arc(lx * s, -7 * s, 6 * s, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.strokeStyle = "#111827";
+        ctx.lineWidth = 1.5 * s;
+        ctx.stroke();
+        if (idx === 1 || idx === 2) {
+          ctx.fillStyle = "#fef3c7";
+          ctx.beginPath();
+          ctx.arc(lx * s, -7 * s, 3 * s, 0, Math.PI * 2);
+          ctx.fill();
+        }
+      });
+
+      ctx.save();
+      ctx.translate(0, -58 * s);
+      ctx.fillStyle = "#f97316";
+      ctx.beginPath();
+      ctx.moveTo(-25 * s, -4 * s);
+      ctx.lineTo(-37 * s, -25 * s);
+      ctx.lineTo(-12 * s, -16 * s);
+      ctx.lineTo(0, -11 * s);
+      ctx.lineTo(12 * s, -16 * s);
+      ctx.lineTo(37 * s, -25 * s);
+      ctx.lineTo(25 * s, -4 * s);
+      ctx.quadraticCurveTo(22 * s, 17 * s, 0, 21 * s);
+      ctx.quadraticCurveTo(-22 * s, 17 * s, -25 * s, -4 * s);
+      ctx.closePath();
+      ctx.fill();
+      ctx.fillStyle = "#ffffff";
+      ctx.beginPath();
+      ctx.moveTo(-14 * s, 1 * s);
+      ctx.quadraticCurveTo(0, 20 * s, 14 * s, 1 * s);
+      ctx.quadraticCurveTo(0, 8 * s, -14 * s, 1 * s);
+      ctx.fill();
+      ctx.fillStyle = "#111827";
+      ctx.beginPath();
+      ctx.arc(-13 * s, -4 * s, 3.5 * s, 0, Math.PI * 2);
+      ctx.arc(13 * s, -4 * s, 3.5 * s, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.beginPath();
+      ctx.arc(0, 5 * s, 4 * s, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.restore();
+
+      ctx.fillStyle = "#334155";
+      ctx.font = `bold ${11 * s}px "Malgun Gothic"`;
+      ctx.textAlign = "center";
+      ctx.fillText("여우택배", 0, -33 * s);
+
+      ctx.fillStyle = "#111827";
+      ctx.fillRect(-57 * s, 4 * s, 20 * s, 15 * s);
+      ctx.fillRect(37 * s, 4 * s, 20 * s, 15 * s);
+
+      ctx.restore();
+    }
+
+    function drawBearPlayer(x, y, scale) {
+      const w = 110 * scale;
+      const h = 150 * scale;
+      ctx.save();
+      ctx.translate(x, y);
+      if (solidarityBoost) {
+        const colors = ["#ff5252", "#ffee58", "#66bb6a", "#40c4ff", "#b388ff"];
+        colors.forEach((color, idx) => {
+          ctx.strokeStyle = color;
+          ctx.globalAlpha = 0.55;
+          ctx.lineWidth = 3;
+          ctx.beginPath();
+          ctx.arc(0, -h / 2, w / 1.45 + idx * 5 + Math.sin(Date.now() * 0.01) * 3, 0, Math.PI * 2);
+          ctx.stroke();
+        });
+        ctx.globalAlpha = 1;
+      }
+      ctx.fillStyle = "#a1887f";
+      ctx.strokeStyle = "#5d4037";
+      ctx.lineWidth = 3;
+      ctx.beginPath(); ctx.arc(-22 * scale, -h + 25 * scale, 14 * scale, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
+      ctx.fillStyle = "#d7ccc8"; ctx.beginPath(); ctx.arc(-22 * scale, -h + 25 * scale, 8 * scale, 0, Math.PI * 2); ctx.fill();
+      ctx.fillStyle = "#a1887f"; ctx.beginPath(); ctx.arc(22 * scale, -h + 25 * scale, 14 * scale, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
+      ctx.fillStyle = "#d7ccc8"; ctx.beginPath(); ctx.arc(22 * scale, -h + 25 * scale, 8 * scale, 0, Math.PI * 2); ctx.fill();
+      ctx.fillStyle = "#a1887f"; ctx.beginPath(); ctx.arc(0, -h + 50 * scale, 32 * scale, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
+      ctx.fillStyle = "#80deea";
+      ctx.beginPath();
+      ctx.moveTo(-25 * scale, -h + 75 * scale);
+      ctx.lineTo(25 * scale, -h + 75 * scale);
+      ctx.lineTo(30 * scale, -10 * scale);
+      ctx.lineTo(-30 * scale, -10 * scale);
+      ctx.closePath();
+      ctx.fill();
+      ctx.stroke();
+      ctx.fillStyle = "#ffeb3b"; ctx.fillRect(-32 * scale, -h + 80 * scale, 10 * scale, 25 * scale); ctx.strokeRect(-32 * scale, -h + 80 * scale, 10 * scale, 25 * scale);
+      ctx.fillStyle = "#ff8a80"; ctx.fillRect(22 * scale, -h + 80 * scale, 10 * scale, 25 * scale); ctx.strokeRect(22 * scale, -h + 80 * scale, 10 * scale, 25 * scale);
+      ctx.fillStyle = "#ff1744";
+      ctx.font = `bold ${16 * scale}px "Malgun Gothic"`;
+      ctx.textAlign = "center";
+      ctx.fillText("♥", 0, -h + 102 * scale);
+      const legSwing = Math.sin(Date.now() * 0.15) * 6 * scale;
+      ctx.fillStyle = "#ab47bc";
+      ctx.fillRect(-22 * scale, -15 * scale, 12 * scale, 15 * scale + legSwing);
+      ctx.strokeRect(-22 * scale, -15 * scale, 12 * scale, 15 * scale + legSwing);
+      ctx.fillRect(10 * scale, -15 * scale, 12 * scale, 15 * scale - legSwing);
+      ctx.strokeRect(10 * scale, -15 * scale, 12 * scale, 15 * scale - legSwing);
+      ctx.restore();
+    }
+
+    function drawParticles() {
+      for (let i = particles.length - 1; i >= 0; i--) {
+        const p = particles[i];
+        ctx.save();
+        ctx.globalAlpha = Math.max(0, p.alpha);
+        ctx.fillStyle = p.color;
+        ctx.font = "bold 21px 'Malgun Gothic'";
+        ctx.shadowBlur = 6;
+        ctx.shadowColor = "#000";
+        ctx.textAlign = "center";
+        ctx.fillText(p.text, canvas.width / 2, p.y);
+        ctx.restore();
+        p.y -= 2.1;
+        p.alpha -= 0.02;
+        if (p.alpha <= 0) particles.splice(i, 1);
+      }
+      ctx.globalAlpha = 1;
+    }
+
+    function finishGame(completed) {
+      gameActive = false;
+      touchControls.style.display = "none";
+      const bonus = companionCount * 500 + socialEnterpriseVisits * 300 + Math.round(cooperationGauge * 10);
+      score += bonus;
+      const reportScore = Math.min(100, Math.round(companionCount * 7 + socialEnterpriseVisits * 5 + cooperationGauge * 0.2 + (completed ? 10 : 0)));
+      const distributionRevenue=runRevenue;
+      if(completed){let pipeline=loadPipeline();pipeline.deliverySupport=companionCount;savePipeline(pipeline)}
+      const nextDeliveryInterval=Math.max(5,10-companionCount);
+      endTitle.innerText = '배달 정산 결과';
+      finalScoreEl.innerText = `획득 성과: ${distributionRevenue.toLocaleString()}점`;
+      endMsg.innerHTML = `
+        <div class="report-grid">
+          <div>방문 배달처: ${visitedDeliveryPlaces.length?[...new Set(visitedDeliveryPlaces)].join(', '):'없음'}</div>
+          <div>벌어들인 수익: ${runRevenue.toLocaleString()}원</div>
+          <div>전달한 사회적가치: ${deliveryCount}개</div>
+          <div><b>획득 성과: ${distributionRevenue.toLocaleString()}점</b></div>
+        </div>
+      `;
+      endScreen.style.display = "flex";
+      updateUI();
+    }
+    renderPipeline();
+</script>
+</body>
+</html>
