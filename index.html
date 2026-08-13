@@ -644,6 +644,44 @@ function missionGoalText(){
   return "모든 목표를 달성했습니다. 엔딩 영상이 준비될 예정입니다.";
 }
 
+// 현재 미션의 다음 행동 지점을 지도 위 빨간 화살표로 안내합니다.
+function missionArrowTarget(){
+  const q=ensureMissionQuest();
+  const completeSet=set=>["rice","ginseng","garlic"].every(key=>(set[key]||0)>=5);
+  const destination=(id,label)=>{
+    const place=mapDestinations.find(item=>item.id===id);
+    // 화면 상단의 장소도 안내 문구가 잘리지 않도록 화살표 끝점을 건물 안쪽에 둡니다.
+    return place?{x:place.x+place.w/2,y:Math.max(place.y+80,110),label}:null;
+  };
+
+  if(q.stage===0)return {x:1405,y:160,label:"밭에서 작물 심기·수확"};
+  if(q.stage===1)return truck.cargo
+    ? destination("traditionalMarket","전통시장에 납품")
+    : {x:1165,y:225,label:"저장고에서 재료 싣기"};
+  if(q.stage===2){
+    if(!completeSet(q.farmRestaurant))return {x:1405,y:160,label:"밭에서 작물 심기·수확"};
+    return truck.cargo
+      ? destination("samgyetang","삼계탕 맛집에 납품")
+      : {x:1165,y:225,label:"저장고에서 재료 싣기"};
+  }
+  if(q.stage===3)return destination("samgyetang","삼계탕 만들기·배식");
+  if(q.stage===4)return destination("cultureCenter","문화센터 교육 미션");
+  if(q.stage===5){
+    const stepTargets=[
+      ["beefRestaurant","한우 식당에서 사건 확인"],
+      ["police","경찰서에서 CCTV 확인"],
+      ["station","영주역 목격자 조사"],
+      ["temple","부석사 NPC 조사"],
+      ["sosu","소수서원에서 용의자 찾기"],
+      ["hyoCenter","효문화진흥원에서 자백 받기"]
+    ];
+    const target=stepTargets[Math.min(5,q.beefTheft.step||0)];
+    return destination(target[0],target[1]);
+  }
+  if(q.stage===6)return destination("socialCenter","사회적경제 컨설팅");
+  return null;
+}
+
 function missionComplete(nextStage,residentChange,message){
   const q=ensureMissionQuest();
   q.stage=nextStage;
@@ -1361,12 +1399,49 @@ function draw(){
     drawPlaces();
     drawCustomers();
     drawInvestigationCitizens();
+    drawMissionArrow();
     drawTruck();
     drawTarget();
     drawBubbles();
   }
   ctx.restore();
   drawMiniMap();
+}
+
+function drawMissionArrow(){
+  const target=missionArrowTarget();
+  if(!target)return;
+  const bob=Math.sin(performance.now()/180)*8;
+  const tipY=target.y-8+bob;
+  ctx.save();
+  ctx.shadowColor="rgba(70,0,0,.65)";
+  ctx.shadowBlur=8;
+  ctx.fillStyle="#e60012";
+  ctx.strokeStyle="#fff";
+  ctx.lineWidth=4;
+  ctx.beginPath();
+  ctx.moveTo(target.x-13,tipY-49);
+  ctx.lineTo(target.x+13,tipY-49);
+  ctx.lineTo(target.x+13,tipY-25);
+  ctx.lineTo(target.x+28,tipY-25);
+  ctx.lineTo(target.x,tipY);
+  ctx.lineTo(target.x-28,tipY-25);
+  ctx.lineTo(target.x-13,tipY-25);
+  ctx.closePath();
+  ctx.fill();ctx.stroke();
+  ctx.shadowBlur=5;
+  ctx.font="900 17px 'Malgun Gothic', sans-serif";
+  ctx.textAlign="center";
+  const width=Math.max(150,ctx.measureText(target.label).width+28);
+  ctx.fillStyle="rgba(255,255,255,.96)";
+  ctx.strokeStyle="#e60012";
+  ctx.lineWidth=3;
+  ctx.fillRect(target.x-width/2,tipY-86,width,29);
+  ctx.strokeRect(target.x-width/2,tipY-86,width,29);
+  ctx.shadowBlur=0;
+  ctx.fillStyle="#c40010";
+  ctx.fillText(target.label,target.x,tipY-65);
+  ctx.restore();
 }
 
 function drawInvestigationCitizens(){
@@ -1620,6 +1695,18 @@ function drawMiniMap(){
   }
   if(mapImage.complete&&mapImage.naturalWidth)mctx.drawImage(mapImage,0,0,miniMap.width,miniMap.height);else{mctx.fillStyle="#274f32";mctx.fillRect(0,0,miniMap.width,miniMap.height)}
   drawMissionHouses(mctx,sx,sy);
+  const missionTarget=missionArrowTarget();
+  if(missionTarget){
+    const mx=missionTarget.x*sx,my=missionTarget.y*sy;
+    mctx.fillStyle="#e60012";
+    mctx.strokeStyle="#fff";
+    mctx.lineWidth=1.5;
+    mctx.beginPath();
+    mctx.moveTo(mx,my);
+    mctx.lineTo(mx-6,my-10);
+    mctx.lineTo(mx+6,my-10);
+    mctx.closePath();mctx.fill();mctx.stroke();
+  }
   mctx.fillStyle = "#e84b3c";
   mctx.fillRect(truck.x*sx-3, truck.y*sy-3, 6, 6);
 }
