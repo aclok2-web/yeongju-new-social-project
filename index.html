@@ -654,12 +654,12 @@ function missionArrowTarget(){
     return place?{x:place.x+place.w/2,y:Math.max(place.y+80,110),label}:null;
   };
 
-  if(q.stage===0)return {x:1405,y:160,label:"밭에서 작물 심기·수확"};
+  if(q.stage===0)return destination("ginsengVillage","풍기 인삼마을");
   if(q.stage===1)return truck.cargo
     ? destination("traditionalMarket","전통시장에 납품")
     : {x:1165,y:225,label:"저장고에서 재료 싣기"};
   if(q.stage===2){
-    if(!completeSet(q.farmRestaurant))return {x:1405,y:160,label:"밭에서 작물 심기·수확"};
+    if(!completeSet(q.farmRestaurant))return destination("ginsengVillage","풍기 인삼마을");
     return truck.cargo
       ? destination("samgyetang","삼계탕 맛집에 납품")
       : {x:1165,y:225,label:"저장고에서 재료 싣기"};
