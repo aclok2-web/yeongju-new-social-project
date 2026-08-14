@@ -421,8 +421,8 @@
     }
 
     function capacity(){ return 20 + (state.capacityLevel - 1) * 14; }
-    function speed(){ return 2.65 + (state.speedLevel - 1) * 0.42; }
-    function bladeRadius(){ return 38 + (state.bladeLevel - 1) * 16; }
+    function speed(){ return 3.2 + (state.speedLevel - 1) * 0.45; }
+    function bladeRadius(){ return 70 + (state.bladeLevel - 1) * 20; }
     function inFieldActionRange(field){
       const nearestX = Math.max(field.x, Math.min(tractor.x, field.x + field.w));
       const nearestY = Math.max(field.y, Math.min(tractor.y, field.y + field.h));
