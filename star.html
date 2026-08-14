@@ -130,6 +130,16 @@
     @media (min-width: 800px) {
       .controls { display: none; }
     }
+    @media (max-width:799px) {
+      body{min-height:100dvh;padding:4px;align-items:flex-start}
+      .game-wrap{width:min(98vw,760px);height:calc(100dvh - 8px);display:flex;flex-direction:column;justify-content:center}
+      .topbar{margin-bottom:4px;font-size:clamp(11px,3vw,16px)}.panel{padding:4px 7px;border-radius:8px}
+      canvas{max-height:52dvh;border-width:2px;border-radius:10px}
+      .info{margin-top:4px;font-size:9px}.notice{margin-top:4px;min-height:25px;padding:4px 7px;border-radius:8px;font-size:10px;line-height:1.2}
+      .controls{margin-top:5px;width:132px;grid-template-columns:repeat(3,40px);grid-template-rows:repeat(2,36px);gap:4px}.btn{border-radius:8px;font-size:18px}
+      .overlay{padding:6px}.card{width:min(94vw,520px);max-height:94dvh;overflow:auto;padding:10px}
+    }
+    @media (max-height:600px) {.game-wrap{height:100dvh}.topbar{font-size:11px}canvas{max-height:55dvh}.info{display:none}.notice{font-size:9px}.controls{grid-template-rows:repeat(2,30px)}}
   </style>
 </head>
 <body>
