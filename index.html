@@ -301,7 +301,7 @@ canvas{display:block;width:100%;height:100%;image-rendering:pixelated;background
     </video>
     <p class="intro-hint">소리를 들으려면 영상의 음소거 버튼을 눌러 주세요.</p>
     <p class="project-credit">Original Project © 2026 영주한국효문화진흥원</p>
-    <button id="introStartBtn" onclick="closeIntro()" disabled>영상 재생 후 시작하기</button>
+    <button id="introStartBtn" onclick="closeIntro()">영상 건너뛰고 시작하기</button>
   </div>
 </div>
 
@@ -355,11 +355,11 @@ canvas{display:block;width:100%;height:100%;image-rendering:pixelated;background
       </div>
       <div class="action-row">
         <button id="farmGameBtn" onclick="openFarmGame()">농사하기</button>
-        <button id="farmLoadBtn" onclick="showFarmLoadChoices()">물건 싣기</button>
+        <button id="farmLoadBtn" onclick="loadFarmBundle()">쌀·인삼·마늘 한 번에 싣기</button>
         <button id="loadRiceBtn" onclick="loadFarmStock('rice')">쌀 5개 싣기</button>
         <button id="loadGinsengBtn" onclick="loadFarmStock('ginseng')">인삼 5개 싣기</button>
         <button id="loadGarlicBtn" onclick="loadFarmStock('garlic')">마늘 5개 싣기</button>
-        <button id="marketSellBtn" onclick="sellFarmStock('traditionalMarket')">영주 전통시장에 판매</button>
+        <button id="marketSellBtn" onclick="marketTrade()">영주 전통시장에 판매</button>
         <button id="restaurantGameBtn" onclick="openRestaurantGame()">장사하기</button>
         <button id="restaurantDeliverBtn" onclick="sellFarmStock('samgyetang')">납품하기</button>
         <button id="cultureMissionBtn" onclick="openEducationGame()">AI 직무교육 시작</button>
@@ -641,8 +641,8 @@ function missionGoalText(){
   const q=ensureMissionQuest(),fmt=p=>`쌀 ${Math.min(5,p.rice)}/5 · 풍기인삼 ${Math.min(5,p.ginseng)}/5 · 마늘 ${Math.min(5,p.garlic)}/5`;
   if(q.stage===0)return `인삼마을에서 풍기인삼·마늘·쌀을 5개씩 심고 수확해 지방 특산물을 만드세요. (${fmt(q.farmLocal)})`;
   if(q.stage===1)return `풍기인삼·마늘·쌀을 전통시장에 5개씩 납품해 전통시장을 활성화하세요. (${fmt(q.marketDelivered)})`;
-  if(q.stage===2)return `인삼마을에서 작물을 다시 5개씩 심고 수확한 뒤 삼계탕 맛집에 납품하세요. (수확 ${fmt(q.farmRestaurant)} / 납품 ${fmt(q.restaurantDelivered)})`;
-  if(q.stage===3)return `삼계탕 5그릇을 팔아 영주의 맛집으로 소문나세요. (${Math.min(5,q.mealsServed)}/5)`;
+  if(q.stage===2)return `전통시장에서 받은 쌀·인삼·마늘을 삼계탕 맛집에 한 번에 납품하세요. (${fmt(q.restaurantDelivered)})`;
+  if(q.stage===3)return `삼계탕 2그릇을 팔아 영주의 맛집으로 소문나세요. (${Math.min(2,q.mealsServed)}/2)`;
   if(q.stage===4)return "영주시문화센터에서 교육하여 일자리를 창출하세요.";
   if(q.stage===5){
     if(q.beefTheft.culpritIdentified||q.beefTheft.step>=5)return BEEF_THEFT_HYO_GOAL;
@@ -666,12 +666,11 @@ function missionArrowTarget(){
   if(q.stage===0)return destination("ginsengVillage","풍기 인삼마을");
   if(q.stage===1)return truck.cargo
     ? destination("traditionalMarket","전통시장에 납품")
-    : {x:1165,y:225,label:"저장고에서 재료 싣기"};
+    : destination("ginsengVillage","쌀·인삼·마늘 한 번에 싣기");
   if(q.stage===2){
-    if(!completeSet(q.farmRestaurant))return destination("ginsengVillage","풍기 인삼마을");
     return truck.cargo
       ? destination("samgyetang","삼계탕 맛집에 납품")
-      : {x:1165,y:225,label:"저장고에서 재료 싣기"};
+      : destination("traditionalMarket","시장에서 식당 재료 받기");
   }
   if(q.stage===3)return destination("samgyetang","삼계탕 만들기·배식");
   if(q.stage===4)return destination("cultureCenter","문화센터 교육 미션");
@@ -951,7 +950,7 @@ function startGame(){
 }
 
 function resetTruck(){
-  if(truck.cargo&&truck.cargo.source==="warehouse"){deliveryWarehouse.inventory[truck.cargo.type]+=truck.cargo.qty;saveDeliveryWarehouse();}
+  if(truck.cargo&&truck.cargo.source==="warehouse"&&truck.cargo.origin!=="market"){for(const item of cargoEntries(truck.cargo))deliveryWarehouse.inventory[item.type]+=item.qty;saveDeliveryWarehouse();}
   if(truck.cargo&&truck.cargo.source==="farm"){deliveryWarehouse.farm[truck.cargo.type]+=truck.cargo.qty;saveDeliveryWarehouse();}
   truck.x = 1115;
   truck.y = 525;
@@ -979,13 +978,49 @@ function syncMissionDelivery(destination,type,qty){
     q.marketDelivered[type]=Math.min(5,(q.marketDelivered[type]||0)+qty);
     if(allFive(q.marketDelivered))missionComplete(2,2,"전통시장 특산물 납품 목표를 달성했습니다.");
   }else if(q.stage===2&&destination==="samgyetang"){
-    if(!allFive(q.farmRestaurant))return showToast("먼저 인삼마을에서 작물을 종류별로 5개씩 다시 수확하세요.");
     q.restaurantDelivered[type]=Math.min(5,(q.restaurantDelivered[type]||0)+qty);
     if(allFive(q.restaurantDelivered))missionComplete(3,2,"삼계탕 맛집 재료 납품 목표를 달성했습니다.");
   }
   saveDeliveryWarehouse();
 }
-function sellFarmStock(destination){if(currentDestinationId!==destination)return showToast(destination==="samgyetang"?"삼계탕 맛집에 도착해야 납품할 수 있습니다.":"영주 전통시장에 도착해야 판매할 수 있습니다.");if(!truck.cargo||truck.cargo.source!=="warehouse")return showToast("풍기 인삼 마을에서 농산물을 먼저 실으세요.");const place=mapDestinations.find(p=>p.id===destination),{type,qty,label}=truck.cargo,info=farmStockInfo[type],isRestaurant=destination==="samgyetang";if(isRestaurant&&deliveryWarehouse.restaurant[type]+qty>RESTAURANT_LIMIT)return showToast(`삼계탕 맛집 ${label} 재고는 ${RESTAURANT_LIMIT}개를 넘길 수 없습니다.`);const earned=Math.floor(info.price*qty*(isRestaurant?1.2:1));if(isRestaurant)deliveryWarehouse.restaurant[type]+=qty;const tax=Math.max(1,Math.floor(earned*.1)),net=earned-tax,valueGain=Math.max(2,Math.round(tax/3)+qty+(isRestaurant?2:0));state.cash+=net;state.taxPaid+=tax;state.localSpend=state.taxPaid;state.localValue=Math.min(100,state.localValue+valueGain);state.reputation=state.localValue;deliveryWarehouse.money=state.cash;deliveryWarehouse.taxPaid=state.taxPaid;deliveryWarehouse.localValue=state.localValue;truck.cargo=null;state.sold++;syncMissionDelivery(destination,type,qty);state.task=missionGoalText();saveDeliveryWarehouse();addLog(`${label} ${qty}개 지역 거래 · 매출 ${formatWon(earned)} · 세금 ${formatWon(tax)} · 지역가치 +${valueGain}`);showToast(isRestaurant?`${label} 납품 완료 · 삼계탕을 만들어 배식하세요.`:`세금 ${formatWon(tax)} 납부 · 지역가치 +${valueGain}`);updateActionButtons();updateUI();}
+function marketTrade(){
+  if(ensureMissionQuest().stage===2&&!truck.cargo)return collectMarketBundle();
+  sellFarmStock("traditionalMarket");
+}
+function collectMarketBundle(notify=true){
+  const q=ensureMissionQuest();
+  if(currentDestinationId!=="traditionalMarket"||q.stage!==2||truck.cargo)return;
+  const items=Object.keys(farmStockInfo).map(type=>({type,qty:Math.max(0,5-(q.restaurantDelivered[type]||0)),label:farmStockInfo[type].label})).filter(i=>i.qty>0);
+  if(!items.length)return;
+  truck.cargo={type:"bundle",items,qty:items.reduce((n,i)=>n+i.qty,0),label:items.map(i=>`${i.label} ${i.qty}개`).join(" · "),source:"warehouse",origin:"market"};
+  state.task=missionGoalText();saveDeliveryWarehouse();updateActionButtons();updateUI();
+  if(notify)showToast("전통시장에서 식당 재료를 받았습니다. 삼계탕집으로 바로 가세요.");
+}
+function cargoEntries(cargo){return cargo.items||[{type:cargo.type,qty:cargo.qty,label:cargo.label}];}
+function loadFarmBundle(){
+  if(currentDestinationId!=="ginsengVillage")return showToast("풍기 인삼 마을에서 재료를 실으세요.");
+  if(truck.cargo)return showToast("트럭에 이미 화물이 있습니다.");
+  const q=ensureMissionQuest(),goal=q.stage===1?q.marketDelivered:q.stage===2?q.restaurantDelivered:null;
+  const items=Object.keys(farmStockInfo).map(type=>({type,qty:Math.min(Math.max(0,5-(goal?.[type]||0)),deliveryWarehouse.inventory[type]||0),label:farmStockInfo[type].label})).filter(i=>i.qty>0);
+  if(!items.length)return showToast("납품할 재료가 없습니다. 농사 후 저장고에 저장하세요.");
+  for(const item of items)deliveryWarehouse.inventory[item.type]-=item.qty;
+  truck.cargo={type:"bundle",items,qty:items.reduce((n,i)=>n+i.qty,0),label:items.map(i=>`${i.label} ${i.qty}개`).join(" · "),source:"warehouse"};
+  farmLoadMenuOpen=false;state.task=missionGoalText();saveDeliveryWarehouse();updateActionButtons();updateUI();
+}
+function sellFarmStock(destination){
+  if(currentDestinationId!==destination)return showToast("납품 장소에 먼저 도착하세요.");
+  if(!truck.cargo||truck.cargo.source!=="warehouse")return showToast("풍기 인삼 마을에서 재료를 먼저 실으세요.");
+  const items=cargoEntries(truck.cargo),isRestaurant=destination==="samgyetang",q=ensureMissionQuest();
+  if(isRestaurant&&items.some(i=>deliveryWarehouse.restaurant[i.type]+i.qty>RESTAURANT_LIMIT))return showToast("식당 재고 공간이 부족합니다.");
+  const earned=items.reduce((n,i)=>n+Math.floor(farmStockInfo[i.type].price*i.qty*(isRestaurant?1.2:1)),0),qty=items.reduce((n,i)=>n+i.qty,0),label=items.map(i=>`${i.label} ${i.qty}개`).join(" · ");
+  if(isRestaurant)for(const i of items)deliveryWarehouse.restaurant[i.type]+=i.qty;
+  const tax=Math.max(1,Math.floor(earned*.1)),valueGain=Math.max(2,Math.round(tax/3)+qty+(isRestaurant?2:0));
+  state.cash+=earned-tax;state.taxPaid+=tax;state.localSpend=state.taxPaid;state.localValue=Math.min(100,state.localValue+valueGain);state.reputation=state.localValue;
+  deliveryWarehouse.money=state.cash;deliveryWarehouse.taxPaid=state.taxPaid;deliveryWarehouse.localValue=state.localValue;truck.cargo=null;state.sold++;
+  for(const i of items)syncMissionDelivery(destination,i.type,i.qty);
+  if(destination==="traditionalMarket"&&ensureMissionQuest().stage===2)collectMarketBundle(false);
+  state.task=missionGoalText();saveDeliveryWarehouse();addLog(`${label} 일괄 납품 · 매출 ${formatWon(earned)} · 세금 ${formatWon(tax)}`);showToast(destination==="traditionalMarket"&&ensureMissionQuest().stage===2?"시장 납품 완료! 식당 재료를 실었습니다. 삼계탕집으로 바로 가세요.":"재료 일괄 납품 완료!");updateActionButtons();updateUI();
+}
 
 function toggleSection(btn){
   btn.closest(".fold-section").classList.toggle("collapsed");
@@ -1294,7 +1329,10 @@ function updateActionButtons(){
   const ids = ["farmGameBtn","farmLoadBtn","loadRiceBtn","loadGinsengBtn","loadGarlicBtn","marketSellBtn","restaurantGameBtn","restaurantDeliverBtn","cultureMissionBtn","policeMissionBtn","policeChaseBtn","socialMissionBtn"];
   ids.forEach(id => document.getElementById(id).style.display = "none");
   if(currentDestinationId==="ginsengVillage"&&!truck.cargo){if(farmLoadMenuOpen){document.getElementById("loadRiceBtn").style.display="block";document.getElementById("loadGinsengBtn").style.display="block";document.getElementById("loadGarlicBtn").style.display="block";}else{document.getElementById("farmGameBtn").style.display="block";document.getElementById("farmLoadBtn").style.display="block";}}
-  if(currentDestinationId==="traditionalMarket"&&truck.cargo)document.getElementById("marketSellBtn").style.display="block";
+  if(currentDestinationId==="traditionalMarket"&&(truck.cargo||ensureMissionQuest().stage===2)){
+    const btn=document.getElementById("marketSellBtn");btn.style.display="block";
+    btn.textContent=truck.cargo?"시장에 일괄 납품":"삼계탕집 재료 받기";
+  }
   if(currentDestinationId==="samgyetang"){document.getElementById("restaurantGameBtn").style.display="block";document.getElementById("restaurantDeliverBtn").style.display="block";}
   const q=ensureMissionQuest();
   if(currentDestinationId==="cultureCenter"&&q.stage===4)document.getElementById("cultureMissionBtn").style.display="block";
@@ -1460,6 +1498,11 @@ function drawInvestigationCitizens(){
     const p=citizenPosition(npc);
     const profileIndex=c.suspectProfiles[npc.slot],profile=THIEF_PROFILES[profileIndex];
     ctx.save();ctx.translate(p.x,p.y);
+    if(c.step===4){
+      ctx.font="900 38px sans-serif";ctx.textAlign="center";
+      ctx.strokeStyle="#fff";ctx.lineWidth=4;ctx.fillStyle="#e60012";
+      ctx.strokeText("⬇",0,-78);ctx.fillText("⬇",0,-78);
+    }
     if(c.culpritIdentified&&c.step===5&&isCulpritCitizen(npc)){
       ctx.strokeStyle="#ffcc33";ctx.lineWidth=4;ctx.beginPath();ctx.arc(0,-12,34,0,Math.PI*2);ctx.stroke();
       ctx.fillStyle="#fff8dc";ctx.strokeStyle="#173d27";ctx.lineWidth=2;ctx.fillRect(-49,-76,98,20);ctx.strokeRect(-49,-76,98,20);
@@ -1797,5 +1840,5 @@ if(new URLSearchParams(location.search).get("consultingComplete") === "1"){
 }
 requestAnimationFrame(function smoothLoop(now){gameLoop(now);requestAnimationFrame(smoothLoop)});
 </script>
-</body>
+<script src="mission-guidance.js"></script></body>
 </html>

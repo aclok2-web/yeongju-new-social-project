@@ -234,6 +234,10 @@
     }
     @media(max-height:600px){.hud{top:4px}.title-card{padding:5px 7px}.title-card h1{font-size:16px}.title-card p{display:none}.wallet{padding:5px}.panel{bottom:4px;max-height:48vh}.help{display:none}.mobile-pad{transform:scale(.65);transform-origin:left bottom}}
   #upgradePanel{display:none!important}
+  .mobile-pad{display:grid;position:fixed;left:18px;bottom:18px;z-index:60;touch-action:none;user-select:none}
+  .mobile-pad button{cursor:pointer;touch-action:none;color:#24452d}
+  .mobile-pad button:active{background:#9cdbb0;transform:translateY(2px)}
+  .help{left:210px;max-width:calc(100vw - 230px)}
 </style>
 </head>
 <body>
@@ -254,10 +258,6 @@
       <div class="title-card">
         <h1>영주 하베스트 타이쿤</h1>
       <p>쌀·풍기인삼·마늘을 골라 심고 수확해 배달앱 공동 저장고에 쌓으세요.</p>
-        <div class="bars">
-          <div class="bar-row"><span>연료</span><div class="bar"><span id="fuelBar"></span></div><span id="fuelText">100%</span></div>
-          <div class="bar-row"><span>적재함</span><div class="bar"><span id="loadBar"></span></div><span id="loadText">0/20</span></div>
-        </div>
       </div>
       <div class="wallet">
         <div class="money" id="money">₩0</div>
@@ -266,7 +266,7 @@
     </div>
 
     <div class="help">
-      조작: W/A/S/D 또는 방향키로 이동합니다. 밭 가까이에서 파종 버튼을 누르고, 작물이 다 자라면 수확 버튼을 눌러 공동 저장고에 보관할 수 있습니다. 작물은 한 번 심을 때 1개씩 수확됩니다.
+      조작: 왼쪽 아래 화살표를 누르고 있으면 해당 방향으로 이동합니다. W/A/S/D와 방향키도 사용할 수 있습니다. 밭 가까이에서 파종 버튼을 누르고, 작물이 다 자라면 수확 버튼을 눌러 공동 저장고에 보관할 수 있습니다. 작물은 한 번 심을 때 1개씩 수확됩니다.
     </div>
 
     <div class="panel" id="upgradePanel">
@@ -279,7 +279,6 @@
       <div class="panel-body">
         <div class="upgrades">
           <div class="upgrade"><div class="ico">⚡</div><div><b>엔진 강화</b><span>이동 속도가 빨라집니다.</span></div><button class="buy" id="speedBtn">구매<span class="cost" id="speedCost"></span></button></div>
-          <div class="upgrade"><div class="ico">📦</div><div><b>적재함 확장</b><span>한 번에 더 많이 싣습니다.</span></div><button class="buy" id="capacityBtn">구매<span class="cost" id="capacityCost"></span></button></div>
           <div class="upgrade"><div class="ico">🌾</div><div><b>수확날 확장</b><span>더 넓은 범위를 수확합니다.</span></div><button class="buy" id="bladeBtn">구매<span class="cost" id="bladeCost"></span></button></div>
           <div class="upgrade"><div class="ico">🗺️</div><div><b>밭 구역 해금</b><span>새 작물 구역이 열립니다.</span></div><button class="buy" id="fieldBtn">구매<span class="cost" id="fieldCost"></span></button></div>
           <div class="upgrade"><div class="ico">🌾</div><div><b>쌀 심기</b><span>빈 밭에 심을 작물 선택 · 1칸 12원</span></div><button class="buy" id="riceBtn">선택</button></div>
@@ -291,11 +290,11 @@
       </div>
     </div>
 
-    <div class="mobile-pad">
-      <button class="up" data-key="ArrowUp">▲</button>
-      <button class="left" data-key="ArrowLeft">◀</button>
-      <button class="right" data-key="ArrowRight">▶</button>
-      <button class="down" data-key="ArrowDown">▼</button>
+    <div class="mobile-pad" aria-label="트랙터 이동">
+      <button class="up" data-key="ArrowUp" aria-label="위로 이동">▲</button>
+      <button class="left" data-key="ArrowLeft" aria-label="왼쪽으로 이동">◀</button>
+      <button class="right" data-key="ArrowRight" aria-label="오른쪽으로 이동">▶</button>
+      <button class="down" data-key="ArrowDown" aria-label="아래로 이동">▼</button>
     </div>
 
     <div class="toast" id="toast"></div>
@@ -327,11 +326,9 @@
       social: 0,
       reputation: 0,
       speedLevel: 4,
-      capacityLevel: 1,
       bladeLevel: 4,
       fieldLevel: 1,
       coopLevel: 0,
-      fuel: 100,
       load: 0,
       loadItems: { rice:0, ginseng:0, garlic:0 },
       loadValue: 0,
@@ -349,6 +346,7 @@
     let shared = loadShared();
     state.money = shared.money;
     state.loadItems = {rice:0,ginseng:0,garlic:0,...(state.loadItems||{})};
+    delete state.fuel;delete state.capacityLevel;
     const keys = {};
     const camera = { x: 0, y: 0 };
     const world = { w: 3000, h: 2100 };
@@ -358,8 +356,7 @@
     const fields = [];
     const fieldZones = [];
     const pads = [
-      { id: "storage", x: 2020, y: 120, w: 500, h: 300, color: "rgba(180,122,60,.78)", label: "배달앱 공동 저장고", icon: "📦" },
-      { id: "fuel", x: 1460, y: 1660, w: 500, h: 300, color: "rgba(61,118,173,.78)", label: "주유소", icon: "⛽" }
+      { id: "storage", x: 2020, y: 120, w: 500, h: 300, color: "rgba(180,122,60,.78)", label: "배달앱 공동 저장고", icon: "📦" }
     ];
 
     const CONTRACT_TYPES = [
@@ -420,7 +417,7 @@
       return "₩" + Math.floor(n).toLocaleString("ko-KR");
     }
 
-    function capacity(){ return 20 + (state.capacityLevel - 1) * 14; }
+
     function speed(){ return 3.2 + (state.speedLevel - 1) * 0.45; }
     function bladeRadius(){ return 70 + (state.bladeLevel - 1) * 20; }
     function inFieldActionRange(field){
@@ -449,11 +446,6 @@
           shared.regionalStats.welfare=Math.min(100,shared.regionalStats.welfare+4);
           shared.regionalStats.happiness=Math.round((shared.regionalStats.safety+shared.regionalStats.welfare+shared.regionalStats.education+shared.regionalStats.economy)/4);
           toast("지방 특산물 생산 목표 달성! 주민이 2명 늘었습니다.");
-        }
-      }else if(q.stage===2){
-        q.farmRestaurant[crop]=Math.min(5,q.farmRestaurant[crop]+1);
-        if(["rice","ginseng","garlic"].every(type=>q.farmRestaurant[type]>=5)){
-          toast("작물 재생산 완료! 삼계탕 맛집에 종류별 5개를 납품하세요.");
         }
       }
       saveShared();
@@ -521,9 +513,6 @@
     }
 
     function update(){
-      if(state.fuel <= 0){
-        handleFuelEmpty();
-      }
 
       const up = keys.ArrowUp || keys.KeyW;
       const down = keys.ArrowDown || keys.KeyS;
@@ -533,7 +522,7 @@
       let iy = (down ? 1 : 0) - (up ? 1 : 0);
       const moving = ix !== 0 || iy !== 0;
 
-      if(moving && state.fuel > 0){
+      if(moving){
         const len = Math.hypot(ix, iy) || 1;
         ix /= len;
         iy /= len;
@@ -543,8 +532,6 @@
         const targetSpeed = speed() * 2.05;
         tractor.vx += (ix * targetSpeed - tractor.vx) * 0.16;
         tractor.vy += (iy * targetSpeed - tractor.vy) * 0.16;
-        state.fuel = Math.max(0, state.fuel - 0.018);
-        if(state.fuel <= 0) handleFuelEmpty();
       }else{
         tractor.vx *= 0.84;
         tractor.vy *= 0.84;
@@ -574,11 +561,6 @@
 
       updatePlantAction();
 
-      pads.forEach(pad => {
-        if(inPad(pad)){
-          if(pad.id === "fuel") chargeFuel();
-        }
-      });
       updateStorageActions();
 
       floaters.forEach(f => { f.y -= 0.8; f.life -= 1; });
@@ -589,8 +571,17 @@
     }
 
     function inPad(pad){
-      const margin = pad.id === "fuel" ? 70 : 0;
+      const margin = 0;
       return tractor.x > pad.x - margin && tractor.x < pad.x + pad.w + margin && tractor.y > pad.y - margin && tractor.y < pad.y + pad.h + margin;
+    }
+
+    function farmMissionTarget(){
+      const counts=shared.quest?.farmLocal||{},types=["ginseng","garlic","rice"];
+      const complete=types.every(t=>(counts[t]||0)>=5);
+      if(complete)return {target:pads.find(p=>p.id==="storage"),label:state.load>0?"저장고에서 수확물 저장":"저장고에서 배달앱으로 이동"};
+      const type=types.find(t=>(counts[t]||0)<5),candidates=fields.filter(f=>f.allowedCrop===type);
+      const target=candidates.find(f=>f.planted&&f.grown>=1)||candidates.find(f=>!f.planted)||candidates[0];
+      return {target,label:cropLabel(type)+(target?.planted?(target.grown>=1?" 수확하기":" 성장 기다리기"):" 파종하기")};
     }
 
     function updateStorageActions(){
@@ -617,31 +608,10 @@
     function goToDeliveryApp(){
       const storagePad = pads.find(pad => pad.id === "storage");
       if(!storagePad || !inPad(storagePad)) return toast("저장고 입구로 이동하세요.");
+      if(state.load>0)storeLoad();
       saveState(true);
       saveShared();
       location.href = "index.html?skipIntro=1";
-    }
-
-    function chargeFuel(){
-      const before = state.fuel;
-      state.fuel = Math.min(100, state.fuel + 1.8);
-      if(before < 100 && state.fuel >= 100) toast("연료가 가득 찼습니다.");
-      if(before < 25 && state.fuel >= 25) toast("충전소에서 연료를 채우는 중입니다.");
-    }
-
-    function handleFuelEmpty(){
-      state.fuel = 35;
-      state.money = Math.floor(state.money / 2);
-      state.load = Math.floor(state.load / 2);
-      state.loadValue = Math.floor(state.loadValue / 2);
-      state.storage = Math.floor(state.storage / 2);
-      state.storageValue = Math.floor(state.storageValue / 2);
-      tractor.vx = 0;
-      tractor.vy = 0;
-      pop("긴급 연료 지원", tractor.x, tractor.y - 76, "#315f8a");
-      toast("연료가 떨어져 긴급 지원을 받았습니다. 소지금, 적재함, 창고 물량이 절반으로 줄고 연료가 35% 회복됩니다.");
-      saveState(true);
-      renderHud();
     }
 
     function storeLoad(){
@@ -680,7 +650,7 @@
         : cropLabel(crop) + " 파종 · " + formatWon(seedCost(crop));
       button.style.display = "block";
       button.disabled = nearbyPlantField.planted
-        ? state.load >= capacity()
+        ? false
         : state.money < seedCost(crop);
     }
 
@@ -689,7 +659,6 @@
       if(!field) return;
       if(field.planted){
         if(field.grown < 1) return;
-        if(state.load >= capacity()) return toast("적재함이 가득 찼습니다.");
         if(state.load === 0) state.loadProcessed = false;
         const crop = field.crop;
         const unit = cropUnit(crop);
@@ -1167,12 +1136,7 @@
     function renderHud(){
       document.getElementById("money").textContent = formatWon(state.money);
       document.getElementById("statText").textContent = "공동 저장고 · 쌀 " + shared.inventory.rice + " · 인삼 " + shared.inventory.ginseng + " · 마늘 " + shared.inventory.garlic;
-      document.getElementById("fuelBar").style.width = state.fuel + "%";
-      document.getElementById("fuelText").textContent = Math.floor(state.fuel) + "%";
-      document.getElementById("loadBar").style.width = Math.min(100, state.load / capacity() * 100) + "%";
-      document.getElementById("loadText").textContent = state.load + "/" + capacity() + " · 창고 " + state.storage;
       setCost("speed", state.speedLevel, "speedCost", "speedBtn");
-      setCost("capacity", state.capacityLevel, "capacityCost", "capacityBtn");
       setCost("blade", state.bladeLevel, "bladeCost", "bladeBtn");
       setCost("field", state.fieldLevel, "fieldCost", "fieldBtn");
       document.getElementById("selectedCropText").textContent=cropLabel(state.selectedCrop);
@@ -1246,7 +1210,6 @@
     addEventListener("keydown", e => { keys[e.code] = true; if(["ArrowUp","ArrowDown","ArrowLeft","ArrowRight","Space"].includes(e.code)) e.preventDefault(); });
     addEventListener("keyup", e => { keys[e.code] = false; });
     document.getElementById("speedBtn").addEventListener("click", () => buy("speed"));
-    document.getElementById("capacityBtn").addEventListener("click", () => buy("capacity"));
     document.getElementById("bladeBtn").addEventListener("click", () => buy("blade"));
     document.getElementById("fieldBtn").addEventListener("click", () => buy("field"));
     document.getElementById("riceBtn").addEventListener("click", () => selectCrop("rice"));
@@ -1263,19 +1226,22 @@
       toggle.setAttribute("aria-label", collapsed ? "장비 업그레이드 펼치기" : "장비 업그레이드 접기");
     });
     document.querySelectorAll(".mobile-pad button").forEach(btn => {
-      const code = btn.dataset.key;
-      btn.addEventListener("pointerdown", e => { e.preventDefault(); keys[code] = true; });
-      btn.addEventListener("pointerup", () => keys[code] = false);
-      btn.addEventListener("pointerleave", () => keys[code] = false);
+      const code=btn.dataset.key;
+      const release=()=>{keys[code]=false;};
+      btn.addEventListener("pointerdown",e=>{e.preventDefault();btn.setPointerCapture(e.pointerId);keys[code]=true;});
+      btn.addEventListener("pointerup",release);
+      btn.addEventListener("pointercancel",release);
+      btn.addEventListener("lostpointercapture",release);
     });
+    addEventListener("blur",()=>{for(const code of Object.keys(keys))keys[code]=false;});
     addEventListener("beforeunload", () => saveState(true));
     addEventListener("storage",e=>{if(e.key==="yeongjuDeliveryWarehouse"){shared=loadShared();state.money=shared.money;renderHud();}});
 
     resize();
     setupFields();
     renderHud();
-    toast("트랙터를 몰아 익은 밭을 지나가 보세요.");
+    toast("빨간 화살표를 따라 밭으로 이동해 파종하고 수확하세요.");
     requestAnimationFrame(loop);
   </script>
-</body>
+<script src="mission-guidance.js"></script></body>
 </html>
