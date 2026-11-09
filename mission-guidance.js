@@ -8,15 +8,15 @@
     const by=id=>stations.find(s=>s.id===id),prep=by('prep'),ps=stations.filter(s=>s.kind==='pot');
     let t,label;
     if(p.id===1){
-      if(p.hold==='chicken'){t=by('sink');label='닭 씻기 · F';}
-      else if(p.hold==='clean'||p.hold==='kit'){t=counters.find(s=>!s.item);label='전달대에 놓기 · F';}
-      else if(p.hold==='rice'||p.hold==='herb'){t=prep;label='손질대에 재료 놓기 · F';}
-      else if(prep.rice&&prep.herb){t=prep;label='꾸러미 만들기 · F';}
+      if(p.hold==='chicken'){t=by('sink');label='닭 씻기 · Space / 들기 버튼';}
+      else if(p.hold==='clean'||p.hold==='kit'){t=counters.find(s=>!s.item);label='전달대에 놓기 · Space / 들기 버튼';}
+      else if(p.hold==='rice'||p.hold==='herb'){t=prep;label='손질대에 재료 놓기 · Space / 들기 버튼';}
+      else if(prep.rice&&prep.herb){t=prep;label='꾸러미 만들기 · Space / 들기 버튼';}
       else{
         const cleanReady=counters.some(s=>s.item==='clean')||players[1].hold==='clean'||Object.values(pots).some(s=>s.parts.includes('clean'));
         const kitReady=counters.some(s=>s.item==='kit')||players[1].hold==='kit'||Object.values(pots).some(s=>s.parts.includes('kit'));
-        if(!cleanReady){t=by('chicken');label='닭 집기 · F';}
-        else if(!kitReady){t=by(prep.herb?'rice':'herb');label=(prep.herb?'찹쌀':'인삼·마늘')+' 집기 · F';}
+        if(!cleanReady){t=by('chicken');label='닭 집기 · Space / 들기 버튼';}
+        else if(!kitReady){t=by(prep.herb?'rice':'herb');label=(prep.herb?'찹쌀':'인삼·마늘')+' 집기 · Space / 들기 버튼';}
         else {t=counters.find(s=>s.item);label='2P에게 재료 전달';}
       }
     }else{

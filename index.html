@@ -287,6 +287,13 @@ canvas{display:block;width:100%;height:100%;image-rendering:pixelated;background
   .modal{padding:6px}.modal-content{max-height:96dvh;overflow:auto;padding:10px}.intro-content h2{font-size:18px}.intro-hint,.project-credit{font-size:10px}
 }
 @media(max-height:620px){.wrap{padding:3px;gap:3px}header{padding:3px 7px;border-width:2px}h1{font-size:16px}.cash-badge strong{font-size:16px}.layout{gap:3px}.game-wrap,.side{border-width:2px}.side{padding:3px;gap:3px}.section-toggle{padding:3px 5px;font-size:9px}.fold-content{padding:3px}.rpg-dialog{bottom:4px;padding:5px 8px}.rpg-dialog p{font-size:9px}}
+/* Larger goals and reachable panels on small or short screens. */
+.side{overflow-y:auto;grid-template-rows:none;grid-auto-rows:max-content;align-content:start;overscroll-behavior:contain}
+.side>.fold-section:first-child .section-toggle{font-size:19px;padding:12px}.side>.fold-section:first-child .fold-content{padding:12px}
+#taskText{font-size:20px;line-height:1.65;padding:14px;min-height:115px;background:#fff6c5}
+.rpg-dialog{min-height:92px;padding:12px 16px;max-height:40%;overflow-y:auto}.rpg-dialog summary{font-size:19px}.rpg-dialog p{font-size:18px;line-height:1.55}
+.log{overflow-y:auto}.modal-content{max-height:94dvh;overflow-y:auto}
+@media(max-width:700px){html,body{height:auto;min-height:100%;overflow:auto}.wrap{height:auto;min-height:100dvh}.layout{display:flex;flex-direction:column;flex:none}.game-wrap{height:70dvh;min-height:480px;flex:none}.side{height:auto;overflow:visible;display:grid;grid-template-rows:none;grid-auto-rows:max-content}.section-toggle{font-size:14px;padding:9px}.fold-content{padding:9px}.task-card,.log,.inv,.stat{font-size:13px}.rpg-dialog summary{font-size:17px}.rpg-dialog p{font-size:16px}.rpg-dialog{left:8px;right:8px;bottom:8px;padding:10px}.side>.fold-section:first-child .section-toggle{font-size:19px}#taskText{font-size:19px;min-height:100px}.log{height:100px}}
 </style>
 </head>
 <body>
@@ -307,7 +314,7 @@ canvas{display:block;width:100%;height:100%;image-rendering:pixelated;background
 
 <div class="modal" id="endingModal" style="display:none">
   <div class="modal-content ending-content">
-    <h2 id="endingTitle">영업 종료</h2>
+    <h2 id="endingTitle">오늘의 미션 결과</h2>
     <img id="endingFestivalImage" class="ending-image" src="yeongju_festival_final.png" alt="영주 축제 엔딩 이미지">
     <p id="finalFeedback"></p>
     <p class="project-credit">Original Project © 2026 영주한국효문화진흥원</p>
@@ -349,7 +356,6 @@ canvas{display:block;width:100%;height:100%;image-rendering:pixelated;background
       <canvas id="game" width="1536" height="1024" tabindex="0" aria-label="영주 배달 지도"></canvas>
       <div class="hud">
         <div class="hudbox" id="nearHud">공동 저장고 앞에서 시작하세요</div>
-        <div class="hudbox" id="timerHud">영업시간 3:00</div>
         <div class="hudbox" id="truckHud">트럭 적재: 없음</div>
         <div class="hudbox" id="stageHud">영주 농산물 물류</div>
       </div>
@@ -843,7 +849,6 @@ const state = {
   circulation:deliveryWarehouse.mealCirculation,
   residentsGained:deliveryWarehouse.quest.residents,
   shopLevel:1,
-  timeLeft:180,
   flour:0,
   milk:0,
   egg:0,
@@ -922,7 +927,6 @@ function startGame(){
     circulation:deliveryWarehouse.mealCirculation,
     residentsGained:deliveryWarehouse.quest.residents,
     shopLevel:1,
-    timeLeft:180,
     flour:0,
     milk:0,
     egg:0,
@@ -1249,7 +1253,6 @@ function update(dt){
     state.residentsGained=ensureMissionQuest().residents;
     state.task=missionGoalText();
     if(ensureMissionQuest().completed)return endGame(true);
-    state.timeLeft = Math.max(0, state.timeLeft - dt);
     updateJobs(dt);
     spawnCustomer();
     updateCustomers(dt);
@@ -1349,9 +1352,6 @@ function updateActionButtons(){
 }
 
 function updateUI(){
-  const time = Math.max(0, Math.ceil(state.timeLeft));
-  const min = Math.floor(time / 60);
-  const sec = String(time % 60).padStart(2,"0");
   const near = mapDestinations.find(p=>p.id===currentDestinationId)||null;
   if(deliveryWarehouse.money!==state.cash){deliveryWarehouse.money=state.cash;saveDeliveryWarehouse();}
   document.getElementById("topCash").innerText = formatWon(state.cash);
@@ -1381,7 +1381,6 @@ function updateUI(){
     ? BEEF_THEFT_HYO_GOAL
     : state.task;
   document.getElementById("logText").innerText = state.log.slice(-3).join("  /  ");
-  document.getElementById("timerHud").innerText = `영업시간 ${min}:${sec}`;
   document.getElementById("nearHud").innerText = near ? `${near.name} 도착` : "방문지를 클릭하거나 운전하세요";
   document.getElementById("truckHud").innerText = `트럭 적재: ${truck.cargo ? `${truck.cargo.label} ${truck.cargo.qty}` : "없음"}`;
   document.getElementById("stageHud").innerText = `미션 ${Math.min(7,ensureMissionQuest().stage+1)}/7 · 주민 증가 ${state.residentsGained}/10명`;
